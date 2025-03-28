@@ -76,7 +76,8 @@ Here's how to run a basic simulation example with custom parameters:
 
 ##‍🔬 Documentation
 
-Generate and open the PDF documentation:
+The PDF file that is generated through Doxygen is **essential** to learning what this program is all about.
+To generate and open the PDF documentation:
 
 ```bash
 make docs
@@ -84,17 +85,18 @@ xdg-open doxyDocs/latex/refman.pdf
 ```
 **Please Note:**
 Doxygen and LaTeX have been an **ABSOLUTE BITCH** to work with, so don't
-try to fiddle around how the PDF is generated in the Makefile, and try not to touch
+try to fiddle around with  how the PDF is generated in the Makefile, and try not to touch
 the Doxyfile much at all. It took me a while to get it all to work.
 Also, you may make an HTML webpage with it as well, but the math formulas and other
 things won't look as nice, as I made the documentation custom-tailored to make PDFs.
 ## 📜 License
 
-This project is licensed under an open-source license:
+### This project is licensed under the **CC BY-NC 4.0** license
 
-- **Non-commercial:** Personal, educational, and non-commercial use allowed.
-- **Attribution required:** Credit this repository clearly in derivative works.
-- **Commercial use:** Requires explicit approval—contact repo owner.
+- **Non-commercial:** Personal, educational, and non-commercial use allowed;
+- **Attribution required:** Credit this repository clearly in derivative works;
+- **Commercial use:** Requires explicit approval—contact repo owner;
+- Please view **LICENSE.md** for more information.
 
 ## 🖥️ Contributing
 
@@ -106,7 +108,9 @@ This project is licensed under an open-source license:
 
 ## 💬 Contact
 
-Feel free to reach out if you have any questions or suggestions!
+Feel free to reach out if you have any questions or suggestions! This is my first piece of software that I started during
+my sophomore year as a CS student, so I am certain that there are things in here that I can change, improve, or otherwise
+make better.
 
 - **GitHub:** [BMAGS6](https://github.com/BMAGS6)
 - **Email:** brandonmagoni111@gmail.com
