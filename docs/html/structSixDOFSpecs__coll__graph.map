@@ -1,7 +1,0 @@
-<map id="SixDOFSpecs" name="SixDOFSpecs">
-<area shape="rect" id="Node000001" title="Extended projectile specifications for 6&#45;DOF." alt="" coords="29,93,136,119"/>
-<area shape="rect" id="Node000002" href="$structInertia.html" title="Moments of inertia for the projectile in principal axes." alt="" coords="5,5,64,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="50,42,65,68,78,92,74,94,60,71,45,44"/>
-<area shape="rect" id="Node000003" href="$structAeroCoeffs.html" title="Aerodynamic coefficients for advanced torque/force modeling." alt="" coords="88,5,176,31"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="121,44,92,94,87,91,116,41"/>
-</map>

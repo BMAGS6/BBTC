@@ -138,7 +138,7 @@ double interpolate_cd_from_table(double mach)
  * \f]
  * and linearly interpolate between index and index+1.
  */
-COLD double fast_interpolate_cd(const double *restrict lookupTable, double mach)
+double fast_interpolate_cd(const double *restrict lookupTable, double mach)
 {
     if (mach <= 0.0) return lookupTable[0];
     if (mach >= LOOKUP_MAX_MACH) return lookupTable[LOOKUP_SIZE - 1];

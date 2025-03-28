@@ -54,7 +54,7 @@ struct option longOpts[] =
  *	@ingroup CLI_Parsing
  *	@param progName The name of the executable (argv[0])
  */
-COLD void print_usage_instructions(const char *progName)
+void print_usage_instructions(const char *progName)
 {
 	fprintf(stderr,
 		"|\tUsage: %s [OPTIONS]\n"
