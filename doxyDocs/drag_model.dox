@@ -1,0 +1,79 @@
+/**
+ * @page drag_model Drag Coefficient Models
+ * @tableofcontents
+ *
+ * @section overview Overview
+ *
+ * BBTC supports multiple empirical drag models that reflect various projectile shapes and flight characteristics. These drag models are used to look up the drag coefficient \( C_d \) as a function of Mach number, which directly influences aerodynamic resistance in the simulation.
+ *
+ * Drag models available:
+ * - G1:  Flatbase with a blunt nose, which is typical of older bullets. Most commonly used drag model used in the market today.
+ * - G2:  Aberdeen J projectile (tangential ogive, sharp point). Not very compatible with small arms ammunition, and more so for certain artillery rounds
+ * - G5:  Short 7.5-degree boat tail with a 6.19 caliber long tangent ogive
+ * - G6:  For flat based "spire point" type bullets - 4.81 calibers long with a 2.53 caliber nose and a 6.99 caliber secant nose ogive
+ * - G7:  Long boat tail with a secant ogive, used for modern VLD bullets. Second most common model in use today---behind G1---and is suited for most modern intermediate and high power rounds. Most modern US military boat tailed bullets match this model.
+ * - G8:  Flat base with similar nose design to G7 - 3.64 calibers long with a 2.18 caliber long nose and a  10 caliber secant nose ogive.  The US M2 152 gr .30 cal bullet matches this drag model.  Close to the G6 model.
+ * - GI:  Converted from the original Ingalls tables, essentially G1. Not recommended for serious use other than illustration or simulation.
+ * - GL:  Traditional model used for flat-based, round nosed, exposed-lead bullets.
+ * - GS:  Model based on a 9/16" sphere. This model is best suited for spherical projectiles (cannon and musket balls, etc.) and is practically identical for all sizes of sphere.
+ * - RA4: Used for heeled bullets that are most commonly fired from small rimfire rounds (e.g. .22LR) and airguns.
+ *
+ *
+ * These drag models are implemented using CSV lookup tables that provide @f$ C_d @f$ values at discrete Mach intervals. During the simulation, the solver determines the projectile's Mach number, locates the appropriate table, and interpolates the drag coefficient accordingly.
+ *
+ *
+\latexonly
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.9\textwidth]{drag_model_chart_combined.png}
+\caption{Standard Drag Model Shapes}
+\label{fig:drag-model-chart}
+\end{figure}
+\endlatexonly
+ *
+ * @section equation Drag Force Equation
+ *
+ * The drag force applied to the bullet is given by:
+ *
+ * @f[
+ * \mathbf{F}_d = -\frac{1}{2} \rho C_d A \|\mathbf{v}_{\mathrm{rel}}\| \mathbf{v}_{\mathrm{rel}}
+ * @f]
+ *
+ * Where:
+ * - @f$ \rho @f$ is the air density
+ * - @f$ C_d @f$ is the drag coefficient from the selected model
+ * - @f$ A @f$ is the bullet’s cross-sectional area
+ * - @f$ \mathbf{v}_{\mathrm{rel}} @f$ is the velocity of the bullet relative to the air
+ *
+ * The direction of the drag force is opposite to the motion relative to the surrounding air. This includes wind if enabled.
+ *
+ * @section interpolation Interpolation Logic
+ *
+ * Since the tables contain discrete entries, @f$ C_d @f$ must be interpolated for smooth physics. BBTC uses binary search followed by linear interpolation for performance and accuracy.
+ *
+ * Steps:
+ * 1. Determine the Mach number from the bullet’s speed and speed of sound
+ * 2. Use binary search to find the nearest bracketing values in the drag table
+ * 3. Apply linear interpolation between those two points to compute an accurate @f$ C_d @f$
+ *
+ * This ensures consistent drag calculation even during rapid transonic transitions where @f$ C_d @f$ changes dramatically.
+ *
+ * @section units Units and Internal Format
+ *
+ * Drag model tables use dimensionless coefficients and are stored in plain-text CSV format. Internally, all physics are computed using SI units:
+ * - Mach number (unitless)
+ * - Cross-sectional area (m²)
+ * - Velocity (m/s)
+ * - Density (kg/m³)
+ *
+ *
+ * @section future Future Enhancements
+ *
+ * Planned upgrades to drag modeling include:
+ * - Temperature-adjusted Reynolds number influence (viscosity effects)
+ * - Automatic curve smoothing or polynomial fitting
+ * - User-defined drag tables
+ *     - Validation routines to test imported tables for monotonicity and resolution
+ *
+ * BBTC’s drag model system is extensible and central to its accurate aerodynamics engine. The system ensures physically realistic bullet trajectories across a wide range of speeds and shapes.
+ */

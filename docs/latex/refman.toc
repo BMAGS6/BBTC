@@ -1,0 +1,321 @@
+\@ifundefined {etoctocstyle}{\let \etoc@startlocaltoc \@gobble \let \etoc@settocdepth \@gobble \let \etoc@depthtag \@gobble \let \etoc@setlocaltop \@gobble }{}
+\contentsline {chapter}{\numberline {1}BBTC\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}: BMAGS\textquotesingle {} Ballistic Trajectory Calculator}{1}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Introduction}{1}{section.1.1}%
+\contentsline {section}{\numberline {1.2}License}{1}{section.1.2}%
+\contentsline {section}{\numberline {1.3}How to Cite}{2}{section.1.3}%
+\contentsline {section}{\numberline {1.4}Documentation Structure}{2}{section.1.4}%
+\contentsline {section}{\numberline {1.5}Build \& Compilation}{2}{section.1.5}%
+\contentsline {section}{\numberline {1.6}Documentation Style Notes}{2}{section.1.6}%
+\contentsline {section}{\numberline {1.7}Acknowledgments}{2}{section.1.7}%
+\contentsline {chapter}{\numberline {2}Six Degrees of Freedom (6DOF) Physics Engine}{3}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Introduction}{3}{section.2.1}%
+\contentsline {section}{\numberline {2.2}Translational Dynamics}{3}{section.2.2}%
+\contentsline {section}{\numberline {2.3}Rotational Dynamics}{4}{section.2.3}%
+\contentsline {section}{\numberline {2.4}Forces Modeled}{4}{section.2.4}%
+\contentsline {section}{\numberline {2.5}Numerical Stability and Performance}{5}{section.2.5}%
+\contentsline {section}{\numberline {2.6}Output Logging}{5}{section.2.6}%
+\contentsline {section}{\numberline {2.7}6\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}DOF Simulation Loop}{5}{section.2.7}%
+\contentsline {subsection}{\numberline {2.7.1}Theory vs. Implementation Table}{5}{subsection.2.7.1}%
+\contentsline {subsection}{\numberline {2.7.2}Theory vs. Implementation Table}{5}{subsection.2.7.2}%
+\contentsline {section}{\numberline {2.8}Future Work}{6}{section.2.8}%
+\contentsline {chapter}{\numberline {3}Command-\/\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}Line Interface (CLI)}{7}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Overview}{7}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Usage Syntax}{7}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Supported Options}{7}{subsection.3.2.1}%
+\contentsline {section}{\numberline {3.3}CLI\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}\_\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}inputs Structure}{8}{section.3.3}%
+\contentsline {section}{\numberline {3.4}Default Values}{8}{section.3.4}%
+\contentsline {section}{\numberline {3.5}Example Command}{8}{section.3.5}%
+\contentsline {chapter}{\numberline {4}Drag Coefficient Models}{9}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Overview}{9}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Drag Force Equation}{9}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Interpolation Logic}{10}{section.4.3}%
+\contentsline {section}{\numberline {4.4}Units and Internal Format}{11}{section.4.4}%
+\contentsline {section}{\numberline {4.5}Future Enhancements}{11}{section.4.5}%
+\contentsline {chapter}{\numberline {5}Environmental Modeling System}{13}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Overview}{13}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Core Atmospheric Variables}{13}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Wind Modeling}{14}{section.5.3}%
+\contentsline {section}{\numberline {5.4}Altitude Effects}{14}{section.5.4}%
+\contentsline {section}{\numberline {5.5}Units and Internal Format}{14}{section.5.5}%
+\contentsline {section}{\numberline {5.6}Output Logging}{14}{section.5.6}%
+\contentsline {section}{\numberline {5.7}Future Enhancements}{14}{section.5.7}%
+\contentsline {chapter}{\numberline {6}Quaternion Mathematics}{17}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Overview}{17}{section.6.1}%
+\contentsline {section}{\numberline {6.2}Why Quaternions?}{17}{section.6.2}%
+\contentsline {section}{\numberline {6.3}Application in Code}{18}{section.6.3}%
+\contentsline {section}{\numberline {6.4}Quaternion Update Step}{18}{section.6.4}%
+\contentsline {section}{\numberline {6.5}Optional\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}: SLERP (\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}Not Implemented)}{18}{section.6.5}%
+\contentsline {section}{\numberline {6.6}Summary}{19}{section.6.6}%
+\contentsline {chapter}{\numberline {7}Topic Index}{21}{chapter.7}%
+\contentsline {section}{\numberline {7.1}Topics}{21}{section.7.1}%
+\contentsline {chapter}{\numberline {8}Data Structure Index}{23}{chapter.8}%
+\contentsline {section}{\numberline {8.1}Data Structures}{23}{section.8.1}%
+\contentsline {chapter}{\numberline {9}File Index}{25}{chapter.9}%
+\contentsline {section}{\numberline {9.1}File List}{25}{section.9.1}%
+\contentsline {chapter}{\numberline {10}Topic Documentation}{27}{chapter.10}%
+\contentsline {section}{\numberline {10.1}Main Program}{27}{section.10.1}%
+\contentsline {subsection}{\numberline {10.1.1}Detailed Description}{27}{subsection.10.1.1}%
+\contentsline {subsection}{\numberline {10.1.2}Macro Definition Documentation}{27}{subsection.10.1.2}%
+\contentsline {subsubsection}{\numberline {10.1.2.1}BULLET\_IS\_AIRBORNE}{27}{subsubsection.10.1.2.1}%
+\contentsline {subsubsection}{\numberline {10.1.2.2}GROUND\_LEVEL}{27}{subsubsection.10.1.2.2}%
+\contentsline {subsubsection}{\numberline {10.1.2.3}MAX\_TIME}{27}{subsubsection.10.1.2.3}%
+\contentsline {subsubsection}{\numberline {10.1.2.4}SEA\_LVL}{27}{subsubsection.10.1.2.4}%
+\contentsline {subsection}{\numberline {10.1.3}Function Documentation}{28}{subsection.10.1.3}%
+\contentsline {subsubsection}{\numberline {10.1.3.1}get\_drag\_model\_string()}{28}{subsubsection.10.1.3.1}%
+\contentsline {subsubsection}{\numberline {10.1.3.2}main()}{28}{subsubsection.10.1.3.2}%
+\contentsline {section}{\numberline {10.2}6-\/DOF Solver}{28}{section.10.2}%
+\contentsline {subsection}{\numberline {10.2.1}Detailed Description}{29}{subsection.10.2.1}%
+\contentsline {subsection}{\numberline {10.2.2}Macro Definition Documentation}{29}{subsection.10.2.2}%
+\contentsline {subsubsection}{\numberline {10.2.2.1}M\_PI}{29}{subsubsection.10.2.2.1}%
+\contentsline {subsubsection}{\numberline {10.2.2.2}PI\_OVER\_180}{29}{subsubsection.10.2.2.2}%
+\contentsline {subsubsection}{\numberline {10.2.2.3}STANDARD\_EARTH\_ROTATION}{29}{subsubsection.10.2.2.3}%
+\contentsline {subsection}{\numberline {10.2.3}Function Documentation}{29}{subsection.10.2.3}%
+\contentsline {subsubsection}{\numberline {10.2.3.1}clamp\_magnus()}{29}{subsubsection.10.2.3.1}%
+\contentsline {subsubsection}{\numberline {10.2.3.2}compute\_bullet\_axes\_world()}{30}{subsubsection.10.2.3.2}%
+\contentsline {subsubsection}{\numberline {10.2.3.3}cross3()}{30}{subsubsection.10.2.3.3}%
+\contentsline {subsection}{\numberline {10.2.4}Variable Documentation}{30}{subsection.10.2.4}%
+\contentsline {subsubsection}{\numberline {10.2.4.1}aero}{30}{subsubsection.10.2.4.1}%
+\contentsline {subsubsection}{\numberline {10.2.4.2}area}{30}{subsubsection.10.2.4.2}%
+\contentsline {subsubsection}{\numberline {10.2.4.3}areaOverMass}{31}{subsubsection.10.2.4.3}%
+\contentsline {subsubsection}{\numberline {10.2.4.4}Cm}{31}{subsubsection.10.2.4.4}%
+\contentsline {subsubsection}{\numberline {10.2.4.5}CspinDamp}{31}{subsubsection.10.2.4.5}%
+\contentsline {subsubsection}{\numberline {10.2.4.6}Ctilt}{31}{subsubsection.10.2.4.6}%
+\contentsline {subsubsection}{\numberline {10.2.4.7}CyawRepose}{31}{subsubsection.10.2.4.7}%
+\contentsline {subsubsection}{\numberline {10.2.4.8}diam}{31}{subsubsection.10.2.4.8}%
+\contentsline {subsubsection}{\numberline {10.2.4.9}inertia}{31}{subsubsection.10.2.4.9}%
+\contentsline {subsubsection}{\numberline {10.2.4.10}Ixx}{31}{subsubsection.10.2.4.10}%
+\contentsline {subsubsection}{\numberline {10.2.4.11}Iyy}{31}{subsubsection.10.2.4.11}%
+\contentsline {subsubsection}{\numberline {10.2.4.12}Izz}{31}{subsubsection.10.2.4.12}%
+\contentsline {subsubsection}{\numberline {10.2.4.13}mass}{31}{subsubsection.10.2.4.13}%
+\contentsline {subsubsection}{\numberline {10.2.4.14}rAC\_local}{31}{subsubsection.10.2.4.14}%
+\contentsline {section}{\numberline {10.3}CLI Option Parsing}{32}{section.10.3}%
+\contentsline {subsection}{\numberline {10.3.1}Detailed Description}{32}{subsection.10.3.1}%
+\contentsline {subsection}{\numberline {10.3.2}Function Documentation}{32}{subsection.10.3.2}%
+\contentsline {subsubsection}{\numberline {10.3.2.1}initialize\_CLI\_inputs()}{32}{subsubsection.10.3.2.1}%
+\contentsline {subsubsection}{\numberline {10.3.2.2}parse\_options()}{32}{subsubsection.10.3.2.2}%
+\contentsline {subsubsection}{\numberline {10.3.2.3}print\_usage\_instructions()}{33}{subsubsection.10.3.2.3}%
+\contentsline {subsubsection}{\numberline {10.3.2.4}str\_cmp\_ignoring\_case()}{33}{subsubsection.10.3.2.4}%
+\contentsline {subsection}{\numberline {10.3.3}Variable Documentation}{33}{subsection.10.3.3}%
+\contentsline {subsubsection}{\numberline {10.3.3.1}longOpts}{33}{subsubsection.10.3.3.1}%
+\contentsline {subsubsection}{\numberline {10.3.3.2}shortOpts}{33}{subsubsection.10.3.3.2}%
+\contentsline {section}{\numberline {10.4}Compiler Detection Macros}{34}{section.10.4}%
+\contentsline {subsection}{\numberline {10.4.1}Detailed Description}{34}{subsection.10.4.1}%
+\contentsline {subsection}{\numberline {10.4.2}Macro Definition Documentation}{34}{subsection.10.4.2}%
+\contentsline {subsubsection}{\numberline {10.4.2.1}COMPILER\_CLANG}{34}{subsubsection.10.4.2.1}%
+\contentsline {subsubsection}{\numberline {10.4.2.2}COMPILER\_GCC}{34}{subsubsection.10.4.2.2}%
+\contentsline {subsubsection}{\numberline {10.4.2.3}COMPILER\_MSVC}{34}{subsubsection.10.4.2.3}%
+\contentsline {subsubsection}{\numberline {10.4.2.4}COMPILER\_UNKNOWN\hspace {0.1cm}{\footnotesize \ttfamily [1/2]}}{34}{subsubsection.10.4.2.4}%
+\contentsline {subsubsection}{\numberline {10.4.2.5}COMPILER\_UNKNOWN\hspace {0.1cm}{\footnotesize \ttfamily [2/2]}}{34}{subsubsection.10.4.2.5}%
+\contentsline {section}{\numberline {10.5}C Standard Version Macros}{35}{section.10.5}%
+\contentsline {section}{\numberline {10.6}Optimization and Performance Macros}{35}{section.10.6}%
+\contentsline {subsection}{\numberline {10.6.1}Detailed Description}{35}{subsection.10.6.1}%
+\contentsline {subsection}{\numberline {10.6.2}Macro Definition Documentation}{35}{subsection.10.6.2}%
+\contentsline {subsubsection}{\numberline {10.6.2.1}ALIGN}{35}{subsubsection.10.6.2.1}%
+\contentsline {subsubsection}{\numberline {10.6.2.2}EXPORT\_SYMBOL}{35}{subsubsection.10.6.2.2}%
+\contentsline {subsubsection}{\numberline {10.6.2.3}HAS\_BUILTIN}{36}{subsubsection.10.6.2.3}%
+\contentsline {subsubsection}{\numberline {10.6.2.4}HOT}{36}{subsubsection.10.6.2.4}%
+\contentsline {subsubsection}{\numberline {10.6.2.5}LIKELY}{36}{subsubsection.10.6.2.5}%
+\contentsline {subsubsection}{\numberline {10.6.2.6}PREFETCH}{36}{subsubsection.10.6.2.6}%
+\contentsline {section}{\numberline {10.7}Environment \& Weather}{36}{section.10.7}%
+\contentsline {subsection}{\numberline {10.7.1}Detailed Description}{37}{subsection.10.7.1}%
+\contentsline {subsection}{\numberline {10.7.2}Macro Definition Documentation}{37}{subsection.10.7.2}%
+\contentsline {subsubsection}{\numberline {10.7.2.1}GAMMA\_DRY\_AIR}{37}{subsubsection.10.7.2.1}%
+\contentsline {subsubsection}{\numberline {10.7.2.2}GAMMA\_H2O\_VAPOR}{37}{subsubsection.10.7.2.2}%
+\contentsline {subsubsection}{\numberline {10.7.2.3}GRAVITY}{37}{subsubsection.10.7.2.3}%
+\contentsline {subsubsection}{\numberline {10.7.2.4}LAPSE\_RATE}{37}{subsubsection.10.7.2.4}%
+\contentsline {subsubsection}{\numberline {10.7.2.5}MOL\_M\_AIR}{37}{subsubsection.10.7.2.5}%
+\contentsline {subsubsection}{\numberline {10.7.2.6}PRECOMPUTED\_EXPONENT}{37}{subsubsection.10.7.2.6}%
+\contentsline {subsubsection}{\numberline {10.7.2.7}R\_DRY\_AIR}{37}{subsubsection.10.7.2.7}%
+\contentsline {subsubsection}{\numberline {10.7.2.8}R\_H2O\_VAPOR}{37}{subsubsection.10.7.2.8}%
+\contentsline {subsubsection}{\numberline {10.7.2.9}R\_UNIV}{37}{subsubsection.10.7.2.9}%
+\contentsline {subsubsection}{\numberline {10.7.2.10}STANDARD\_PRESSURE}{37}{subsubsection.10.7.2.10}%
+\contentsline {subsubsection}{\numberline {10.7.2.11}TEMP\_SEA\_LVL\_C}{37}{subsubsection.10.7.2.11}%
+\contentsline {subsubsection}{\numberline {10.7.2.12}TEMP\_SEA\_LVL\_K}{37}{subsubsection.10.7.2.12}%
+\contentsline {subsection}{\numberline {10.7.3}Function Documentation}{38}{subsection.10.7.3}%
+\contentsline {subsubsection}{\numberline {10.7.3.1}compute\_gamma()}{38}{subsubsection.10.7.3.1}%
+\contentsline {subsubsection}{\numberline {10.7.3.2}compute\_speed\_of\_sound()}{38}{subsubsection.10.7.3.2}%
+\contentsline {subsubsection}{\numberline {10.7.3.3}saturation\_vapor\_pressure()}{38}{subsubsection.10.7.3.3}%
+\contentsline {subsubsection}{\numberline {10.7.3.4}update\_environment()\hspace {0.1cm}{\footnotesize \ttfamily [1/2]}}{39}{subsubsection.10.7.3.4}%
+\contentsline {subsubsection}{\numberline {10.7.3.5}update\_environment()\hspace {0.1cm}{\footnotesize \ttfamily [2/2]}}{39}{subsubsection.10.7.3.5}%
+\contentsline {section}{\numberline {10.8}Drag Table Infrastructure}{39}{section.10.8}%
+\contentsline {subsection}{\numberline {10.8.1}Detailed Description}{40}{subsection.10.8.1}%
+\contentsline {subsection}{\numberline {10.8.2}Macro Definition Documentation}{40}{subsection.10.8.2}%
+\contentsline {subsubsection}{\numberline {10.8.2.1}LOOKUP\_MAX\_MACH}{40}{subsubsection.10.8.2.1}%
+\contentsline {subsubsection}{\numberline {10.8.2.2}LOOKUP\_SIZE}{41}{subsubsection.10.8.2.2}%
+\contentsline {subsubsection}{\numberline {10.8.2.3}LOOKUP\_STEP}{41}{subsubsection.10.8.2.3}%
+\contentsline {subsubsection}{\numberline {10.8.2.4}MAX\_TABLE\_SIZE}{41}{subsubsection.10.8.2.4}%
+\contentsline {subsection}{\numberline {10.8.3}Enumeration Type Documentation}{41}{subsection.10.8.3}%
+\contentsline {subsubsection}{\numberline {10.8.3.1}DragModel}{41}{subsubsection.10.8.3.1}%
+\contentsline {subsection}{\numberline {10.8.4}Function Documentation}{41}{subsection.10.8.4}%
+\contentsline {subsubsection}{\numberline {10.8.4.1}compare\_drag\_entries()}{41}{subsubsection.10.8.4.1}%
+\contentsline {subsubsection}{\numberline {10.8.4.2}fast\_interpolate\_cd()}{42}{subsubsection.10.8.4.2}%
+\contentsline {subsubsection}{\numberline {10.8.4.3}get\_drag\_model\_file()}{42}{subsubsection.10.8.4.3}%
+\contentsline {subsubsection}{\numberline {10.8.4.4}interpolate\_cd\_from\_table()}{43}{subsubsection.10.8.4.4}%
+\contentsline {subsubsection}{\numberline {10.8.4.5}load\_drag\_table\_CSV()}{43}{subsubsection.10.8.4.5}%
+\contentsline {subsubsection}{\numberline {10.8.4.6}precompute\_drag\_lookup\_table()}{45}{subsubsection.10.8.4.6}%
+\contentsline {subsection}{\numberline {10.8.5}Variable Documentation}{45}{subsection.10.8.5}%
+\contentsline {subsubsection}{\numberline {10.8.5.1}g\_dragTable}{45}{subsubsection.10.8.5.1}%
+\contentsline {subsubsection}{\numberline {10.8.5.2}g\_tableSize}{46}{subsubsection.10.8.5.2}%
+\contentsline {subsubsection}{\numberline {10.8.5.3}lookupTable\hspace {0.1cm}{\footnotesize \ttfamily [1/2]}}{46}{subsubsection.10.8.5.3}%
+\contentsline {subsubsection}{\numberline {10.8.5.4}lookupTable\hspace {0.1cm}{\footnotesize \ttfamily [2/2]}}{46}{subsubsection.10.8.5.4}%
+\contentsline {section}{\numberline {10.9}Projectile State Tracking}{46}{section.10.9}%
+\contentsline {subsection}{\numberline {10.9.1}Detailed Description}{46}{subsection.10.9.1}%
+\contentsline {section}{\numberline {10.10}Quaternion Utilities}{46}{section.10.10}%
+\contentsline {subsection}{\numberline {10.10.1}Detailed Description}{47}{subsection.10.10.1}%
+\contentsline {subsection}{\numberline {10.10.2}Function Documentation}{47}{subsection.10.10.2}%
+\contentsline {subsubsection}{\numberline {10.10.2.1}quat\_add\_scaled()}{47}{subsubsection.10.10.2.1}%
+\contentsline {subsubsection}{\numberline {10.10.2.2}quat\_conjugate()\hspace {0.1cm}{\footnotesize \ttfamily [1/2]}}{47}{subsubsection.10.10.2.2}%
+\contentsline {subsubsection}{\numberline {10.10.2.3}quat\_conjugate()\hspace {0.1cm}{\footnotesize \ttfamily [2/2]}}{47}{subsubsection.10.10.2.3}%
+\contentsline {subsubsection}{\numberline {10.10.2.4}quat\_derivatives()}{48}{subsubsection.10.10.2.4}%
+\contentsline {subsubsection}{\numberline {10.10.2.5}quat\_from\_axis\_angle()}{48}{subsubsection.10.10.2.5}%
+\contentsline {subsubsection}{\numberline {10.10.2.6}quat\_integrate\_angular\_velocity()\hspace {0.1cm}{\footnotesize \ttfamily [1/2]}}{48}{subsubsection.10.10.2.6}%
+\contentsline {subsubsection}{\numberline {10.10.2.7}quat\_integrate\_angular\_velocity()\hspace {0.1cm}{\footnotesize \ttfamily [2/2]}}{49}{subsubsection.10.10.2.7}%
+\contentsline {subsubsection}{\numberline {10.10.2.8}quat\_multiply()}{49}{subsubsection.10.10.2.8}%
+\contentsline {subsubsection}{\numberline {10.10.2.9}quat\_normalize()\hspace {0.1cm}{\footnotesize \ttfamily [1/2]}}{49}{subsubsection.10.10.2.9}%
+\contentsline {subsubsection}{\numberline {10.10.2.10}quat\_normalize()\hspace {0.1cm}{\footnotesize \ttfamily [2/2]}}{50}{subsubsection.10.10.2.10}%
+\contentsline {subsubsection}{\numberline {10.10.2.11}quat\_rotate\_vector()\hspace {0.1cm}{\footnotesize \ttfamily [1/2]}}{50}{subsubsection.10.10.2.11}%
+\contentsline {subsubsection}{\numberline {10.10.2.12}quat\_rotate\_vector()\hspace {0.1cm}{\footnotesize \ttfamily [2/2]}}{50}{subsubsection.10.10.2.12}%
+\contentsline {section}{\numberline {10.11}Solver Options}{50}{section.10.11}%
+\contentsline {subsection}{\numberline {10.11.1}Detailed Description}{51}{subsection.10.11.1}%
+\contentsline {subsection}{\numberline {10.11.2}Enumeration Type Documentation}{51}{subsection.10.11.2}%
+\contentsline {subsubsection}{\numberline {10.11.2.1}SolverEffects}{51}{subsubsection.10.11.2.1}%
+\contentsline {chapter}{\numberline {11}Data Structure Documentation}{53}{chapter.11}%
+\contentsline {section}{\numberline {11.1}Aero\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}Coeffs Struct Reference}{53}{section.11.1}%
+\contentsline {subsection}{\numberline {11.1.1}Detailed Description}{53}{subsection.11.1.1}%
+\contentsline {section}{\numberline {11.2}CLI\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}\_\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}inputs Struct Reference}{53}{section.11.2}%
+\contentsline {subsection}{\numberline {11.2.1}Detailed Description}{54}{subsection.11.2.1}%
+\contentsline {subsection}{\numberline {11.2.2}Field Documentation}{54}{subsection.11.2.2}%
+\contentsline {subsubsection}{\numberline {11.2.2.1}altitude}{54}{subsubsection.11.2.2.1}%
+\contentsline {subsubsection}{\numberline {11.2.2.2}ambientTemp}{54}{subsubsection.11.2.2.2}%
+\contentsline {subsubsection}{\numberline {11.2.2.3}azimuthDeg}{54}{subsubsection.11.2.2.3}%
+\contentsline {subsubsection}{\numberline {11.2.2.4}diam}{55}{subsubsection.11.2.2.4}%
+\contentsline {subsubsection}{\numberline {11.2.2.5}dragModelChoice}{55}{subsubsection.11.2.2.5}%
+\contentsline {subsubsection}{\numberline {11.2.2.6}latitude}{55}{subsubsection.11.2.2.6}%
+\contentsline {subsubsection}{\numberline {11.2.2.7}mass}{55}{subsubsection.11.2.2.7}%
+\contentsline {subsubsection}{\numberline {11.2.2.8}muzzleAngleDeg}{55}{subsubsection.11.2.2.8}%
+\contentsline {subsubsection}{\numberline {11.2.2.9}muzzleSpeed}{55}{subsubsection.11.2.2.9}%
+\contentsline {subsubsection}{\numberline {11.2.2.10}options}{55}{subsubsection.11.2.2.10}%
+\contentsline {subsubsection}{\numberline {11.2.2.11}shotAngle}{55}{subsubsection.11.2.2.11}%
+\contentsline {subsubsection}{\numberline {11.2.2.12}tiltFactor}{55}{subsubsection.11.2.2.12}%
+\contentsline {subsubsection}{\numberline {11.2.2.13}timeStep}{55}{subsubsection.11.2.2.13}%
+\contentsline {subsubsection}{\numberline {11.2.2.14}twistInches}{55}{subsubsection.11.2.2.14}%
+\contentsline {subsubsection}{\numberline {11.2.2.15}yawFactor}{55}{subsubsection.11.2.2.15}%
+\contentsline {section}{\numberline {11.3}Drag\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}Entry Struct Reference}{56}{section.11.3}%
+\contentsline {subsection}{\numberline {11.3.1}Detailed Description}{56}{subsection.11.3.1}%
+\contentsline {subsection}{\numberline {11.3.2}Field Documentation}{56}{subsection.11.3.2}%
+\contentsline {subsubsection}{\numberline {11.3.2.1}Cd}{56}{subsubsection.11.3.2.1}%
+\contentsline {subsubsection}{\numberline {11.3.2.2}mach}{56}{subsubsection.11.3.2.2}%
+\contentsline {section}{\numberline {11.4}Environment Struct Reference}{56}{section.11.4}%
+\contentsline {subsection}{\numberline {11.4.1}Detailed Description}{57}{subsection.11.4.1}%
+\contentsline {subsection}{\numberline {11.4.2}Field Documentation}{57}{subsection.11.4.2}%
+\contentsline {subsubsection}{\numberline {11.4.2.1}groundLvl}{57}{subsubsection.11.4.2.1}%
+\contentsline {subsubsection}{\numberline {11.4.2.2}latitude}{57}{subsubsection.11.4.2.2}%
+\contentsline {subsubsection}{\numberline {11.4.2.3}localDensity}{57}{subsubsection.11.4.2.3}%
+\contentsline {subsubsection}{\numberline {11.4.2.4}localPressure}{57}{subsubsection.11.4.2.4}%
+\contentsline {subsubsection}{\numberline {11.4.2.5}localSpdOfSnd}{57}{subsubsection.11.4.2.5}%
+\contentsline {subsubsection}{\numberline {11.4.2.6}localTempK}{58}{subsubsection.11.4.2.6}%
+\contentsline {subsubsection}{\numberline {11.4.2.7}massFrac}{58}{subsubsection.11.4.2.7}%
+\contentsline {subsubsection}{\numberline {11.4.2.8}muzzleAlt}{58}{subsubsection.11.4.2.8}%
+\contentsline {subsubsection}{\numberline {11.4.2.9}muzzlePressure}{58}{subsubsection.11.4.2.9}%
+\contentsline {subsubsection}{\numberline {11.4.2.10}muzzleTempK}{58}{subsubsection.11.4.2.10}%
+\contentsline {subsubsection}{\numberline {11.4.2.11}p\_dry}{58}{subsubsection.11.4.2.11}%
+\contentsline {subsubsection}{\numberline {11.4.2.12}p\_sat}{58}{subsubsection.11.4.2.12}%
+\contentsline {subsubsection}{\numberline {11.4.2.13}p\_vap}{58}{subsubsection.11.4.2.13}%
+\contentsline {subsubsection}{\numberline {11.4.2.14}relHumidity}{58}{subsubsection.11.4.2.14}%
+\contentsline {subsubsection}{\numberline {11.4.2.15}spdOfSndInv}{58}{subsubsection.11.4.2.15}%
+\contentsline {subsubsection}{\numberline {11.4.2.16}windDirDeg}{58}{subsubsection.11.4.2.16}%
+\contentsline {subsubsection}{\numberline {11.4.2.17}windX}{58}{subsubsection.11.4.2.17}%
+\contentsline {subsubsection}{\numberline {11.4.2.18}windY}{59}{subsubsection.11.4.2.18}%
+\contentsline {subsubsection}{\numberline {11.4.2.19}windZ}{59}{subsubsection.11.4.2.19}%
+\contentsline {section}{\numberline {11.5}Inertia Struct Reference}{59}{section.11.5}%
+\contentsline {subsection}{\numberline {11.5.1}Detailed Description}{59}{subsection.11.5.1}%
+\contentsline {section}{\numberline {11.6}PState Struct Reference}{59}{section.11.6}%
+\contentsline {subsection}{\numberline {11.6.1}Detailed Description}{60}{subsection.11.6.1}%
+\contentsline {subsection}{\numberline {11.6.2}Field Documentation}{60}{subsection.11.6.2}%
+\contentsline {subsubsection}{\numberline {11.6.2.1}ori}{60}{subsubsection.11.6.2.1}%
+\contentsline {subsubsection}{\numberline {11.6.2.2}vx}{60}{subsubsection.11.6.2.2}%
+\contentsline {subsubsection}{\numberline {11.6.2.3}vy}{60}{subsubsection.11.6.2.3}%
+\contentsline {subsubsection}{\numberline {11.6.2.4}vz}{60}{subsubsection.11.6.2.4}%
+\contentsline {subsubsection}{\numberline {11.6.2.5}wx}{61}{subsubsection.11.6.2.5}%
+\contentsline {subsubsection}{\numberline {11.6.2.6}wy}{61}{subsubsection.11.6.2.6}%
+\contentsline {subsubsection}{\numberline {11.6.2.7}wz}{61}{subsubsection.11.6.2.7}%
+\contentsline {subsubsection}{\numberline {11.6.2.8}x}{61}{subsubsection.11.6.2.8}%
+\contentsline {subsubsection}{\numberline {11.6.2.9}y}{61}{subsubsection.11.6.2.9}%
+\contentsline {subsubsection}{\numberline {11.6.2.10}z}{61}{subsubsection.11.6.2.10}%
+\contentsline {section}{\numberline {11.7}Quat Struct Reference}{61}{section.11.7}%
+\contentsline {subsection}{\numberline {11.7.1}Detailed Description}{61}{subsection.11.7.1}%
+\contentsline {subsection}{\numberline {11.7.2}Field Documentation}{61}{subsection.11.7.2}%
+\contentsline {subsubsection}{\numberline {11.7.2.1}w}{61}{subsubsection.11.7.2.1}%
+\contentsline {subsubsection}{\numberline {11.7.2.2}x}{62}{subsubsection.11.7.2.2}%
+\contentsline {subsubsection}{\numberline {11.7.2.3}y}{62}{subsubsection.11.7.2.3}%
+\contentsline {subsubsection}{\numberline {11.7.2.4}z}{62}{subsubsection.11.7.2.4}%
+\contentsline {section}{\numberline {11.8}Six\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}DOFSpecs Struct Reference}{62}{section.11.8}%
+\contentsline {subsection}{\numberline {11.8.1}Detailed Description}{63}{subsection.11.8.1}%
+\contentsline {section}{\numberline {11.9}Solver\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}Options Struct Reference}{63}{section.11.9}%
+\contentsline {subsection}{\numberline {11.9.1}Detailed Description}{63}{subsection.11.9.1}%
+\contentsline {subsection}{\numberline {11.9.2}Field Documentation}{63}{subsection.11.9.2}%
+\contentsline {subsubsection}{\numberline {11.9.2.1}effects}{63}{subsubsection.11.9.2.1}%
+\contentsline {section}{\numberline {11.10}State\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}Deriv3D Struct Reference}{63}{section.11.10}%
+\contentsline {subsection}{\numberline {11.10.1}Detailed Description}{64}{subsection.11.10.1}%
+\contentsline {subsection}{\numberline {11.10.2}Field Documentation}{64}{subsection.11.10.2}%
+\contentsline {subsubsection}{\numberline {11.10.2.1}dOri}{64}{subsubsection.11.10.2.1}%
+\contentsline {subsubsection}{\numberline {11.10.2.2}dvx}{64}{subsubsection.11.10.2.2}%
+\contentsline {subsubsection}{\numberline {11.10.2.3}dvy}{64}{subsubsection.11.10.2.3}%
+\contentsline {subsubsection}{\numberline {11.10.2.4}dvz}{64}{subsubsection.11.10.2.4}%
+\contentsline {subsubsection}{\numberline {11.10.2.5}dwx}{64}{subsubsection.11.10.2.5}%
+\contentsline {subsubsection}{\numberline {11.10.2.6}dwy}{64}{subsubsection.11.10.2.6}%
+\contentsline {subsubsection}{\numberline {11.10.2.7}dwz}{64}{subsubsection.11.10.2.7}%
+\contentsline {subsubsection}{\numberline {11.10.2.8}dx}{64}{subsubsection.11.10.2.8}%
+\contentsline {subsubsection}{\numberline {11.10.2.9}dy}{64}{subsubsection.11.10.2.9}%
+\contentsline {subsubsection}{\numberline {11.10.2.10}dz}{65}{subsubsection.11.10.2.10}%
+\contentsline {chapter}{\numberline {12}File Documentation}{67}{chapter.12}%
+\contentsline {section}{\numberline {12.1}a\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}\_\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}core\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}\_\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}6dof.\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}dox File Reference}{67}{section.12.1}%
+\contentsline {section}{\numberline {12.2}cli\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}\_\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}opts.\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}dox File Reference}{67}{section.12.2}%
+\contentsline {section}{\numberline {12.3}drag\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}\_\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}model.\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}dox File Reference}{67}{section.12.3}%
+\contentsline {section}{\numberline {12.4}environment.\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}dox File Reference}{67}{section.12.4}%
+\contentsline {section}{\numberline {12.5}mainpage.\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}dox File Reference}{67}{section.12.5}%
+\contentsline {section}{\numberline {12.6}quat\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}\_\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}math.\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}dox File Reference}{67}{section.12.6}%
+\contentsline {section}{\numberline {12.7}6dof.\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}h File Reference}{67}{section.12.7}%
+\contentsline {subsection}{\numberline {12.7.1}Detailed Description}{69}{subsection.12.7.1}%
+\contentsline {section}{\numberline {12.8}6dof.\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}h}{69}{section.12.8}%
+\contentsline {section}{\numberline {12.9}cli\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}\_\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}opts.\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}h File Reference}{70}{section.12.9}%
+\contentsline {subsection}{\numberline {12.9.1}Detailed Description}{71}{subsection.12.9.1}%
+\contentsline {section}{\numberline {12.10}cli\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}\_\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}opts.\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}h}{71}{section.12.10}%
+\contentsline {section}{\numberline {12.11}compiler\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}\_\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}macros.\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}h File Reference}{71}{section.12.11}%
+\contentsline {subsection}{\numberline {12.11.1}Detailed Description}{72}{subsection.12.11.1}%
+\contentsline {subsection}{\numberline {12.11.2}Macro Definition Documentation}{72}{subsection.12.11.2}%
+\contentsline {subsubsection}{\numberline {12.11.2.1}C\_VERSION}{72}{subsubsection.12.11.2.1}%
+\contentsline {subsubsection}{\numberline {12.11.2.2}UNLIKELY}{73}{subsubsection.12.11.2.2}%
+\contentsline {section}{\numberline {12.12}compiler\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}\_\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}macros.\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}h}{73}{section.12.12}%
+\contentsline {section}{\numberline {12.13}environment.\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}h File Reference}{74}{section.12.13}%
+\contentsline {subsection}{\numberline {12.13.1}Detailed Description}{75}{subsection.12.13.1}%
+\contentsline {section}{\numberline {12.14}environment.\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}h}{75}{section.12.14}%
+\contentsline {section}{\numberline {12.15}load\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}\_\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}drag\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}\_\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}tables.\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}h File Reference}{76}{section.12.15}%
+\contentsline {subsection}{\numberline {12.15.1}Detailed Description}{78}{subsection.12.15.1}%
+\contentsline {section}{\numberline {12.16}load\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}\_\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}drag\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}\_\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}tables.\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}h}{78}{section.12.16}%
+\contentsline {section}{\numberline {12.17}pstate.\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}h File Reference}{78}{section.12.17}%
+\contentsline {subsection}{\numberline {12.17.1}Detailed Description}{79}{subsection.12.17.1}%
+\contentsline {section}{\numberline {12.18}pstate.\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}h}{80}{section.12.18}%
+\contentsline {section}{\numberline {12.19}quat.\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}h File Reference}{80}{section.12.19}%
+\contentsline {subsection}{\numberline {12.19.1}Detailed Description}{81}{subsection.12.19.1}%
+\contentsline {section}{\numberline {12.20}quat.\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}h}{81}{section.12.20}%
+\contentsline {section}{\numberline {12.21}solver\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}\_\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}options.\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}h File Reference}{82}{section.12.21}%
+\contentsline {subsection}{\numberline {12.21.1}Detailed Description}{83}{subsection.12.21.1}%
+\contentsline {section}{\numberline {12.22}solver\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}\_\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}options.\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}h}{83}{section.12.22}%
+\contentsline {section}{\numberline {12.23}6dof.\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}c File Reference}{84}{section.12.23}%
+\contentsline {subsection}{\numberline {12.23.1}Detailed Description}{85}{subsection.12.23.1}%
+\contentsline {subsection}{\numberline {12.23.2}Macro Definition Documentation}{85}{subsection.12.23.2}%
+\contentsline {subsubsection}{\numberline {12.23.2.1}PI\_TIMES\_0\_25}{85}{subsubsection.12.23.2.1}%
+\contentsline {subsection}{\numberline {12.23.3}Function Documentation}{85}{subsection.12.23.3}%
+\contentsline {subsubsection}{\numberline {12.23.3.1}compute\_6dof\_derivatives()}{85}{subsubsection.12.23.3.1}%
+\contentsline {subsubsection}{\numberline {12.23.3.2}rk4\_step\_6dof()}{85}{subsubsection.12.23.3.2}%
+\contentsline {section}{\numberline {12.24}cli\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}\_\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}opts.\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}c File Reference}{85}{section.12.24}%
+\contentsline {subsection}{\numberline {12.24.1}Detailed Description}{86}{subsection.12.24.1}%
+\contentsline {section}{\numberline {12.25}environment.\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}c File Reference}{86}{section.12.25}%
+\contentsline {subsection}{\numberline {12.25.1}Detailed Description}{87}{subsection.12.25.1}%
+\contentsline {section}{\numberline {12.26}load\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}\_\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}drag\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}\_\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}tables.\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}c File Reference}{87}{section.12.26}%
+\contentsline {subsection}{\numberline {12.26.1}Detailed Description}{88}{subsection.12.26.1}%
+\contentsline {section}{\numberline {12.27}main.\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}c File Reference}{89}{section.12.27}%
+\contentsline {subsection}{\numberline {12.27.1}Detailed Description}{89}{subsection.12.27.1}%
+\contentsline {section}{\numberline {12.28}quat.\discretionary {\mbox {\scriptsize $\hookleftarrow $}}{}{}c File Reference}{90}{section.12.28}%
+\contentsline {subsection}{\numberline {12.28.1}Detailed Description}{91}{subsection.12.28.1}%

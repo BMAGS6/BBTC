@@ -1,0 +1,11 @@
+<map id="environment.h" name="environment.h">
+<area shape="rect" id="Node000001" title="Declarations for environment &amp; weather calculations." alt="" coords="64,5,168,31"/>
+<area shape="rect" id="Node000002" href="$pstate_8h.html" title="Defines the projectile state in 3D (position, velocity, orientation, etc.)." alt="" coords="45,79,115,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="112,32,94,68,90,65,108,30"/>
+<area shape="rect" id="Node000004" href="$compiler__macros_8h.html" title="Contains macros for cross&#45;compatible compiler optimizations and compatibility." alt="" coords="35,225,167,251"/>
+<area shape="poly" id="edge5_Node000001_Node000004" title=" " alt="" coords="121,31,129,78,130,115,125,152,112,213,107,212,120,151,124,115,124,79,116,32"/>
+<area shape="rect" id="Node000003" href="$quat_8h.html" title="Declarations for quaternion&#45;based rotation utilities." alt="" coords="5,152,64,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="75,106,52,142,47,139,70,103"/>
+<area shape="poly" id="edge4_Node000002_Node000004" title=" " alt="" coords="84,104,100,211,95,212,79,105"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="48,176,83,213,79,217,44,179"/>
+</map>

@@ -1,0 +1,419 @@
+\doxysection{Drag Table Infrastructure}
+\hypertarget{group__DragTableFunctions}{}\label{group__DragTableFunctions}\index{Drag Table Infrastructure@{Drag Table Infrastructure}}
+\doxysubsubsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structDragEntry}{Drag\+Entry}}
+\begin{DoxyCompactList}\small\item\em One entry in a drag function table (Mach vs. Cd) \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum \mbox{\hyperlink{group__DragTableFunctions_ga326940386c828daadb8613c8eddf8d15}{Drag\+Model}} \{ \newline
+\mbox{\hyperlink{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15aaec6d2231567cdb9063f093d8effa224}{G1}}
+, \mbox{\hyperlink{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15aedce8067580fa0c4c235f8534f25a7b3}{G2}}
+, \mbox{\hyperlink{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15a33e4e589075c868910acfa95b14efb5f}{G5}}
+, \mbox{\hyperlink{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15a6ab0f7aca08fd2ba5505168472501d98}{G6}}
+, \newline
+\mbox{\hyperlink{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15ae236ad64088ffc77d9e098628d5ba342}{G7}}
+, \mbox{\hyperlink{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15aa1c865ccd52132fb116c4587969e6ad8}{G8}}
+, \mbox{\hyperlink{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15a7f7fa110446e4371d106f7e1d3c56b59}{GL}}
+, \mbox{\hyperlink{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15a9c922c72676cab2b540d081a8bb3788a}{GS}}
+, \newline
+\mbox{\hyperlink{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15ae21608b5801d6215e4dc527e466f394a}{GI}}
+, \mbox{\hyperlink{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15a566fa6b4b472c54ce458883f1afd6b15}{RA4}}
+, \mbox{\hyperlink{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15a4959281332ebd81e59cc8d125b15da56}{G\+\_\+\+UNKNOWN}}
+ \}
+\begin{DoxyCompactList}\small\item\em Standard drag function types used in external ballistics. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+size\+\_\+t \mbox{\hyperlink{group__DragTableFunctions_ga08e47092c6f2d59115f2f587d0cf9ee8}{load\+\_\+drag\+\_\+table\+\_\+\+CSV}} (const char \texorpdfstring{$\ast$}{*}filename)
+\begin{DoxyCompactList}\small\item\em Loads a drag table from a CSV file into the global lookup table. \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{group__DragTableFunctions_ga75273f11053c06ff9ec8ed76a80ac9f9}{interpolate\+\_\+cd\+\_\+from\+\_\+table}} (double mach)
+\begin{DoxyCompactList}\small\item\em Linearly interpolates a drag coefficient from the global lookup table. \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{group__DragTableFunctions_gadcb2dd0c4acd7053fae6288d3f01bd36}{fast\+\_\+interpolate\+\_\+cd}} (const double \texorpdfstring{$\ast$}{*}restrict \mbox{\hyperlink{group__DragTableFunctions_ga3685a28564435b1400de859262895e1e}{lookup\+Table}}, double mach)
+\begin{DoxyCompactList}\small\item\em Quickly retrieves a drag coefficient using a precomputed table. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{group__DragTableFunctions_ga1ef367f143c9df1c3cab577448b47eab}{precompute\+\_\+drag\+\_\+lookup\+\_\+table}} (double \texorpdfstring{$\ast$}{*}restrict \mbox{\hyperlink{group__DragTableFunctions_ga3685a28564435b1400de859262895e1e}{lookup\+Table}})
+\begin{DoxyCompactList}\small\item\em Precomputes a lookup table of Cd values for fast runtime access. \end{DoxyCompactList}\item 
+const char \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__DragTableFunctions_gace0bb54ddce60d35912fea956619bf15}{get\+\_\+drag\+\_\+model\+\_\+file}} (\mbox{\hyperlink{group__DragTableFunctions_ga326940386c828daadb8613c8eddf8d15}{Drag\+Model}} model)
+\begin{DoxyCompactList}\small\item\em Gets the file name for a given drag model enum. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+double \mbox{\hyperlink{group__DragTableFunctions_gaff941223492c755b6a75be14bfc7e834}{lookup\+Table}} \mbox{[}$\,$\mbox{]}
+\begin{DoxyCompactList}\small\item\em Global drag coefficient lookup table. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{DoxyCompactItemize}
+\item 
+static \mbox{\hyperlink{structDragEntry}{Drag\+Entry}} \mbox{\hyperlink{group__DragTableFunctions_ga5861fb5f634b4a72f1d61b33c66099ac}{g\+\_\+drag\+Table}} \mbox{[}\mbox{\hyperlink{group__DragTableFunctions_ga48d3ccc21ddc04633ef7cd7e80dbb987}{MAX\+\_\+\+TABLE\+\_\+\+SIZE}}\mbox{]}
+\item 
+double \mbox{\hyperlink{group__DragTableFunctions_ga3685a28564435b1400de859262895e1e}{lookup\+Table}} \mbox{[}\mbox{\hyperlink{group__DragTableFunctions_gac0a1c23a3f02bb1cd5afafb358b40de7}{LOOKUP\+\_\+\+SIZE}}\mbox{]}
+\begin{DoxyCompactList}\small\item\em The precomputed finer array. \end{DoxyCompactList}\item 
+static size\+\_\+t \mbox{\hyperlink{group__DragTableFunctions_ga0f5047f8a768c169d040a6d20f0ee51e}{g\+\_\+table\+Size}} = 0
+\item 
+static int \mbox{\hyperlink{group__DragTableFunctions_ga622a634e050a95809d247650a248f911}{compare\+\_\+drag\+\_\+entries}} (const void \texorpdfstring{$\ast$}{*}a, const void \texorpdfstring{$\ast$}{*}b)
+\begin{DoxyCompactList}\small\item\em Compare function for qsort, sorting \doxylink{structDragEntry}{Drag\+Entry} by Mach. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{group__DragTableFunctions_ga48d3ccc21ddc04633ef7cd7e80dbb987}{MAX\+\_\+\+TABLE\+\_\+\+SIZE}}~500
+\begin{DoxyCompactList}\small\item\em Max \# of entries in the CSV table. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{group__DragTableFunctions_ga8bc1273802692c4fe269508c98053672}{LOOKUP\+\_\+\+STEP}}~0.\+001
+\begin{DoxyCompactList}\small\item\em Step for the finer resolution array. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{group__DragTableFunctions_ga8c3d42492adca449562d71c267c77828}{LOOKUP\+\_\+\+MAX\+\_\+\+MACH}}~5.\+0
+\begin{DoxyCompactList}\small\item\em Maximum Mach \# in the finer resolution array. \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{group__DragTableFunctions_gac0a1c23a3f02bb1cd5afafb358b40de7}{LOOKUP\+\_\+\+SIZE}}~5001
+\begin{DoxyCompactList}\small\item\em $ \frac{\mathrm{LOOKUP\_MAX\_MACH}}{\mathrm{LOOKUP\_STEP}} + 1 $ \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+This module handles\+:
+\begin{DoxyItemize}
+\item Defining standard drag models (G1, G7, etc.),
+\item Parsing CSV tables of Mach/\+Cd values,
+\item Interpolating drag coefficients at arbitrary Mach numbers,
+\item Precomputing fast lookup tables for runtime efficiency. 
+\end{DoxyItemize}
+
+\doxysubsection{Macro Definition Documentation}
+\Hypertarget{group__DragTableFunctions_ga8c3d42492adca449562d71c267c77828}\label{group__DragTableFunctions_ga8c3d42492adca449562d71c267c77828} 
+\index{Drag Table Infrastructure@{Drag Table Infrastructure}!LOOKUP\_MAX\_MACH@{LOOKUP\_MAX\_MACH}}
+\index{LOOKUP\_MAX\_MACH@{LOOKUP\_MAX\_MACH}!Drag Table Infrastructure@{Drag Table Infrastructure}}
+\doxysubsubsection{\texorpdfstring{LOOKUP\_MAX\_MACH}{LOOKUP\_MAX\_MACH}}
+{\footnotesize\ttfamily \#define LOOKUP\+\_\+\+MAX\+\_\+\+MACH~5.\+0}
+
+
+
+Maximum Mach \# in the finer resolution array. 
+
+\Hypertarget{group__DragTableFunctions_gac0a1c23a3f02bb1cd5afafb358b40de7}\label{group__DragTableFunctions_gac0a1c23a3f02bb1cd5afafb358b40de7} 
+\index{Drag Table Infrastructure@{Drag Table Infrastructure}!LOOKUP\_SIZE@{LOOKUP\_SIZE}}
+\index{LOOKUP\_SIZE@{LOOKUP\_SIZE}!Drag Table Infrastructure@{Drag Table Infrastructure}}
+\doxysubsubsection{\texorpdfstring{LOOKUP\_SIZE}{LOOKUP\_SIZE}}
+{\footnotesize\ttfamily \#define LOOKUP\+\_\+\+SIZE~5001}
+
+
+
+$ \frac{\mathrm{LOOKUP\_MAX\_MACH}}{\mathrm{LOOKUP\_STEP}} + 1 $ 
+
+\Hypertarget{group__DragTableFunctions_ga8bc1273802692c4fe269508c98053672}\label{group__DragTableFunctions_ga8bc1273802692c4fe269508c98053672} 
+\index{Drag Table Infrastructure@{Drag Table Infrastructure}!LOOKUP\_STEP@{LOOKUP\_STEP}}
+\index{LOOKUP\_STEP@{LOOKUP\_STEP}!Drag Table Infrastructure@{Drag Table Infrastructure}}
+\doxysubsubsection{\texorpdfstring{LOOKUP\_STEP}{LOOKUP\_STEP}}
+{\footnotesize\ttfamily \#define LOOKUP\+\_\+\+STEP~0.\+001}
+
+
+
+Step for the finer resolution array. 
+
+\Hypertarget{group__DragTableFunctions_ga48d3ccc21ddc04633ef7cd7e80dbb987}\label{group__DragTableFunctions_ga48d3ccc21ddc04633ef7cd7e80dbb987} 
+\index{Drag Table Infrastructure@{Drag Table Infrastructure}!MAX\_TABLE\_SIZE@{MAX\_TABLE\_SIZE}}
+\index{MAX\_TABLE\_SIZE@{MAX\_TABLE\_SIZE}!Drag Table Infrastructure@{Drag Table Infrastructure}}
+\doxysubsubsection{\texorpdfstring{MAX\_TABLE\_SIZE}{MAX\_TABLE\_SIZE}}
+{\footnotesize\ttfamily \#define MAX\+\_\+\+TABLE\+\_\+\+SIZE~500}
+
+
+
+Max \# of entries in the CSV table. 
+
+
+
+\doxysubsection{Enumeration Type Documentation}
+\Hypertarget{group__DragTableFunctions_ga326940386c828daadb8613c8eddf8d15}\label{group__DragTableFunctions_ga326940386c828daadb8613c8eddf8d15} 
+\index{Drag Table Infrastructure@{Drag Table Infrastructure}!DragModel@{DragModel}}
+\index{DragModel@{DragModel}!Drag Table Infrastructure@{Drag Table Infrastructure}}
+\doxysubsubsection{\texorpdfstring{DragModel}{DragModel}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{group__DragTableFunctions_ga326940386c828daadb8613c8eddf8d15}{Drag\+Model}}}
+
+
+
+Standard drag function types used in external ballistics. 
+
+These refer to common empirical drag models such as G1, G7, etc. Each is based on different reference projectile shapes\+:
+\begin{DoxyItemize}
+\item G1\+: Flat-\/base, blunt nose (classic bullet)
+\item G7\+: Boat-\/tail projectile (modern long-\/range)
+\item G5, G6, etc.\+: Specialized shapes
+\item RA4, GS, GL, GI\+: Less commonly used or experimental
+\end{DoxyItemize}
+
+These are used to select which drag function file to load. \begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{G1@{G1}!Drag Table Infrastructure@{Drag Table Infrastructure}}\index{Drag Table Infrastructure@{Drag Table Infrastructure}!G1@{G1}}}\Hypertarget{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15aaec6d2231567cdb9063f093d8effa224}\label{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15aaec6d2231567cdb9063f093d8effa224} 
+G1&G1 Drag Model (Most used drag model today) \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{G2@{G2}!Drag Table Infrastructure@{Drag Table Infrastructure}}\index{Drag Table Infrastructure@{Drag Table Infrastructure}!G2@{G2}}}\Hypertarget{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15aedce8067580fa0c4c235f8534f25a7b3}\label{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15aedce8067580fa0c4c235f8534f25a7b3} 
+G2&G2 Drag Model. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{G5@{G5}!Drag Table Infrastructure@{Drag Table Infrastructure}}\index{Drag Table Infrastructure@{Drag Table Infrastructure}!G5@{G5}}}\Hypertarget{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15a33e4e589075c868910acfa95b14efb5f}\label{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15a33e4e589075c868910acfa95b14efb5f} 
+G5&G5 Drag Model. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{G6@{G6}!Drag Table Infrastructure@{Drag Table Infrastructure}}\index{Drag Table Infrastructure@{Drag Table Infrastructure}!G6@{G6}}}\Hypertarget{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15a6ab0f7aca08fd2ba5505168472501d98}\label{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15a6ab0f7aca08fd2ba5505168472501d98} 
+G6&G6 Drag Model. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{G7@{G7}!Drag Table Infrastructure@{Drag Table Infrastructure}}\index{Drag Table Infrastructure@{Drag Table Infrastructure}!G7@{G7}}}\Hypertarget{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15ae236ad64088ffc77d9e098628d5ba342}\label{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15ae236ad64088ffc77d9e098628d5ba342} 
+G7&G7 Drag Model (Second-\/most used drag model today; most accurate for modern, boat-\/tailed bullets) \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{G8@{G8}!Drag Table Infrastructure@{Drag Table Infrastructure}}\index{Drag Table Infrastructure@{Drag Table Infrastructure}!G8@{G8}}}\Hypertarget{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15aa1c865ccd52132fb116c4587969e6ad8}\label{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15aa1c865ccd52132fb116c4587969e6ad8} 
+G8&G8 Drag Model. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{GL@{GL}!Drag Table Infrastructure@{Drag Table Infrastructure}}\index{Drag Table Infrastructure@{Drag Table Infrastructure}!GL@{GL}}}\Hypertarget{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15a7f7fa110446e4371d106f7e1d3c56b59}\label{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15a7f7fa110446e4371d106f7e1d3c56b59} 
+GL&GL Drag Model. \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{GS@{GS}!Drag Table Infrastructure@{Drag Table Infrastructure}}\index{Drag Table Infrastructure@{Drag Table Infrastructure}!GS@{GS}}}\Hypertarget{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15a9c922c72676cab2b540d081a8bb3788a}\label{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15a9c922c72676cab2b540d081a8bb3788a} 
+GS&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{GI@{GI}!Drag Table Infrastructure@{Drag Table Infrastructure}}\index{Drag Table Infrastructure@{Drag Table Infrastructure}!GI@{GI}}}\Hypertarget{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15ae21608b5801d6215e4dc527e466f394a}\label{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15ae21608b5801d6215e4dc527e466f394a} 
+GI&GS Drag Model (used for spheres, e.\+g., cannon and musket balls) GI Drag Model \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{RA4@{RA4}!Drag Table Infrastructure@{Drag Table Infrastructure}}\index{Drag Table Infrastructure@{Drag Table Infrastructure}!RA4@{RA4}}}\Hypertarget{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15a566fa6b4b472c54ce458883f1afd6b15}\label{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15a566fa6b4b472c54ce458883f1afd6b15} 
+RA4&RA4 Drag Model (used rarely and only for "{}heeled"{} bullets, only seen in air guns and small rimfire rounds) \\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{G\_UNKNOWN@{G\_UNKNOWN}!Drag Table Infrastructure@{Drag Table Infrastructure}}\index{Drag Table Infrastructure@{Drag Table Infrastructure}!G\_UNKNOWN@{G\_UNKNOWN}}}\Hypertarget{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15a4959281332ebd81e59cc8d125b15da56}\label{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15a4959281332ebd81e59cc8d125b15da56} 
+G\+\_\+\+UNKNOWN&Unknown or unsupported drag model. \\
+\hline
+
+\end{DoxyEnumFields}
+
+
+\doxysubsection{Function Documentation}
+\Hypertarget{group__DragTableFunctions_ga622a634e050a95809d247650a248f911}\label{group__DragTableFunctions_ga622a634e050a95809d247650a248f911} 
+\index{Drag Table Infrastructure@{Drag Table Infrastructure}!compare\_drag\_entries@{compare\_drag\_entries}}
+\index{compare\_drag\_entries@{compare\_drag\_entries}!Drag Table Infrastructure@{Drag Table Infrastructure}}
+\doxysubsubsection{\texorpdfstring{compare\_drag\_entries()}{compare\_drag\_entries()}}
+{\footnotesize\ttfamily static int compare\+\_\+drag\+\_\+entries (\begin{DoxyParamCaption}\item[{const void \texorpdfstring{$\ast$}{*}}]{a,  }\item[{const void \texorpdfstring{$\ast$}{*}}]{b }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Compare function for qsort, sorting \doxylink{structDragEntry}{Drag\+Entry} by Mach. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em a} & Pointer to first \doxylink{structDragEntry}{Drag\+Entry} \\
+\hline
+{\em b} & Pointer to second \doxylink{structDragEntry}{Drag\+Entry} \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+negative/zero/positive if a \texorpdfstring{$<$}{<} b, a == b, a \texorpdfstring{$>$}{>} b 
+\end{DoxyReturn}
+\Hypertarget{group__DragTableFunctions_gadcb2dd0c4acd7053fae6288d3f01bd36}\label{group__DragTableFunctions_gadcb2dd0c4acd7053fae6288d3f01bd36} 
+\index{Drag Table Infrastructure@{Drag Table Infrastructure}!fast\_interpolate\_cd@{fast\_interpolate\_cd}}
+\index{fast\_interpolate\_cd@{fast\_interpolate\_cd}!Drag Table Infrastructure@{Drag Table Infrastructure}}
+\doxysubsubsection{\texorpdfstring{fast\_interpolate\_cd()}{fast\_interpolate\_cd()}}
+{\footnotesize\ttfamily double fast\+\_\+interpolate\+\_\+cd (\begin{DoxyParamCaption}\item[{const double \texorpdfstring{$\ast$}{*}restrict}]{lookup\+Table,  }\item[{double}]{mach }\end{DoxyParamCaption})}
+
+
+
+Quickly retrieves a drag coefficient using a precomputed table. 
+
+Similar to {\ttfamily \doxylink{group__DragTableFunctions_ga75273f11053c06ff9ec8ed76a80ac9f9}{interpolate\+\_\+cd\+\_\+from\+\_\+table()}}, but optimized using fixed-\/resolution sampling of the Mach domain and avoiding runtime search.
+
+
+\begin{DoxyParams}{Parameters}
+{\em lookup\+Table} & Pointer to the precomputed Cd lookup array. \\
+\hline
+{\em mach} & Mach number. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Drag coefficient approximated from the precomputed table.
+\end{DoxyReturn}
+Quickly retrieves a drag coefficient using a precomputed table.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em lookup\+Table} & A pointer to the precomputed array \\
+\hline
+\mbox{\texttt{ in}}  & {\em mach} & The Mach number to sample \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Drag coefficient
+\end{DoxyReturn}
+We clamp $\mathrm{mach}$ to $[0, \mathrm{LOOKUP\_MAX\_MACH}]$, then compute\+:  \[
+    \mathrm{index} = \left\lfloor \frac{\mathrm{mach}}{\mathrm{LOOKUP\_STEP}} \right\rfloor
+\] and linearly interpolate between index and index+1. \Hypertarget{group__DragTableFunctions_gace0bb54ddce60d35912fea956619bf15}\label{group__DragTableFunctions_gace0bb54ddce60d35912fea956619bf15} 
+\index{Drag Table Infrastructure@{Drag Table Infrastructure}!get\_drag\_model\_file@{get\_drag\_model\_file}}
+\index{get\_drag\_model\_file@{get\_drag\_model\_file}!Drag Table Infrastructure@{Drag Table Infrastructure}}
+\doxysubsubsection{\texorpdfstring{get\_drag\_model\_file()}{get\_drag\_model\_file()}}
+{\footnotesize\ttfamily const char \texorpdfstring{$\ast$}{*} get\+\_\+drag\+\_\+model\+\_\+file (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{group__DragTableFunctions_ga326940386c828daadb8613c8eddf8d15}{Drag\+Model}}}]{model }\end{DoxyParamCaption})}
+
+
+
+Gets the file name for a given drag model enum. 
+
+Maps a {\ttfamily Drag\+Model} enum to a corresponding CSV filename string.
+
+
+\begin{DoxyParams}{Parameters}
+{\em model} & Drag model to query. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Pointer to string containing the file path, or NULL if unknown.
+\end{DoxyReturn}
+Gets the file name for a given drag model enum.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em model} & The selected drag model \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The corresponding CSV file path. e.\+g. "{}\+CSV\+\_\+\+Files/\+G1.\+csv"{} for G1 
+\end{DoxyReturn}
+\Hypertarget{group__DragTableFunctions_ga75273f11053c06ff9ec8ed76a80ac9f9}\label{group__DragTableFunctions_ga75273f11053c06ff9ec8ed76a80ac9f9} 
+\index{Drag Table Infrastructure@{Drag Table Infrastructure}!interpolate\_cd\_from\_table@{interpolate\_cd\_from\_table}}
+\index{interpolate\_cd\_from\_table@{interpolate\_cd\_from\_table}!Drag Table Infrastructure@{Drag Table Infrastructure}}
+\doxysubsubsection{\texorpdfstring{interpolate\_cd\_from\_table()}{interpolate\_cd\_from\_table()}}
+{\footnotesize\ttfamily double interpolate\+\_\+cd\+\_\+from\+\_\+table (\begin{DoxyParamCaption}\item[{double}]{mach }\end{DoxyParamCaption})}
+
+
+
+Linearly interpolates a drag coefficient from the global lookup table. 
+
+Given a Mach number, this function searches for two nearby entries in the {\ttfamily lookup\+Table\mbox{[}\mbox{]}} and performs linear interpolation. If {\ttfamily mach} is outside the table range, it clamps to the first or last available value.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em mach} & Mach number to query. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The interpolated or clamped drag coefficient.
+\end{DoxyReturn}
+Linearly interpolates a drag coefficient from the global lookup table.
+
+Internally does a binary search to find the bracketed region. Then performs linear interpolation\+:
+
+\[
+  \mathrm{Cd}(mach) = \mathrm{Cd}(m_1) + \frac{mach - m_1}{m_2 - m_1}\, \bigl(\mathrm{Cd}(m_2) - \mathrm{Cd}(m_1)\bigr).
+\]
+
+\begin{DoxyParagraph}{Complexity}
+$ \mathcal{O}(\log n) $ due to binary search.
+\end{DoxyParagraph}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em mach} & Current Mach number. \\
+\hline
+ & {\em mach\+\_\+table} & Sorted array of Mach numbers. \\
+\hline
+ & {\em cd\+\_\+table} & Corresponding array of drag coefficients. \\
+\hline
+ & {\em table\+\_\+size} & Number of elements in the tables. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Interpolated drag coefficient for the given Mach number. 
+\end{DoxyReturn}
+\Hypertarget{group__DragTableFunctions_ga08e47092c6f2d59115f2f587d0cf9ee8}\label{group__DragTableFunctions_ga08e47092c6f2d59115f2f587d0cf9ee8} 
+\index{Drag Table Infrastructure@{Drag Table Infrastructure}!load\_drag\_table\_CSV@{load\_drag\_table\_CSV}}
+\index{load\_drag\_table\_CSV@{load\_drag\_table\_CSV}!Drag Table Infrastructure@{Drag Table Infrastructure}}
+\doxysubsubsection{\texorpdfstring{load\_drag\_table\_CSV()}{load\_drag\_table\_CSV()}}
+{\footnotesize\ttfamily size\+\_\+t load\+\_\+drag\+\_\+table\+\_\+\+CSV (\begin{DoxyParamCaption}\item[{const char \texorpdfstring{$\ast$}{*}}]{filename }\end{DoxyParamCaption})}
+
+
+
+Loads a drag table from a CSV file into the global lookup table. 
+
+Parses a file formatted as "{}\+Mach,\+Cd"{} on each line, stores values in a global table.
+
+
+\begin{DoxyParams}{Parameters}
+{\em filename} & Path to the CSV file to load. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The number of entries successfully loaded.
+\end{DoxyReturn}
+\begin{DoxyNote}{Note}
+This function allocates and populates the global {\ttfamily lookup\+Table\mbox{[}\mbox{]}}. The file must be correctly formatted as a .csv file with no spaces, where mach is the first column and Cd is the right column and there is no header, or the program will not work.
+\end{DoxyNote}
+Loads a drag table from a CSV file into the global lookup table.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em filename} & Path to the CSV file \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The number of entries loaded. Returns 0 if the file could not be opened.
+\end{DoxyReturn}
+The CSV is expected to have lines of the form\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{0.1,0.23}
+\DoxyCodeLine{0.2,0.30}
+\DoxyCodeLine{...}
+
+\end{DoxyCode}
+ where {\ttfamily mach} is the left column, and {\ttfamily Cd} is the right. \Hypertarget{group__DragTableFunctions_ga1ef367f143c9df1c3cab577448b47eab}\label{group__DragTableFunctions_ga1ef367f143c9df1c3cab577448b47eab} 
+\index{Drag Table Infrastructure@{Drag Table Infrastructure}!precompute\_drag\_lookup\_table@{precompute\_drag\_lookup\_table}}
+\index{precompute\_drag\_lookup\_table@{precompute\_drag\_lookup\_table}!Drag Table Infrastructure@{Drag Table Infrastructure}}
+\doxysubsubsection{\texorpdfstring{precompute\_drag\_lookup\_table()}{precompute\_drag\_lookup\_table()}}
+{\footnotesize\ttfamily void precompute\+\_\+drag\+\_\+lookup\+\_\+table (\begin{DoxyParamCaption}\item[{double \texorpdfstring{$\ast$}{*}restrict}]{lookup\+Table }\end{DoxyParamCaption})}
+
+
+
+Precomputes a lookup table of Cd values for fast runtime access. 
+
+This function builds a uniformly sampled array of Cd values across a typical Mach number range (e.\+g., 0.\+0 to 5.\+0). Used by {\ttfamily \doxylink{group__DragTableFunctions_gadcb2dd0c4acd7053fae6288d3f01bd36}{fast\+\_\+interpolate\+\_\+cd()}}.
+
+
+\begin{DoxyParams}{Parameters}
+{\em lookup\+Table} & Pointer to the buffer to fill with precomputed Cd values.\\
+\hline
+\end{DoxyParams}
+Precomputes a lookup table of Cd values for fast runtime access.
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in,out}}  & {\em lookup\+Table} & A pointer to the array of size LOOKUP\+\_\+\+SIZE\\
+\hline
+\end{DoxyParams}
+For each index $i$, we map\+:  \[
+    i \cdot \mathrm{LOOKUP\_STEP} \mapsto \mathrm{interpolate\_cd\_from\_table}
+\] 
+
+\doxysubsection{Variable Documentation}
+\Hypertarget{group__DragTableFunctions_ga5861fb5f634b4a72f1d61b33c66099ac}\label{group__DragTableFunctions_ga5861fb5f634b4a72f1d61b33c66099ac} 
+\index{Drag Table Infrastructure@{Drag Table Infrastructure}!g\_dragTable@{g\_dragTable}}
+\index{g\_dragTable@{g\_dragTable}!Drag Table Infrastructure@{Drag Table Infrastructure}}
+\doxysubsubsection{\texorpdfstring{g\_dragTable}{g\_dragTable}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structDragEntry}{Drag\+Entry}} g\+\_\+drag\+Table\mbox{[}\mbox{\hyperlink{group__DragTableFunctions_ga48d3ccc21ddc04633ef7cd7e80dbb987}{MAX\+\_\+\+TABLE\+\_\+\+SIZE}}\mbox{]}\hspace{0.3cm}{\ttfamily [static]}}
+
+\Hypertarget{group__DragTableFunctions_ga0f5047f8a768c169d040a6d20f0ee51e}\label{group__DragTableFunctions_ga0f5047f8a768c169d040a6d20f0ee51e} 
+\index{Drag Table Infrastructure@{Drag Table Infrastructure}!g\_tableSize@{g\_tableSize}}
+\index{g\_tableSize@{g\_tableSize}!Drag Table Infrastructure@{Drag Table Infrastructure}}
+\doxysubsubsection{\texorpdfstring{g\_tableSize}{g\_tableSize}}
+{\footnotesize\ttfamily size\+\_\+t g\+\_\+table\+Size = 0\hspace{0.3cm}{\ttfamily [static]}}
+
+\Hypertarget{group__DragTableFunctions_gaff941223492c755b6a75be14bfc7e834}\label{group__DragTableFunctions_gaff941223492c755b6a75be14bfc7e834} 
+\index{Drag Table Infrastructure@{Drag Table Infrastructure}!lookupTable@{lookupTable}}
+\index{lookupTable@{lookupTable}!Drag Table Infrastructure@{Drag Table Infrastructure}}
+\doxysubsubsection{\texorpdfstring{lookupTable}{lookupTable}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily double lookup\+Table\mbox{[}$\,$\mbox{]}\hspace{0.3cm}{\ttfamily [extern]}}
+
+
+
+Global drag coefficient lookup table. 
+
+This global buffer is filled by {\ttfamily \doxylink{group__DragTableFunctions_ga08e47092c6f2d59115f2f587d0cf9ee8}{load\+\_\+drag\+\_\+table\+\_\+\+CSV()}} or {\ttfamily \doxylink{group__DragTableFunctions_ga1ef367f143c9df1c3cab577448b47eab}{precompute\+\_\+drag\+\_\+lookup\+\_\+table()}} and used by the other functions for interpolation.
+
+Global drag coefficient lookup table. \Hypertarget{group__DragTableFunctions_ga3685a28564435b1400de859262895e1e}\label{group__DragTableFunctions_ga3685a28564435b1400de859262895e1e} 
+\index{Drag Table Infrastructure@{Drag Table Infrastructure}!lookupTable@{lookupTable}}
+\index{lookupTable@{lookupTable}!Drag Table Infrastructure@{Drag Table Infrastructure}}
+\doxysubsubsection{\texorpdfstring{lookupTable}{lookupTable}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily double lookup\+Table\mbox{[}\mbox{\hyperlink{group__DragTableFunctions_gac0a1c23a3f02bb1cd5afafb358b40de7}{LOOKUP\+\_\+\+SIZE}}\mbox{]}}
+
+
+
+The precomputed finer array. 
+
+Global drag coefficient lookup table. 

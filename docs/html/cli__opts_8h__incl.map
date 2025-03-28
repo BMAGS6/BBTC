@@ -1,0 +1,16 @@
+<map id="cli_opts.h" name="cli_opts.h">
+<area shape="rect" id="Node000001" title="Function declarations and datatypes for user input through the command line." alt="" coords="145,5,223,31"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,79,67,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="161,33,74,75,71,70,159,28"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="91,79,160,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="176,33,145,70,141,67,172,29"/>
+<area shape="rect" id="Node000004" href="$solver__options_8h.html" title="Defines toggles/flags controlling advanced solver effects." alt="" coords="184,79,301,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="196,29,227,67,223,70,192,33"/>
+<area shape="rect" id="Node000006" href="$load__drag__tables_8h.html" title="Drag model support and CSV loading for standard ballistic drag functions." alt="" coords="325,79,456,104"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="218,28,345,72,343,77,216,33"/>
+<area shape="rect" id="Node000005" href="$compiler__macros_8h.html" title="Contains macros for cross&#45;compatible compiler optimizations and compatibility." alt="" coords="190,152,322,177"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="247,104,254,138,249,139,242,105"/>
+<area shape="poly" id="edge7_Node000006_Node000005" title=" " alt="" coords="370,106,291,148,289,143,368,102"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="359,152,423,177"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="393,104,393,138,388,138,388,104"/>
+</map>

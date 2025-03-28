@@ -1,0 +1,256 @@
+\doxysection{Environment \& Weather}
+\hypertarget{group__environment}{}\label{group__environment}\index{Environment \& Weather@{Environment \& Weather}}
+\doxysubsubsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structEnvironment}{Environment}}
+\begin{DoxyCompactList}\small\item\em Holds environment data such as temperature, pressure, wind, etc. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{group__environment_ga92340563677c798b2bb1abd185604204}{TEMP\+\_\+\+SEA\+\_\+\+LVL\+\_\+K}}~288.\+15
+\item 
+\#define \mbox{\hyperlink{group__environment_ga8c29b765ea98e2ce5c2dab6bfc07ebe5}{TEMP\+\_\+\+SEA\+\_\+\+LVL\+\_\+C}}~15.\+0065
+\item 
+\#define \mbox{\hyperlink{group__environment_gacc5504316708c8f3e05c35babf83f7bd}{LAPSE\+\_\+\+RATE}}~0.\+0065
+\item 
+\#define \mbox{\hyperlink{group__environment_ga8293d310d212f147c1663e31cd9d03c0}{STANDARD\+\_\+\+PRESSURE}}~101325.\+0065
+\item 
+\#define \mbox{\hyperlink{group__environment_ga6801baa546c6112d19eb095111d24720}{GRAVITY}}~9.\+807
+\item 
+\#define \mbox{\hyperlink{group__environment_gaf65a979f3c7885133fb0fd6b21571394}{MOL\+\_\+\+M\+\_\+\+AIR}}~0.\+0289644
+\item 
+\#define \mbox{\hyperlink{group__environment_gafd66553d14150e40999c65cb3ad7426f}{R\+\_\+\+DRY\+\_\+\+AIR}}~287.\+052874
+\item 
+\#define \mbox{\hyperlink{group__environment_ga2d2e160c37a32963acd8e33a1167161d}{R\+\_\+\+H2\+O\+\_\+\+VAPOR}}~461.\+52
+\item 
+\#define \mbox{\hyperlink{group__environment_ga0ccf981dfb6aa02b2fd3c41ae2f0254e}{R\+\_\+\+UNIV}}~8.\+3144598
+\item 
+\#define \mbox{\hyperlink{group__environment_ga11931f9765bcee4ff773b4b0d11b107a}{GAMMA\+\_\+\+DRY\+\_\+\+AIR}}~1.\+461
+\item 
+\#define \mbox{\hyperlink{group__environment_ga2b0c8b49e94c1f7a4f42fd70e10f6b8e}{GAMMA\+\_\+\+H2\+O\+\_\+\+VAPOR}}~1.\+32
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+double \mbox{\hyperlink{group__environment_gaed7062b11a1d9a5b46f11c421058663f}{saturation\+\_\+vapor\+\_\+pressure}} (double tK)
+\begin{DoxyCompactList}\small\item\em Computes the saturation vapor pressure at temperature tK (Kelvin). \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{group__environment_ga8c9aadab972d06316655d537e560f9fa}{update\+\_\+environment}} (\mbox{\hyperlink{structEnvironment}{Environment}} \texorpdfstring{$\ast$}{*}restrict env, \mbox{\hyperlink{structPState}{PState}} \texorpdfstring{$\ast$}{*}restrict state)
+\begin{DoxyCompactList}\small\item\em Updates the environment based on projectile state (e.\+g., altitude). \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{group__environment_ga1ca564b2b16519b88dd0412d789204a4}{compute\+\_\+speed\+\_\+of\+\_\+sound}} (\mbox{\hyperlink{structEnvironment}{Environment}} \texorpdfstring{$\ast$}{*}restrict env)
+\begin{DoxyCompactList}\small\item\em Computes the speed of sound in the environment. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{DoxyCompactItemize}
+\item 
+static double \mbox{\hyperlink{group__environment_ga8876b6492f651342a4923f986f625150}{compute\+\_\+gamma}} (double mass\+\_\+frac\+\_\+h2o)
+\begin{DoxyCompactList}\small\item\em Computes an effective ratio of specific heats $\gamma_{\mathrm{effective}}$ given the fraction of water vapor in air. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{group__environment_ga87adc161379f184d8f273c59d590e150}{update\+\_\+environment}} (\mbox{\hyperlink{structEnvironment}{Environment}} \texorpdfstring{$\ast$}{*}env, \mbox{\hyperlink{structPState}{PState}} \texorpdfstring{$\ast$}{*}state)
+\begin{DoxyCompactList}\small\item\em Updates the environment based on projectile state (e.\+g., altitude). \end{DoxyCompactList}\item 
+\#define \mbox{\hyperlink{group__environment_ga1f9cef376e468f873bc173df2676c81b}{PRECOMPUTED\+\_\+\+EXPONENT}}~(\mbox{\hyperlink{group__environment_ga6801baa546c6112d19eb095111d24720}{GRAVITY}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__environment_gaf65a979f3c7885133fb0fd6b21571394}{MOL\+\_\+\+M\+\_\+\+AIR}}) / (\mbox{\hyperlink{group__environment_ga0ccf981dfb6aa02b2fd3c41ae2f0254e}{R\+\_\+\+UNIV}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__environment_gacc5504316708c8f3e05c35babf83f7bd}{LAPSE\+\_\+\+RATE}})
+\begin{DoxyCompactList}\small\item\em A constant factor used for exponent calculation in some atmospheric models. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+\doxysubsection{Macro Definition Documentation}
+\Hypertarget{group__environment_ga11931f9765bcee4ff773b4b0d11b107a}\label{group__environment_ga11931f9765bcee4ff773b4b0d11b107a} 
+\index{Environment \& Weather@{Environment \& Weather}!GAMMA\_DRY\_AIR@{GAMMA\_DRY\_AIR}}
+\index{GAMMA\_DRY\_AIR@{GAMMA\_DRY\_AIR}!Environment \& Weather@{Environment \& Weather}}
+\doxysubsubsection{\texorpdfstring{GAMMA\_DRY\_AIR}{GAMMA\_DRY\_AIR}}
+{\footnotesize\ttfamily \#define GAMMA\+\_\+\+DRY\+\_\+\+AIR~1.\+461}
+
+\Hypertarget{group__environment_ga2b0c8b49e94c1f7a4f42fd70e10f6b8e}\label{group__environment_ga2b0c8b49e94c1f7a4f42fd70e10f6b8e} 
+\index{Environment \& Weather@{Environment \& Weather}!GAMMA\_H2O\_VAPOR@{GAMMA\_H2O\_VAPOR}}
+\index{GAMMA\_H2O\_VAPOR@{GAMMA\_H2O\_VAPOR}!Environment \& Weather@{Environment \& Weather}}
+\doxysubsubsection{\texorpdfstring{GAMMA\_H2O\_VAPOR}{GAMMA\_H2O\_VAPOR}}
+{\footnotesize\ttfamily \#define GAMMA\+\_\+\+H2\+O\+\_\+\+VAPOR~1.\+32}
+
+\Hypertarget{group__environment_ga6801baa546c6112d19eb095111d24720}\label{group__environment_ga6801baa546c6112d19eb095111d24720} 
+\index{Environment \& Weather@{Environment \& Weather}!GRAVITY@{GRAVITY}}
+\index{GRAVITY@{GRAVITY}!Environment \& Weather@{Environment \& Weather}}
+\doxysubsubsection{\texorpdfstring{GRAVITY}{GRAVITY}}
+{\footnotesize\ttfamily \#define GRAVITY~9.\+807}
+
+\Hypertarget{group__environment_gacc5504316708c8f3e05c35babf83f7bd}\label{group__environment_gacc5504316708c8f3e05c35babf83f7bd} 
+\index{Environment \& Weather@{Environment \& Weather}!LAPSE\_RATE@{LAPSE\_RATE}}
+\index{LAPSE\_RATE@{LAPSE\_RATE}!Environment \& Weather@{Environment \& Weather}}
+\doxysubsubsection{\texorpdfstring{LAPSE\_RATE}{LAPSE\_RATE}}
+{\footnotesize\ttfamily \#define LAPSE\+\_\+\+RATE~0.\+0065}
+
+\Hypertarget{group__environment_gaf65a979f3c7885133fb0fd6b21571394}\label{group__environment_gaf65a979f3c7885133fb0fd6b21571394} 
+\index{Environment \& Weather@{Environment \& Weather}!MOL\_M\_AIR@{MOL\_M\_AIR}}
+\index{MOL\_M\_AIR@{MOL\_M\_AIR}!Environment \& Weather@{Environment \& Weather}}
+\doxysubsubsection{\texorpdfstring{MOL\_M\_AIR}{MOL\_M\_AIR}}
+{\footnotesize\ttfamily \#define MOL\+\_\+\+M\+\_\+\+AIR~0.\+0289644}
+
+\Hypertarget{group__environment_ga1f9cef376e468f873bc173df2676c81b}\label{group__environment_ga1f9cef376e468f873bc173df2676c81b} 
+\index{Environment \& Weather@{Environment \& Weather}!PRECOMPUTED\_EXPONENT@{PRECOMPUTED\_EXPONENT}}
+\index{PRECOMPUTED\_EXPONENT@{PRECOMPUTED\_EXPONENT}!Environment \& Weather@{Environment \& Weather}}
+\doxysubsubsection{\texorpdfstring{PRECOMPUTED\_EXPONENT}{PRECOMPUTED\_EXPONENT}}
+{\footnotesize\ttfamily \#define PRECOMPUTED\+\_\+\+EXPONENT~(\mbox{\hyperlink{group__environment_ga6801baa546c6112d19eb095111d24720}{GRAVITY}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__environment_gaf65a979f3c7885133fb0fd6b21571394}{MOL\+\_\+\+M\+\_\+\+AIR}}) / (\mbox{\hyperlink{group__environment_ga0ccf981dfb6aa02b2fd3c41ae2f0254e}{R\+\_\+\+UNIV}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__environment_gacc5504316708c8f3e05c35babf83f7bd}{LAPSE\+\_\+\+RATE}})}
+
+
+
+A constant factor used for exponent calculation in some atmospheric models. 
+
+Defined as\+:  \[
+  \mathrm{PRECOMPUTED\_EXPONENT} = \frac{GRAVITY \times MOL\_M\_AIR}{R\_UNIV \times LAPSE\_RATE}.
+\] \Hypertarget{group__environment_gafd66553d14150e40999c65cb3ad7426f}\label{group__environment_gafd66553d14150e40999c65cb3ad7426f} 
+\index{Environment \& Weather@{Environment \& Weather}!R\_DRY\_AIR@{R\_DRY\_AIR}}
+\index{R\_DRY\_AIR@{R\_DRY\_AIR}!Environment \& Weather@{Environment \& Weather}}
+\doxysubsubsection{\texorpdfstring{R\_DRY\_AIR}{R\_DRY\_AIR}}
+{\footnotesize\ttfamily \#define R\+\_\+\+DRY\+\_\+\+AIR~287.\+052874}
+
+\Hypertarget{group__environment_ga2d2e160c37a32963acd8e33a1167161d}\label{group__environment_ga2d2e160c37a32963acd8e33a1167161d} 
+\index{Environment \& Weather@{Environment \& Weather}!R\_H2O\_VAPOR@{R\_H2O\_VAPOR}}
+\index{R\_H2O\_VAPOR@{R\_H2O\_VAPOR}!Environment \& Weather@{Environment \& Weather}}
+\doxysubsubsection{\texorpdfstring{R\_H2O\_VAPOR}{R\_H2O\_VAPOR}}
+{\footnotesize\ttfamily \#define R\+\_\+\+H2\+O\+\_\+\+VAPOR~461.\+52}
+
+\Hypertarget{group__environment_ga0ccf981dfb6aa02b2fd3c41ae2f0254e}\label{group__environment_ga0ccf981dfb6aa02b2fd3c41ae2f0254e} 
+\index{Environment \& Weather@{Environment \& Weather}!R\_UNIV@{R\_UNIV}}
+\index{R\_UNIV@{R\_UNIV}!Environment \& Weather@{Environment \& Weather}}
+\doxysubsubsection{\texorpdfstring{R\_UNIV}{R\_UNIV}}
+{\footnotesize\ttfamily \#define R\+\_\+\+UNIV~8.\+3144598}
+
+\Hypertarget{group__environment_ga8293d310d212f147c1663e31cd9d03c0}\label{group__environment_ga8293d310d212f147c1663e31cd9d03c0} 
+\index{Environment \& Weather@{Environment \& Weather}!STANDARD\_PRESSURE@{STANDARD\_PRESSURE}}
+\index{STANDARD\_PRESSURE@{STANDARD\_PRESSURE}!Environment \& Weather@{Environment \& Weather}}
+\doxysubsubsection{\texorpdfstring{STANDARD\_PRESSURE}{STANDARD\_PRESSURE}}
+{\footnotesize\ttfamily \#define STANDARD\+\_\+\+PRESSURE~101325.\+0065}
+
+\Hypertarget{group__environment_ga8c29b765ea98e2ce5c2dab6bfc07ebe5}\label{group__environment_ga8c29b765ea98e2ce5c2dab6bfc07ebe5} 
+\index{Environment \& Weather@{Environment \& Weather}!TEMP\_SEA\_LVL\_C@{TEMP\_SEA\_LVL\_C}}
+\index{TEMP\_SEA\_LVL\_C@{TEMP\_SEA\_LVL\_C}!Environment \& Weather@{Environment \& Weather}}
+\doxysubsubsection{\texorpdfstring{TEMP\_SEA\_LVL\_C}{TEMP\_SEA\_LVL\_C}}
+{\footnotesize\ttfamily \#define TEMP\+\_\+\+SEA\+\_\+\+LVL\+\_\+C~15.\+0065}
+
+\Hypertarget{group__environment_ga92340563677c798b2bb1abd185604204}\label{group__environment_ga92340563677c798b2bb1abd185604204} 
+\index{Environment \& Weather@{Environment \& Weather}!TEMP\_SEA\_LVL\_K@{TEMP\_SEA\_LVL\_K}}
+\index{TEMP\_SEA\_LVL\_K@{TEMP\_SEA\_LVL\_K}!Environment \& Weather@{Environment \& Weather}}
+\doxysubsubsection{\texorpdfstring{TEMP\_SEA\_LVL\_K}{TEMP\_SEA\_LVL\_K}}
+{\footnotesize\ttfamily \#define TEMP\+\_\+\+SEA\+\_\+\+LVL\+\_\+K~288.\+15}
+
+
+
+\doxysubsection{Function Documentation}
+\Hypertarget{group__environment_ga8876b6492f651342a4923f986f625150}\label{group__environment_ga8876b6492f651342a4923f986f625150} 
+\index{Environment \& Weather@{Environment \& Weather}!compute\_gamma@{compute\_gamma}}
+\index{compute\_gamma@{compute\_gamma}!Environment \& Weather@{Environment \& Weather}}
+\doxysubsubsection{\texorpdfstring{compute\_gamma()}{compute\_gamma()}}
+{\footnotesize\ttfamily static double compute\+\_\+gamma (\begin{DoxyParamCaption}\item[{double}]{mass\+\_\+frac\+\_\+h2o }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Computes an effective ratio of specific heats $\gamma_{\mathrm{effective}}$ given the fraction of water vapor in air. 
+
+Weighted average\+:  \[
+   \gamma_{\mathrm{effective}} = 1.4 \times (1 - mass\_frac\_h2o) + 1.33 \times mass\_frac\_h2o.
+\]
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em mass\+\_\+frac\+\_\+h2o} & Fraction of water vapor by pressure \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Effective gamma 
+\end{DoxyReturn}
+\Hypertarget{group__environment_ga1ca564b2b16519b88dd0412d789204a4}\label{group__environment_ga1ca564b2b16519b88dd0412d789204a4} 
+\index{Environment \& Weather@{Environment \& Weather}!compute\_speed\_of\_sound@{compute\_speed\_of\_sound}}
+\index{compute\_speed\_of\_sound@{compute\_speed\_of\_sound}!Environment \& Weather@{Environment \& Weather}}
+\doxysubsubsection{\texorpdfstring{compute\_speed\_of\_sound()}{compute\_speed\_of\_sound()}}
+{\footnotesize\ttfamily void compute\+\_\+speed\+\_\+of\+\_\+sound (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structEnvironment}{Environment}} \texorpdfstring{$\ast$}{*}restrict}]{env }\end{DoxyParamCaption})}
+
+
+
+Computes the speed of sound in the environment. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em env} & The environment \\
+\hline
+\end{DoxyParams}
+\Hypertarget{group__environment_gaed7062b11a1d9a5b46f11c421058663f}\label{group__environment_gaed7062b11a1d9a5b46f11c421058663f} 
+\index{Environment \& Weather@{Environment \& Weather}!saturation\_vapor\_pressure@{saturation\_vapor\_pressure}}
+\index{saturation\_vapor\_pressure@{saturation\_vapor\_pressure}!Environment \& Weather@{Environment \& Weather}}
+\doxysubsubsection{\texorpdfstring{saturation\_vapor\_pressure()}{saturation\_vapor\_pressure()}}
+{\footnotesize\ttfamily double saturation\+\_\+vapor\+\_\+pressure (\begin{DoxyParamCaption}\item[{double}]{tK }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Computes the saturation vapor pressure at temperature tK (Kelvin). 
+
+
+\begin{DoxyParams}{Parameters}
+{\em tK} & Temperature in Kelvin \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Saturation vapor pressure in Pa
+\end{DoxyReturn}
+Computes the saturation vapor pressure at temperature tK (Kelvin).
+
+Internally converts to Celsius ( $t_{\mathrm{C}} = t_{\mathrm{K}} - 273.15$), then uses an approximation\+:  \[
+  p_{\mathrm{sat}} = 6.1078 \times \exp\Bigl(\frac{17.08085 \times t_{\mathrm{C}}}{234.175 + t_{\mathrm{C}}}\Bigr)\times 100.0 \mathrm{Pa}.
+\]
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em tK} & Temperature in Kelvin \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Saturation vapor pressure in Pascals 
+\end{DoxyReturn}
+\Hypertarget{group__environment_ga87adc161379f184d8f273c59d590e150}\label{group__environment_ga87adc161379f184d8f273c59d590e150} 
+\index{Environment \& Weather@{Environment \& Weather}!update\_environment@{update\_environment}}
+\index{update\_environment@{update\_environment}!Environment \& Weather@{Environment \& Weather}}
+\doxysubsubsection{\texorpdfstring{update\_environment()}{update\_environment()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily void update\+\_\+environment (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structEnvironment}{Environment}} \texorpdfstring{$\ast$}{*}}]{env,  }\item[{\mbox{\hyperlink{structPState}{PState}} \texorpdfstring{$\ast$}{*}}]{state }\end{DoxyParamCaption})}
+
+
+
+Updates the environment based on projectile state (e.\+g., altitude). 
+
+Modifies {\ttfamily env-\/\texorpdfstring{$>$}{>}local\+TempK}, {\ttfamily env-\/\texorpdfstring{$>$}{>}local\+Pressure}, {\ttfamily env-\/\texorpdfstring{$>$}{>}local\+Density}, and {\ttfamily env-\/\texorpdfstring{$>$}{>}local\+Spd\+Of\+Snd} according to various atmospheric layers\+:
+\begin{DoxyItemize}
+\item Troposphere
+\item Stratosphere (lower, mid, upper)
+\item Mesosphere (lower, mid, upper)
+\item Thermosphere
+\item Exosphere
+\end{DoxyItemize}
+
+Each layer has a distinct temperature/pressure model\+:
+\begin{DoxyItemize}
+\item Some layers have a constant temperature, with exponential decay in pressure.
+\item Others have linear or variable lapse rates in temperature.
+\end{DoxyItemize}
+
+After computing local temperature and pressure, the function calculates partial pressures of water vapor, total density, and speed of sound.
+
+
+\begin{DoxyParams}{Parameters}
+{\em env} & \mbox{[}in,out\mbox{]} The environment to update \\
+\hline
+{\em state} & \mbox{[}in\mbox{]} Current projectile state for altitude, {\ttfamily state-\/\texorpdfstring{$>$}{>}y} \\
+\hline
+\end{DoxyParams}
+\Hypertarget{group__environment_ga8c9aadab972d06316655d537e560f9fa}\label{group__environment_ga8c9aadab972d06316655d537e560f9fa} 
+\index{Environment \& Weather@{Environment \& Weather}!update\_environment@{update\_environment}}
+\index{update\_environment@{update\_environment}!Environment \& Weather@{Environment \& Weather}}
+\doxysubsubsection{\texorpdfstring{update\_environment()}{update\_environment()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily void update\+\_\+environment (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structEnvironment}{Environment}} \texorpdfstring{$\ast$}{*}restrict}]{env,  }\item[{\mbox{\hyperlink{structPState}{PState}} \texorpdfstring{$\ast$}{*}restrict}]{state }\end{DoxyParamCaption})}
+
+
+
+Updates the environment based on projectile state (e.\+g., altitude). 
+
+
+\begin{DoxyParams}{Parameters}
+{\em env} & \mbox{[}in,out\mbox{]} The environment to update \\
+\hline
+{\em state} & \mbox{[}in\mbox{]} Current projectile state \\
+\hline
+\end{DoxyParams}

@@ -1,0 +1,72 @@
+\chapter{Drag Coefficient Models}
+\hypertarget{drag_model}{}\label{drag_model}\index{Drag Coefficient Models@{Drag Coefficient Models}}
+\hypertarget{quat_math_overview}{}\doxysection{\texorpdfstring{Overview}{Overview}}\label{quat_math_overview}
+BBTC supports multiple empirical drag models that reflect various projectile shapes and flight characteristics. These drag models are used to look up the drag coefficient ( C\+\_\+d ) as a function of Mach number, which directly influences aerodynamic resistance in the simulation.
+
+Drag models available\+:
+\begin{DoxyItemize}
+\item G1\+: Flatbase with a blunt nose, which is typical of older bullets. Most commonly used drag model used in the market today.
+\item G2\+: Aberdeen J projectile (tangential ogive, sharp point). Not very compatible with small arms ammunition, and more so for certain artillery rounds
+\item G5\+: Short 7.\+5-\/degree boat tail with a 6.\+19 caliber long tangent ogive
+\item G6\+: For flat based "{}spire point"{} type bullets -\/ 4.\+81 calibers long with a 2.\+53 caliber nose and a 6.\+99 caliber secant nose ogive
+\item G7\+: Long boat tail with a secant ogive, used for modern VLD bullets. Second most common model in use today---behind G1---and is suited for most modern intermediate and high power rounds. Most modern US military boat tailed bullets match this model.
+\item G8\+: Flat base with similar nose design to G7 -\/ 3.\+64 calibers long with a 2.\+18 caliber long nose and a 10 caliber secant nose ogive. The US M2 152 gr .30 cal bullet matches this drag model. Close to the G6 model.
+\item GI\+: Converted from the original Ingalls tables, essentially G1. Not recommended for serious use other than illustration or simulation.
+\item GL\+: Traditional model used for flat-\/based, round nosed, exposed-\/lead bullets.
+\item GS\+: Model based on a 9/16"{} sphere. This model is best suited for spherical projectiles (cannon and musket balls, etc.) and is practically identical for all sizes of sphere.
+\item RA4\+: Used for heeled bullets that are most commonly fired from small rimfire rounds (e.\+g. .22LR) and airguns.
+\end{DoxyItemize}
+
+These drag models are implemented using CSV lookup tables that provide $ C_d $ values at discrete Mach intervals. During the simulation, the solver determines the projectile\textquotesingle{}s Mach number, locates the appropriate table, and interpolates the drag coefficient accordingly.
+
+ 
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.9\textwidth]{drag_model_chart_combined.png}
+\caption{Standard Drag Model Shapes}
+\label{fig:drag-model-chart}
+\end{figure}
+\hypertarget{drag_model_equation}{}\doxysection{\texorpdfstring{Drag Force Equation}{Drag Force Equation}}\label{drag_model_equation}
+The drag force applied to the bullet is given by\+:
+
+\[
+   \mathbf{F}_d = -\frac{1}{2} \rho C_d A \|\mathbf{v}_{\mathrm{rel}}\| \mathbf{v}_{\mathrm{rel}}
+   \]
+
+Where\+:
+\begin{DoxyItemize}
+\item $ \rho $ is the air density
+\item $ C_d $ is the drag coefficient from the selected model
+\item $ A $ is the bullet’s cross-\/sectional area
+\item $ \mathbf{v}_{\mathrm{rel}} $ is the velocity of the bullet relative to the air
+\end{DoxyItemize}
+
+The direction of the drag force is opposite to the motion relative to the surrounding air. This includes wind if enabled.\hypertarget{drag_model_interpolation}{}\doxysection{\texorpdfstring{Interpolation Logic}{Interpolation Logic}}\label{drag_model_interpolation}
+Since the tables contain discrete entries, $ C_d $ must be interpolated for smooth physics. BBTC uses binary search followed by linear interpolation for performance and accuracy.
+
+Steps\+:
+\begin{DoxyEnumerate}
+\item Determine the Mach number from the bullet’s speed and speed of sound
+\item Use binary search to find the nearest bracketing values in the drag table
+\item Apply linear interpolation between those two points to compute an accurate $ C_d $
+\end{DoxyEnumerate}
+
+This ensures consistent drag calculation even during rapid transonic transitions where $ C_d $ changes dramatically.\hypertarget{environment_units}{}\doxysection{\texorpdfstring{Units and Internal Format}{Units and Internal Format}}\label{environment_units}
+Drag model tables use dimensionless coefficients and are stored in plain-\/text CSV format. Internally, all physics are computed using SI units\+:
+\begin{DoxyItemize}
+\item Mach number (unitless)
+\item Cross-\/sectional area (m²)
+\item Velocity (m/s)
+\item Density (kg/m³)
+\end{DoxyItemize}\hypertarget{drag_model_future}{}\doxysection{\texorpdfstring{Future Enhancements}{Future Enhancements}}\label{drag_model_future}
+Planned upgrades to drag modeling include\+:
+\begin{DoxyItemize}
+\item Temperature-\/adjusted Reynolds number influence (viscosity effects)
+\item Automatic curve smoothing or polynomial fitting
+\item User-\/defined drag tables
+\begin{DoxyItemize}
+\item Validation routines to test imported tables for monotonicity and resolution
+\end{DoxyItemize}
+\end{DoxyItemize}
+
+BBTC’s drag model system is extensible and central to its accurate aerodynamics engine. The system ensures physically realistic bullet trajectories across a wide range of speeds and shapes. 

@@ -1,0 +1,69 @@
+/**
+ * @mainpage BBTC: BMAGS' Ballistic Trajectory Calculator
+ *
+ * @section intro_sec Introduction
+ * Welcome to the BBTC project—BMAGS' Ballistic Trajectory Calculator. This is a cross-platform, scientific simulation engine designed to model the external ballistics of projectiles with high fidelity.
+ *
+ * BBTC is written entirely in C, and is designed with deep educational value in mind, offering:
+ * - Advanced 6DOF modeling with quaternion rotation
+ * - Support for all major drag models (G1, G2, G5, G6, G7, G8, GL, GS, GI, RA4)
+ * - Realistic atmosphere and environmental effects
+ * - Detailed .csv (spreadsheet format---comma-separated values) logging and simulation output
+ * - Fully static memory model with no dynamic allocation (no \c malloc , \c realloc , \c calloc , etc.)
+ * - Doxygen-formatted documentation
+ *
+ * @section license_sec License
+ * This project is released under the <b> Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0) </b> license.
+ *
+ * <b> You may: </b>
+ * - Share and redistribute this project in any medium or format
+ * - Adapt and modify it for educational or personal, non-commercial use
+ * - Study and learn from the code
+ *
+ * <b> You must: </b>
+ * - Provide proper attribution: cite the original author and link to the repository or documentation
+ * - Indicate if changes were made
+ *
+ * <b> You may not: </b>
+ * - Use this work for commercial purposes without express permission
+ * - Sublicense or relicense it for commercial platforms
+ *
+ * For full license text: https://creativecommons.org/licenses/by-nc/4.0/
+ *
+ * @section citation_sec How to Cite
+ * If you use BBTC in research, coursework, or documentation, please cite it as:
+ *
+ *     BMAGS. "BBTC: BMAGS' Ballistic Trajectory Calculator." https://github.com/BMAGS6/BBTC, 2025.
+ *
+ * @section structure_sec Documentation Structure
+ * This PDF is structured in the following order:
+ *
+ * 1. @ref core_6dof "6DOF Physics Core"
+ * 2. @ref cli_opts "Command-Line Interface"
+ * 3. @ref drag_model "Drag Models"
+ * 4. @ref environment "Environmental Modeling"
+ * 5. @ref quat_math "Quaternion Rotation"
+ * 6. Source File Reference
+ * 7. Structure and Field Diagrams
+ *
+ * @section build_sec Build & Compilation
+ * - BBTC builds via a portable Makefile
+ * - \c make builds the simulator
+ * - <c> make doc-pdf </c> generates this PDF documentation
+ * - \c drag_model_chart_combined.png is automatically embedded if placed at `BBTC/docs/drag_model_chart_combined.png`
+ *
+ * @section docstyle_sec Documentation Style Notes
+ * - LaTeX rendering of math formulas is enabled
+ * - DOT and SVG diagrams are embedded inline for clarity
+ * - Field-level units are included for all major structures
+ * - CLI options are fully documented and indexed
+ * - PDF output uses pdfLaTeX and standard vector graphics
+ * - No Unicode or emoji is used to ensure cross-platform rendering
+ *
+ * @section thanks_sec Acknowledgments
+ * - Ballistic model side profiles image inspired by \link https://www.frfrogspad.com/ballisti.htm Fr. Frog's \endlink
+  drag model illustrations and classic ballistic modeling references;
+ * - \link https://www.jbmballistics.com/ballistics/calculators/calculators.shtml JBM Ballistics \endlink, for the immense amount of invaluable data regarding external ballistics;
+ *
+ */
+

@@ -1,0 +1,35 @@
+\doxysection{environment.\+c File Reference}
+\hypertarget{environment_8c}{}\label{environment_8c}\index{environment.c@{environment.c}}
+
+
+Implements functions for atmospheric and environmental calculations.  
+
+
+{\ttfamily \#include $<$stdio.\+h$>$}\newline
+{\ttfamily \#include $<$math.\+h$>$}\newline
+{\ttfamily \#include "{}../include/environment.\+h"{}}\newline
+{\ttfamily \#include "{}../include/pstate.\+h"{}}\newline
+{\ttfamily \#include "{}../include/compiler\+\_\+macros.\+h"{}}\newline
+Include dependency graph for environment.\+c\+:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{environment_8c__incl}
+\end{center}
+\end{figure}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{group__environment_ga1f9cef376e468f873bc173df2676c81b}{PRECOMPUTED\+\_\+\+EXPONENT}}~(\mbox{\hyperlink{group__environment_ga6801baa546c6112d19eb095111d24720}{GRAVITY}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__environment_gaf65a979f3c7885133fb0fd6b21571394}{MOL\+\_\+\+M\+\_\+\+AIR}}) / (\mbox{\hyperlink{group__environment_ga0ccf981dfb6aa02b2fd3c41ae2f0254e}{R\+\_\+\+UNIV}} \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__environment_gacc5504316708c8f3e05c35babf83f7bd}{LAPSE\+\_\+\+RATE}})
+\begin{DoxyCompactList}\small\item\em A constant factor used for exponent calculation in some atmospheric models. \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{group__environment_gaed7062b11a1d9a5b46f11c421058663f}{saturation\+\_\+vapor\+\_\+pressure}} (double tK)
+\begin{DoxyCompactList}\small\item\em Computes saturation vapor pressure (Pa) for a given temperature in Kelvin. \end{DoxyCompactList}\item 
+static double \mbox{\hyperlink{group__environment_ga8876b6492f651342a4923f986f625150}{compute\+\_\+gamma}} (double mass\+\_\+frac\+\_\+h2o)
+\begin{DoxyCompactList}\small\item\em Computes an effective ratio of specific heats $\gamma_{\mathrm{effective}}$ given the fraction of water vapor in air. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{group__environment_ga87adc161379f184d8f273c59d590e150}{update\+\_\+environment}} (\mbox{\hyperlink{structEnvironment}{Environment}} \texorpdfstring{$\ast$}{*}env, \mbox{\hyperlink{structPState}{PState}} \texorpdfstring{$\ast$}{*}state)
+\begin{DoxyCompactList}\small\item\em Updates the environment based on projectile state (e.\+g., altitude). \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Implements functions for atmospheric and environmental calculations. 
+
+Integrated into the main loop described in core\+\_\+6dof. 

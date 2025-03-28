@@ -1,0 +1,42 @@
+\doxysection{cli\+\_\+opts.\+c File Reference}
+\hypertarget{cli__opts_8c}{}\label{cli__opts_8c}\index{cli\_opts.c@{cli\_opts.c}}
+
+
+Definitions of functions for user input through the command line.  
+
+
+{\ttfamily \#include $<$stdio.\+h$>$}\newline
+{\ttfamily \#include $<$stdlib.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include $<$ctype.\+h$>$}\newline
+{\ttfamily \#include $<$getopt.\+h$>$}\newline
+{\ttfamily \#include "{}../include/compiler\+\_\+macros.\+h"{}}\newline
+{\ttfamily \#include "{}../include/cli\+\_\+opts.\+h"{}}\newline
+{\ttfamily \#include "{}../include/environment.\+h"{}}\newline
+Include dependency graph for cli\+\_\+opts.\+c\+:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{cli__opts_8c__incl}
+\end{center}
+\end{figure}
+\begin{DoxyCompactItemize}
+\item 
+struct option \mbox{\hyperlink{group__CLI__Parsing_ga9dbb3a4179558154a5d0212ced82dc59}{long\+Opts}} \mbox{[}$\,$\mbox{]}
+\begin{DoxyCompactList}\small\item\em The global array describing our long options. \end{DoxyCompactList}\item 
+static const char \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__CLI__Parsing_gac812488933e5a6ce556517ce50a45b74}{short\+Opts}} = "{}mcey\+M\+:t\+Y\+:\+T\+:v\+:d\+:a\+:\+D\+:w\+:s\+:x\+:\+G\+:\+L\+:\+A\+:h"{}
+\begin{DoxyCompactList}\small\item\em Character array of possible short options. \end{DoxyCompactList}\item 
+COLD void \mbox{\hyperlink{group__CLI__Parsing_gac7560ffa2d3f32446bfad0c9933d2385}{print\+\_\+usage\+\_\+instructions}} (const char \texorpdfstring{$\ast$}{*}prog\+Name)
+\begin{DoxyCompactList}\small\item\em Prints usage instructions for the user, listing all recognized options. \end{DoxyCompactList}\item 
+static int \mbox{\hyperlink{group__CLI__Parsing_ga74686568953ea8bbe8b1920cc927a20c}{str\+\_\+cmp\+\_\+ignoring\+\_\+case}} (const char \texorpdfstring{$\ast$}{*}str1, const char \texorpdfstring{$\ast$}{*}str2)
+\begin{DoxyCompactList}\small\item\em Case-\/insensitive string compare. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{group__CLI__Parsing_ga464246c8023836fadaead439d71dc97d}{initialize\+\_\+\+CLI\+\_\+inputs}} (\mbox{\hyperlink{structCLI__inputs}{CLI\+\_\+inputs}} \texorpdfstring{$\ast$}{*}cli)
+\begin{DoxyCompactList}\small\item\em Initializes CLI\+\_\+\+Inputs with default toggles and ballistic parameters. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{group__CLI__Parsing_gacdd3189c1d563aede4bf528077cbb76c}{parse\+\_\+options}} (\mbox{\hyperlink{structCLI__inputs}{CLI\+\_\+inputs}} \texorpdfstring{$\ast$}{*}cli, int argc, char \texorpdfstring{$\ast$}{*}argv\mbox{[}$\,$\mbox{]})
+\begin{DoxyCompactList}\small\item\em Parses the command-\/line arguments for the solver. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Definitions of functions for user input through the command line. 
+
+Provides a command-\/line interface for specifying muzzle velocity, angle, bullet mass, and advanced solver toggles like Magnus effect, bullet tilt, etc. 

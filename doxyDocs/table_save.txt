@@ -1,0 +1,22 @@
+ * @section theory_vs_impl Theory vs. Implementation Table
+ *
+ * This table maps physical models used in the 6DOF simulation to their mathematical
+ * formulations and code-level implementations based on the actual contents of \c 6dof.c ,
+ * \c environment.c , \c quat.c , and \c load_drag_tables.c.
+ *
+ * | Physics Concept             | Formula                                                                                | Implemented In                                       |
+ * |-----------------------------|----------------------------------------------------------------------------------------|------------------------------------------------------|
+ * | Translational Motion        | @f$ \mathbf{F} = m \mathbf{a} @f$                                                      | \c compute_6dof_derivatives() in \c 6dof.c              |
+ * | Rotational Motion           | @f$ \mathbf{\tau} = I \mathbf{\alpha} + \mathbf{\omega} \times (I \mathbf{\omega}) @f$ | \c compute_6dof_derivatives() in \c 6dof.c              |
+ * | Aerodynamic Drag            | @f$ \mathbf{F}_d = -\tfrac{1}{2} \rho C_d A \|\mathbf{v}\| \mathbf{v} @f$              | \c compute_6dof_derivatives() in \c 6dof.c              |
+ * | Coriolis Force              | @f$ \mathbf{a}_c = -2\mathbf{\omega}_E \times \mathbf{v} @f$                           | \c compute_6dof_derivatives() in \c 6dof.c              |
+ * | Eötvös Effect               | @f$ a_e = 2 \omega_E v \cos(\phi) @f$                                                  | \c compute_6dof_derivatives() in \c 6dof.c              |
+ * | Magnus (Spin-Induced) Force | @f$ \mathbf{F}_m \propto \mathbf{\omega}_{spin} \times \mathbf{v} v                    | \c compute_6dof_derivatives() in \c 6dof.c              |
+ * | Bullet Tilt (optional)      | Empirical damping on rotational velocity                                               | \c compute_6dof_derivatives() in \c 6dof.c              |
+ * | Gravity                     | Directional, altitude- and latitude-dependent                                          | \c compute_6dof_derivatives() in \c 6dof.c              |
+ * | Quaternion Derivative       | @f$ \dot{q} = \tfrac{1}{2} q \otimes \omega @f$                                        | \c quaternion_derivative() in \c quat.c                 |
+ * | Quaternion Integration      | Semi-implicit Euler or RK update                                                       | \c quaternion_update() in \c quat.c                     |
+ * | Air Density Calculation     | @f$ \rho = \frac{p}{R T} @f$ (Ideal Gas Law)                                           | \c compute_air_density() in \c environment.c            |
+ * | Speed of Sound              | @f$ c = \sqrt{\gamma R T} @f$                                                          | \c compute_speed_of_sound() in \c environment.c         |
+ * | Mach Number                 | @f$ M = \frac{v}{c} @f$                                                                | \c compute_mach_number() in \c environment.c            |
+ * | Drag Coefficient Lookup     | Binary + linear interpolation over Mach tables                                         | \c interpolate_cd_from_table() in \c load_drag_tables.c |

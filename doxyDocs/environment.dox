@@ -1,0 +1,88 @@
+/**
+ * @page environment Environmental Modeling System
+ * @tableofcontents
+ *
+ * @section overview Overview
+ *
+ * BBTC's environmental modeling system dynamically computes atmospheric variables that influence projectile behavior during flight. These variables include air temperature, pressure, density, humidity, and the speed of sound, each of which contributes to realistic drag, lift, and sound barrier effects.
+ *
+ * This system ensures that long-range simulations remain accurate across altitude bands, weather conditions, and geographic locations.
+ *
+ * @section model_components Core Atmospheric Variables
+ *
+ * The following variables are computed or adjusted during each simulation step:
+ *
+ * - \b Temperature ( @f$ T @f$ ) — Measured in kelvin (K), derived from user input or standard conditions.
+ * - \b  Pressure ( @f$ P @f$ ) — Calculated from altitude using the barometric formula:
+ *   @f[ P = P_0 \cdot \left(1 - \frac{L h}{T_0} \right)^{\frac{g M}{R L}} @f]
+ *   where:
+ *   - @f$ P_0 @f$: sea level pressure (101325 Pa)
+ *   - @f$ L @f$: lapse rate (0.0065 K/m)
+ *   - @f$ h @f$: altitude above sea level (m)
+ *   - @f$ T_0 @f$: reference temperature (K)
+ *   - @f$ g @f$: gravitational acceleration (9.80665 m/s²)
+ *   - @f$ M @f$: molar mass of Earth's air (0.0289644 kg/mol)
+ *   - @f$ R @f$: universal gas constant (8.31447 J/(mol·K))
+ *
+ * - \b Humidity (H) — Impacts the effective air density and speed of sound.
+ * - \b Air \b Density @f$ \rho @f$ — Adjusted based on altitude, temperature, and humidity:
+ *   @f[ \rho = \frac{P}{R_d T} + \frac{e}{R_v T} @f]
+ *   where:
+ *   - @f$ e @f$: vapor pressure from humidity
+ *   - @f$ R_d @f$: specific gas constant for dry air
+ *   - @f$ R_v @f$: specific gas constant for water vapor
+ *
+ * - \b Speed \b of \b Sound (@f$a@f$) — Influences Mach number and drag coefficient lookup:
+ *   @f[ a = \sqrt{\gamma R T} @f]
+ *   @f$ \gamma @f$ and @f$ R @f$ are adjusted for humidity using weighted mixing rules.
+ *
+ * @section wind Wind Modeling
+ *
+ * Wind is currently modeled as a fixed 3D vector, representing a constant wind condition throughout the simulation. It is subtracted from the projectile's velocity to obtain a relative airspeed used in drag and lift calculations:
+ *
+ * @f[ \mathbf{v}_{\mathrm{rel}} = \mathbf{v}_{\mathrm{bullet}} - \mathbf{v}_{\mathrm{wind}} @f]
+ *
+ * The wind vector is defined in world coordinates (e.g., east/north/up), and its effect is consistent over time.
+ *
+ * Future versions of BBTC may implement time-varying wind patterns, terrain-influenced wind behavior, or stochastic gust models.
+ *
+ * @section altitude Altitude Effects
+ *
+ * All environmental variables dynamically update based on the bullet's instantaneous altitude. As the bullet ascends or descends, pressure and temperature change according to the International Standard Atmosphere (ISA) model, and density is recalculated accordingly.
+ *
+ * These changes allow BBTC to realistically model supersonic transition behavior and long-range arcing flight paths.
+ *
+ * @section units Units Used
+ *
+ * Internally, the environmental model uses strict SI units:
+ * - Temperature: K             (Kelvin)
+ * - Pressure: Pa               (Pascals = 0.000145038 psi = 0.00750062 mmHg)
+ * - Humidity: %                (0.0 to 1.0, where 1.0 = 100%)
+ * - Density: kg/m³             (kilograms per cubic meter = 0.062428 lb/ft³)
+ * - Speed of sound: m/s        (meters per second = 3.28084 ft/s = 2.23694 mph)
+ *
+ * 
+ * @section output Output Variables Logged
+ *
+ * The environment model contributes the following to each output step:
+ * - Air density
+ * - Temperature
+ * - Pressure
+ * - Speed of sound
+ * - Relative velocity (for drag and Mach)
+ *
+ * These values are logged alongside core trajectory information to allow deep post-analysis and visualization.
+ *
+ * @section extensions Future Enhancements
+ *
+ * Planned improvements to the environmental system include:
+ * - Input able to be entered in U.S. customary units and to be converted to SI on ingest. The simulation could optionally output a secondary CSV log in U.S. units for convenience.
+ * - Dynamic wind profiles
+ * - Weather layer ingestion (e.g., METAR or grib2 feeds)
+ * - Pressure wave modeling
+ * - Humidity-based fog effects or index of refraction simulation
+ * - Layered atmospheric models with inversion zones
+ * - Custom weather and location data uploaded by the user or downloaded by the user to the program through a weather API
+ *
+ * BBTC’s environmental engine ensures that projectile motion is grounded in physical reality and can adapt to a wide range of shooting scenarios.
+ */

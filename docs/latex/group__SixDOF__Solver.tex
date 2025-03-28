@@ -1,0 +1,282 @@
+\doxysection{6-\/DOF Solver}
+\hypertarget{group__SixDOF__Solver}{}\label{group__SixDOF__Solver}\index{6-\/DOF Solver@{6-\/DOF Solver}}
+\doxysubsubsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structInertia}{Inertia}}
+\begin{DoxyCompactList}\small\item\em Moments of inertia for the projectile in principal axes. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAeroCoeffs}{Aero\+Coeffs}}
+\begin{DoxyCompactList}\small\item\em Aerodynamic coefficients for advanced torque/force modeling. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structSixDOFSpecs}{Six\+DOFSpecs}}
+\begin{DoxyCompactList}\small\item\em Extended projectile specifications for 6-\/DOF. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{group__SixDOF__Solver_ga46780e005f4e6eae6b66b1ba1cef7af7}{STANDARD\+\_\+\+EARTH\+\_\+\+ROTATION}}~7.\+292115e-\/5
+\item 
+\#define \mbox{\hyperlink{group__SixDOF__Solver_gae71449b1cc6e6250b91f539153a7a0d3}{M\+\_\+\+PI}}~3.\+14159265358979323846
+\item 
+\#define \mbox{\hyperlink{group__SixDOF__Solver_gab7aee7b3221fb08bac0a8360ad6dfeb4}{PI\+\_\+\+OVER\+\_\+180}}~(\mbox{\hyperlink{group__SixDOF__Solver_gae71449b1cc6e6250b91f539153a7a0d3}{M\+\_\+\+PI}} / 180.\+0)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+static void \mbox{\hyperlink{group__SixDOF__Solver_ga4475665a0faf450196a7f3b1eb662e24}{cross3}} (double a\mbox{[}3\mbox{]}, double b\mbox{[}3\mbox{]}, double out\mbox{[}3\mbox{]})
+\begin{DoxyCompactList}\small\item\em Cross product\+: $ \mathbf{out} = \mathbf{a} \times \mathbf{b} $. \end{DoxyCompactList}\item 
+static double \mbox{\hyperlink{group__SixDOF__Solver_ga3ad3c114387ca290c2e73c1a0303bcfa}{clamp\+\_\+magnus}} (double x, double min, double max)
+\begin{DoxyCompactList}\small\item\em Clamps Magnus force to a safe maximum based on bullet weight. \end{DoxyCompactList}\item 
+static void \mbox{\hyperlink{group__SixDOF__Solver_ga8e1ba07428e6bd9c17ed8e4240fa4ab1}{compute\+\_\+bullet\+\_\+axes\+\_\+world}} (const \mbox{\hyperlink{structQuat}{Quat}} \texorpdfstring{$\ast$}{*}ori, double forwardW\mbox{[}3\mbox{]}, double upW\mbox{[}3\mbox{]}, double rightW\mbox{[}3\mbox{]})
+\begin{DoxyCompactList}\small\item\em Computes bullet\textquotesingle{}s forward, up, and right unit vectors in world coordinates. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+double \mbox{\hyperlink{group__SixDOF__Solver_ga1502beeaa2d039fc3436d67c98babf7f}{Inertia\+::\+Ixx}}
+\item 
+double \mbox{\hyperlink{group__SixDOF__Solver_gab34f6dcb64fe337e2eb9c65bc0001943}{Inertia\+::\+Iyy}}
+\item 
+double \mbox{\hyperlink{group__SixDOF__Solver_ga756c322aa2121a7acf9caf3267d65e67}{Inertia\+::\+Izz}}
+\item 
+double \mbox{\hyperlink{group__SixDOF__Solver_gad5f429bd78c052f2efca5b040168c945}{Aero\+Coeffs\+::\+Cm}}
+\begin{DoxyCompactList}\small\item\em Magnus coefficient (lift from spin) \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{group__SixDOF__Solver_gab4cde4437b9a805cd0112df7f4161400}{Aero\+Coeffs\+::\+Cspin\+Damp}}
+\begin{DoxyCompactList}\small\item\em Damping term proportional to spin rate. \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{group__SixDOF__Solver_gad9c229aab8f3ed03e03db85d150bd2a9}{Aero\+Coeffs\+::\+Cyaw\+Repose}}
+\begin{DoxyCompactList}\small\item\em Drift force due to yaw-\/of-\/repose. \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{group__SixDOF__Solver_ga4fda5915b2c1426a753c9af20efb6639}{Aero\+Coeffs\+::\+Ctilt}}
+\begin{DoxyCompactList}\small\item\em Torque from bullet tilt during flight. \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{group__SixDOF__Solver_ga554e068a77bd5d74f59d055230ea17e0}{Six\+DOFSpecs\+::diam}}
+\begin{DoxyCompactList}\small\item\em Bullet diameter (caliber) in meters. \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{group__SixDOF__Solver_ga85a4a58a0f6c5cb231e69b5b1a9f05f7}{Six\+DOFSpecs\+::area}}
+\begin{DoxyCompactList}\small\item\em Cross-\/sectional area in m\texorpdfstring{$^\wedge$}{\string^}2. \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{group__SixDOF__Solver_gab9235f6824d1c9f06ce42e4467b2b93f}{Six\+DOFSpecs\+::area\+Over\+Mass}}
+\begin{DoxyCompactList}\small\item\em Precomputed area / mass ratio. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structInertia}{Inertia}} \mbox{\hyperlink{group__SixDOF__Solver_gad230dd98b2ca5f57f681fa75ffadc926}{Six\+DOFSpecs\+::inertia}}
+\begin{DoxyCompactList}\small\item\em Diagonal inertia tensor. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{structAeroCoeffs}{Aero\+Coeffs}} \mbox{\hyperlink{group__SixDOF__Solver_gae686e1907c72758ec8ad542324f9c8fa}{Six\+DOFSpecs\+::aero}}
+\begin{DoxyCompactList}\small\item\em Aerodynamic coefficients. \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{group__SixDOF__Solver_ga2ae4a37273786acb757a9b0de5b18908}{Six\+DOFSpecs\+::mass}}
+\begin{DoxyCompactList}\small\item\em Mass in kilograms. \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{group__SixDOF__Solver_gaafea13932ccfa2b7e68eb9d3d030cfb5}{Six\+DOFSpecs\+::r\+AC\+\_\+local}} \mbox{[}3\mbox{]}
+\begin{DoxyCompactList}\small\item\em Aerodynamic center offset vector in local bullet coordinates. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+\doxysubsection{Macro Definition Documentation}
+\Hypertarget{group__SixDOF__Solver_gae71449b1cc6e6250b91f539153a7a0d3}\label{group__SixDOF__Solver_gae71449b1cc6e6250b91f539153a7a0d3} 
+\index{6-\/DOF Solver@{6-\/DOF Solver}!M\_PI@{M\_PI}}
+\index{M\_PI@{M\_PI}!6-\/DOF Solver@{6-\/DOF Solver}}
+\doxysubsubsection{\texorpdfstring{M\_PI}{M\_PI}}
+{\footnotesize\ttfamily \#define M\+\_\+\+PI~3.\+14159265358979323846}
+
+\Hypertarget{group__SixDOF__Solver_gab7aee7b3221fb08bac0a8360ad6dfeb4}\label{group__SixDOF__Solver_gab7aee7b3221fb08bac0a8360ad6dfeb4} 
+\index{6-\/DOF Solver@{6-\/DOF Solver}!PI\_OVER\_180@{PI\_OVER\_180}}
+\index{PI\_OVER\_180@{PI\_OVER\_180}!6-\/DOF Solver@{6-\/DOF Solver}}
+\doxysubsubsection{\texorpdfstring{PI\_OVER\_180}{PI\_OVER\_180}}
+{\footnotesize\ttfamily \#define PI\+\_\+\+OVER\+\_\+180~(\mbox{\hyperlink{group__SixDOF__Solver_gae71449b1cc6e6250b91f539153a7a0d3}{M\+\_\+\+PI}} / 180.\+0)}
+
+\Hypertarget{group__SixDOF__Solver_ga46780e005f4e6eae6b66b1ba1cef7af7}\label{group__SixDOF__Solver_ga46780e005f4e6eae6b66b1ba1cef7af7} 
+\index{6-\/DOF Solver@{6-\/DOF Solver}!STANDARD\_EARTH\_ROTATION@{STANDARD\_EARTH\_ROTATION}}
+\index{STANDARD\_EARTH\_ROTATION@{STANDARD\_EARTH\_ROTATION}!6-\/DOF Solver@{6-\/DOF Solver}}
+\doxysubsubsection{\texorpdfstring{STANDARD\_EARTH\_ROTATION}{STANDARD\_EARTH\_ROTATION}}
+{\footnotesize\ttfamily \#define STANDARD\+\_\+\+EARTH\+\_\+\+ROTATION~7.\+292115e-\/5}
+
+
+
+\doxysubsection{Function Documentation}
+\Hypertarget{group__SixDOF__Solver_ga3ad3c114387ca290c2e73c1a0303bcfa}\label{group__SixDOF__Solver_ga3ad3c114387ca290c2e73c1a0303bcfa} 
+\index{6-\/DOF Solver@{6-\/DOF Solver}!clamp\_magnus@{clamp\_magnus}}
+\index{clamp\_magnus@{clamp\_magnus}!6-\/DOF Solver@{6-\/DOF Solver}}
+\doxysubsubsection{\texorpdfstring{clamp\_magnus()}{clamp\_magnus()}}
+{\footnotesize\ttfamily static double clamp\+\_\+magnus (\begin{DoxyParamCaption}\item[{double}]{x,  }\item[{double}]{min,  }\item[{double}]{max }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Clamps Magnus force to a safe maximum based on bullet weight. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em x} & Input force value to clamp \\
+\hline
+{\em min} & Minimum allowable value \\
+\hline
+{\em max} & Maximum allowable value \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Clamped value in the range \mbox{[}min, max\mbox{]} 
+\end{DoxyReturn}
+\Hypertarget{group__SixDOF__Solver_ga8e1ba07428e6bd9c17ed8e4240fa4ab1}\label{group__SixDOF__Solver_ga8e1ba07428e6bd9c17ed8e4240fa4ab1} 
+\index{6-\/DOF Solver@{6-\/DOF Solver}!compute\_bullet\_axes\_world@{compute\_bullet\_axes\_world}}
+\index{compute\_bullet\_axes\_world@{compute\_bullet\_axes\_world}!6-\/DOF Solver@{6-\/DOF Solver}}
+\doxysubsubsection{\texorpdfstring{compute\_bullet\_axes\_world()}{compute\_bullet\_axes\_world()}}
+{\footnotesize\ttfamily static void compute\+\_\+bullet\+\_\+axes\+\_\+world (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{structQuat}{Quat}} \texorpdfstring{$\ast$}{*}}]{ori,  }\item[{double}]{forwardW\mbox{[}3\mbox{]},  }\item[{double}]{upW\mbox{[}3\mbox{]},  }\item[{double}]{rightW\mbox{[}3\mbox{]} }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Computes bullet\textquotesingle{}s forward, up, and right unit vectors in world coordinates. 
+
+Useful for determining spin-\/axis orientation, side forces, and yaw-\/of-\/repose effects.
+
+
+\begin{DoxyParams}{Parameters}
+{\em ori} & Bullet orientation quaternion \\
+\hline
+{\em forwardW} & Output forward vector in world space \\
+\hline
+{\em upW} & Output up vector in world space \\
+\hline
+{\em rightW} & Output right vector in world space \\
+\hline
+\end{DoxyParams}
+\Hypertarget{group__SixDOF__Solver_ga4475665a0faf450196a7f3b1eb662e24}\label{group__SixDOF__Solver_ga4475665a0faf450196a7f3b1eb662e24} 
+\index{6-\/DOF Solver@{6-\/DOF Solver}!cross3@{cross3}}
+\index{cross3@{cross3}!6-\/DOF Solver@{6-\/DOF Solver}}
+\doxysubsubsection{\texorpdfstring{cross3()}{cross3()}}
+{\footnotesize\ttfamily static void cross3 (\begin{DoxyParamCaption}\item[{double}]{a\mbox{[}3\mbox{]},  }\item[{double}]{b\mbox{[}3\mbox{]},  }\item[{double}]{out\mbox{[}3\mbox{]} }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Cross product\+: $ \mathbf{out} = \mathbf{a} \times \mathbf{b} $. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em a} & Left-\/hand 3D vector \\
+\hline
+{\em b} & Right-\/hand 3D vector \\
+\hline
+{\em out} & Output vector ( $ \mathbf{a} \times \mathbf{b} $) \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Variable Documentation}
+\Hypertarget{group__SixDOF__Solver_gae686e1907c72758ec8ad542324f9c8fa}\label{group__SixDOF__Solver_gae686e1907c72758ec8ad542324f9c8fa} 
+\index{6-\/DOF Solver@{6-\/DOF Solver}!aero@{aero}}
+\index{aero@{aero}!6-\/DOF Solver@{6-\/DOF Solver}}
+\doxysubsubsection{\texorpdfstring{aero}{aero}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structAeroCoeffs}{Aero\+Coeffs}} Six\+DOFSpecs\+::aero}
+
+
+
+Aerodynamic coefficients. 
+
+\Hypertarget{group__SixDOF__Solver_ga85a4a58a0f6c5cb231e69b5b1a9f05f7}\label{group__SixDOF__Solver_ga85a4a58a0f6c5cb231e69b5b1a9f05f7} 
+\index{6-\/DOF Solver@{6-\/DOF Solver}!area@{area}}
+\index{area@{area}!6-\/DOF Solver@{6-\/DOF Solver}}
+\doxysubsubsection{\texorpdfstring{area}{area}}
+{\footnotesize\ttfamily double Six\+DOFSpecs\+::area}
+
+
+
+Cross-\/sectional area in m\texorpdfstring{$^\wedge$}{\string^}2. 
+
+\Hypertarget{group__SixDOF__Solver_gab9235f6824d1c9f06ce42e4467b2b93f}\label{group__SixDOF__Solver_gab9235f6824d1c9f06ce42e4467b2b93f} 
+\index{6-\/DOF Solver@{6-\/DOF Solver}!areaOverMass@{areaOverMass}}
+\index{areaOverMass@{areaOverMass}!6-\/DOF Solver@{6-\/DOF Solver}}
+\doxysubsubsection{\texorpdfstring{areaOverMass}{areaOverMass}}
+{\footnotesize\ttfamily double Six\+DOFSpecs\+::area\+Over\+Mass}
+
+
+
+Precomputed area / mass ratio. 
+
+\Hypertarget{group__SixDOF__Solver_gad5f429bd78c052f2efca5b040168c945}\label{group__SixDOF__Solver_gad5f429bd78c052f2efca5b040168c945} 
+\index{6-\/DOF Solver@{6-\/DOF Solver}!Cm@{Cm}}
+\index{Cm@{Cm}!6-\/DOF Solver@{6-\/DOF Solver}}
+\doxysubsubsection{\texorpdfstring{Cm}{Cm}}
+{\footnotesize\ttfamily double Aero\+Coeffs\+::\+Cm}
+
+
+
+Magnus coefficient (lift from spin) 
+
+\Hypertarget{group__SixDOF__Solver_gab4cde4437b9a805cd0112df7f4161400}\label{group__SixDOF__Solver_gab4cde4437b9a805cd0112df7f4161400} 
+\index{6-\/DOF Solver@{6-\/DOF Solver}!CspinDamp@{CspinDamp}}
+\index{CspinDamp@{CspinDamp}!6-\/DOF Solver@{6-\/DOF Solver}}
+\doxysubsubsection{\texorpdfstring{CspinDamp}{CspinDamp}}
+{\footnotesize\ttfamily double Aero\+Coeffs\+::\+Cspin\+Damp}
+
+
+
+Damping term proportional to spin rate. 
+
+\Hypertarget{group__SixDOF__Solver_ga4fda5915b2c1426a753c9af20efb6639}\label{group__SixDOF__Solver_ga4fda5915b2c1426a753c9af20efb6639} 
+\index{6-\/DOF Solver@{6-\/DOF Solver}!Ctilt@{Ctilt}}
+\index{Ctilt@{Ctilt}!6-\/DOF Solver@{6-\/DOF Solver}}
+\doxysubsubsection{\texorpdfstring{Ctilt}{Ctilt}}
+{\footnotesize\ttfamily double Aero\+Coeffs\+::\+Ctilt}
+
+
+
+Torque from bullet tilt during flight. 
+
+\Hypertarget{group__SixDOF__Solver_gad9c229aab8f3ed03e03db85d150bd2a9}\label{group__SixDOF__Solver_gad9c229aab8f3ed03e03db85d150bd2a9} 
+\index{6-\/DOF Solver@{6-\/DOF Solver}!CyawRepose@{CyawRepose}}
+\index{CyawRepose@{CyawRepose}!6-\/DOF Solver@{6-\/DOF Solver}}
+\doxysubsubsection{\texorpdfstring{CyawRepose}{CyawRepose}}
+{\footnotesize\ttfamily double Aero\+Coeffs\+::\+Cyaw\+Repose}
+
+
+
+Drift force due to yaw-\/of-\/repose. 
+
+\Hypertarget{group__SixDOF__Solver_ga554e068a77bd5d74f59d055230ea17e0}\label{group__SixDOF__Solver_ga554e068a77bd5d74f59d055230ea17e0} 
+\index{6-\/DOF Solver@{6-\/DOF Solver}!diam@{diam}}
+\index{diam@{diam}!6-\/DOF Solver@{6-\/DOF Solver}}
+\doxysubsubsection{\texorpdfstring{diam}{diam}}
+{\footnotesize\ttfamily double Six\+DOFSpecs\+::diam}
+
+
+
+Bullet diameter (caliber) in meters. 
+
+\Hypertarget{group__SixDOF__Solver_gad230dd98b2ca5f57f681fa75ffadc926}\label{group__SixDOF__Solver_gad230dd98b2ca5f57f681fa75ffadc926} 
+\index{6-\/DOF Solver@{6-\/DOF Solver}!inertia@{inertia}}
+\index{inertia@{inertia}!6-\/DOF Solver@{6-\/DOF Solver}}
+\doxysubsubsection{\texorpdfstring{inertia}{inertia}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structInertia}{Inertia}} Six\+DOFSpecs\+::inertia}
+
+
+
+Diagonal inertia tensor. 
+
+\Hypertarget{group__SixDOF__Solver_ga1502beeaa2d039fc3436d67c98babf7f}\label{group__SixDOF__Solver_ga1502beeaa2d039fc3436d67c98babf7f} 
+\index{6-\/DOF Solver@{6-\/DOF Solver}!Ixx@{Ixx}}
+\index{Ixx@{Ixx}!6-\/DOF Solver@{6-\/DOF Solver}}
+\doxysubsubsection{\texorpdfstring{Ixx}{Ixx}}
+{\footnotesize\ttfamily double Inertia\+::\+Ixx}
+
+\Hypertarget{group__SixDOF__Solver_gab34f6dcb64fe337e2eb9c65bc0001943}\label{group__SixDOF__Solver_gab34f6dcb64fe337e2eb9c65bc0001943} 
+\index{6-\/DOF Solver@{6-\/DOF Solver}!Iyy@{Iyy}}
+\index{Iyy@{Iyy}!6-\/DOF Solver@{6-\/DOF Solver}}
+\doxysubsubsection{\texorpdfstring{Iyy}{Iyy}}
+{\footnotesize\ttfamily double Inertia\+::\+Iyy}
+
+\Hypertarget{group__SixDOF__Solver_ga756c322aa2121a7acf9caf3267d65e67}\label{group__SixDOF__Solver_ga756c322aa2121a7acf9caf3267d65e67} 
+\index{6-\/DOF Solver@{6-\/DOF Solver}!Izz@{Izz}}
+\index{Izz@{Izz}!6-\/DOF Solver@{6-\/DOF Solver}}
+\doxysubsubsection{\texorpdfstring{Izz}{Izz}}
+{\footnotesize\ttfamily double Inertia\+::\+Izz}
+
+\Hypertarget{group__SixDOF__Solver_ga2ae4a37273786acb757a9b0de5b18908}\label{group__SixDOF__Solver_ga2ae4a37273786acb757a9b0de5b18908} 
+\index{6-\/DOF Solver@{6-\/DOF Solver}!mass@{mass}}
+\index{mass@{mass}!6-\/DOF Solver@{6-\/DOF Solver}}
+\doxysubsubsection{\texorpdfstring{mass}{mass}}
+{\footnotesize\ttfamily double Six\+DOFSpecs\+::mass}
+
+
+
+Mass in kilograms. 
+
+\Hypertarget{group__SixDOF__Solver_gaafea13932ccfa2b7e68eb9d3d030cfb5}\label{group__SixDOF__Solver_gaafea13932ccfa2b7e68eb9d3d030cfb5} 
+\index{6-\/DOF Solver@{6-\/DOF Solver}!rAC\_local@{rAC\_local}}
+\index{rAC\_local@{rAC\_local}!6-\/DOF Solver@{6-\/DOF Solver}}
+\doxysubsubsection{\texorpdfstring{rAC\_local}{rAC\_local}}
+{\footnotesize\ttfamily double Six\+DOFSpecs\+::r\+AC\+\_\+local\mbox{[}3\mbox{]}}
+
+
+
+Aerodynamic center offset vector in local bullet coordinates. 
+

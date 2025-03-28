@@ -1,0 +1,126 @@
+/**
+@page quat_math Quaternion Mathematics
+
+@section overview Overview
+
+This section documents the quaternion math used by B.B.T.C. to handle 3D orientation and rotation. Quaternions offer a compact, non-singular, and numerically stable method of representing orientations in three dimensions, making them a superior choice over Euler angles or rotation matrices for physics simulations that require smooth, continuous rotational updates.
+
+This ballistic simulator uses quaternions to represent projectile orientation in a rotation-aware, drift-free way. This is essential in modeling spin-stabilized projectiles with gyroscopic precession and nutation effects.
+
+---
+
+@section rotation_math Why Quaternions?
+
+Rotation in 3D space can be represented in multiple ways:
+- <b>Euler angles</b> (yaw, pitch, roll) are intuitive but suffer from <i> gimbal lock </i>.
+- <b>Rotation matrices</b> are expressive but large (9 values) and can become numerically unstable.
+- <b> Axis-angle pairs</b> are compact but harder to interpolate or apply repeatedly.
+- <b> Quaternions</b> combine the best of all worlds:
+  - Compact: only 4 values.
+  - Interpolatable.
+  - No gimbal lock.
+  - Fast composition and inverse operations.
+  - Easily convertible to/from axis-angle and rotation matrix forms.
+
+In mathematical terms, a unit quaternion can be expressed as:
+
+@f[
+q = w + xi + yj + zk
+@f]
+
+where:
+- @f$ w \in \mathbb{R} @f$ is the scalar part,
+- @f$ (x, y, z) \in \mathbb{R}^3 @f$ forms the vector part.
+
+For unit quaternions (used in rotation), the constraint is:
+
+@f[
+w^2 + x^2 + y^2 + z^2 = 1
+@f]
+
+---
+
+@section application_in_code Application in Code
+
+In this codebase, quaternions are used to:
+- Represent projectile orientation in 3D space.
+- Compute orientation updates during simulation.
+- Apply compound rotations via quaternion multiplication.
+- Normalize after integration to maintain unit length.
+
+You provide the following functionality in \c quat.c and \c quat.h:
+- \c quat_multiply() — multiplies two quaternions.
+- \c quat_normalize() — ensures unit quaternion normalization.
+- \c quat_from_axis_angle() — converts axis-angle pairs to quaternions.
+- \c quat_rotate_vec3() — applies quaternion rotation to a 3D vector.
+- \c quat_to_rotation_matrix() — converts quaternion to 3×3 matrix (optional).
+- Other utility functions for quaternion conjugates and inverses.
+
+These are the backbone of rotational motion in the solver.
+
+---
+
+@section update_step Quaternion Update Step
+
+Orientation is updated every time step using the angular velocity vector \( \omega \), integrated into quaternion space.
+
+Given a quaternion @f$ q @f$ and angular velocity @f$ \omega = (\omega_x, \omega_y, \omega_z) @f$, we construct a pure quaternion:
+
+@f[
+\Omega = 0 + \omega_x i + \omega_y j + \omega_z k
+@f]
+
+Then, the derivative of orientation is:
+
+@f[
+\frac{dq}{dt} = \frac{1}{2} q \cdot \Omega
+@f]
+
+This differential equation is integrated numerically (e.g., via RK4), and the result is normalized to maintain unit length.
+
+---
+
+@section future_interpolation Optional: SLERP (Not Implemented)
+
+<b> SLERP</b>, or <i> Spherical Linear intERPolation</i>, is a method for smoothly interpolating between two orientations represented by unit quaternions.
+
+It has the following properties:
+- Constant angular velocity interpolation.
+- Always takes the shortest arc between two orientations.
+- Avoids artifacts from linear interpolation or Euler angle blending.
+
+Although <b> SLERP is not currently implemented</b> in this program, its mathematical definition is provided here for reference:
+
+Given two unit quaternions @f$ q_0 @f$ and @f$ q_1 @f$, and interpolation parameter @f$ t \in [0, 1] @f$, the SLERP function is:
+
+@f[
+\mathrm{SLERP}(q_0, q_1, t) = \frac{\sin((1 - t)\theta)}{\sin(\theta)} q_0 + \frac{\sin(t \theta)}{\sin(\theta)} q_1
+@f]
+
+where @f$ \theta @f$ is the angle between @f$ q_0 @f$ and @f$ q_1 @f$:
+
+@f[
+\cos(\theta) = q_0 \cdot q_1
+@f]
+
+I am considering implementing SLERP in future revisions to enable smooth interpolation of projectile orientation (e.g., for cinematic visualization, camera tracking, or guided munitions).
+
+---
+
+@section summary Summary
+
+Quaternions are used in this simulator because they are:
+
+- \b Robust against gimbal lock.
+- \b Lightweight and fast.
+- \b Ideal for compound 3D rotations.
+- <b> Naturally suited </b> to Runge-Kutta integration.
+
+This implementation is already capable of full quaternion-based motion integration, and this provides a powerful foundation for realistic rotational dynamics. The current state of the program leaves the door open for interpolation methods like SLERP, but currently sticks to what’s implemented.
+
+For more detail, see:
+- \c quat.h — quaternion API definition.
+- \c quat.c — implementation of rotation math.
+- \c core_6dof.dox — overview of how orientation is integrated.
+
+*/

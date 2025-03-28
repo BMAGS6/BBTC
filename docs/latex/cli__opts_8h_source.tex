@@ -1,0 +1,50 @@
+\doxysection{cli\+\_\+opts.\+h}
+\hypertarget{cli__opts_8h_source}{}\label{cli__opts_8h_source}\index{cli\_opts.h@{cli\_opts.h}}
+\mbox{\hyperlink{cli__opts_8h}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#ifndef\ CLI\_OPTS\_H}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#define\ CLI\_OPTS\_H}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <stdio.h>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <getopt.h>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{solver__options_8h}{solver\_options.h}}"{}}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{load__drag__tables_8h}{load\_drag\_tables.h}}"{}}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#ifdef\ \_\_cplusplus}}
+\DoxyCodeLine{00015\ \ \ \ \ \textcolor{keyword}{extern}\ \textcolor{stringliteral}{"{}C"{}}\{}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00030\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct}}
+\DoxyCodeLine{00031\ \{}
+\DoxyCodeLine{00032\ \ \ \ \ \mbox{\hyperlink{structSolverOptions}{SolverOptions}}\ \mbox{\hyperlink{structCLI__inputs_a6b30f1f32a5d14334d8a48f2ebfb7d6e}{options}};\ \ \ \textcolor{comment}{/*\ Toggles/flags\ (Magnus,\ Coriolis,\ etc.)\ from\ solver\_options.h\ */}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ \ \textcolor{comment}{//\ Ballistic\ Parameters:}}
+\DoxyCodeLine{00035\ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{structCLI__inputs_aa1f338bd65c2eddcb12796d55fa50de7}{muzzleSpeed}};\ \ \ \ \ \ }
+\DoxyCodeLine{00036\ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{structCLI__inputs_a10fb8a655a86d899ea4b8d9d7bc81572}{muzzleAngleDeg}};\ \ \ }
+\DoxyCodeLine{00037\ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{structCLI__inputs_afdd8777a48e0536d483c97f2969c7e28}{tiltFactor}};\ \ \ \ \ \ \ }
+\DoxyCodeLine{00038\ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{structCLI__inputs_ab12cd911b8f7824c231f5d2ffd7c86e8}{yawFactor}};\ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00039\ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{structCLI__inputs_aa2556313e881129020f98f6f6af7928e}{diam}};\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00040\ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{structCLI__inputs_ac588d4e7c6c44211506925d56b5ed810}{shotAngle}};\ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00041\ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{structCLI__inputs_a8d0541a5b69e424e61a1b5f8b7d131fe}{twistInches}};\ \ \ \ \ \ }
+\DoxyCodeLine{00042\ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{structCLI__inputs_a069417f7461413e39f9764e46a287101}{timeStep}};\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00043\ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{structCLI__inputs_a5d0c936af7c252e287a2ca7450500977}{azimuthDeg}};\ \ \ \ \ \ \ }
+\DoxyCodeLine{00044\ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{structCLI__inputs_a21c22c675e2c02588dc1393bcb754f2d}{ambientTemp}};\ \ \ \ \ \ }
+\DoxyCodeLine{00045\ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{structCLI__inputs_ad3df87de2055203a9bc1ad9c04b75d20}{mass}};\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{structCLI__inputs_a8bfa61df2db519cf195f05cabd461620}{latitude}};\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{structCLI__inputs_acd4e84f560371ac35d60a0d8f447eeb6}{altitude}};\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00049\ \ \ \ \ \mbox{\hyperlink{group__DragTableFunctions_ga326940386c828daadb8613c8eddf8d15}{DragModel}}\ \mbox{\hyperlink{structCLI__inputs_a408090e11dec9dcf6a525dfec7d9be9e}{dragModelChoice}};\ }
+\DoxyCodeLine{00050\ \}\ \mbox{\hyperlink{structCLI__inputs}{CLI\_inputs}};}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00059\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{group__CLI__Parsing_ga464246c8023836fadaead439d71dc97d}{initialize\_CLI\_inputs}}(\mbox{\hyperlink{structCLI__inputs}{CLI\_inputs}}\ *cli);}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00072\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{group__CLI__Parsing_gacdd3189c1d563aede4bf528077cbb76c}{parse\_options}}(\mbox{\hyperlink{structCLI__inputs}{CLI\_inputs}}\ *cli,\ \textcolor{keywordtype}{int}\ argc,\ \textcolor{keywordtype}{char}\ *argv[]);}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00075\ \textcolor{comment}{//\ end\ of\ CLI\_Parsing\ group}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \textcolor{preprocessor}{\#ifdef\ \_\_cplusplus}}
+\DoxyCodeLine{00078\ \}}
+\DoxyCodeLine{00079\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00080\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ CLI\_OPTS\_H\ */}\textcolor{preprocessor}{}}
+
+\end{DoxyCode}

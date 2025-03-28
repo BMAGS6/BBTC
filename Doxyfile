@@ -1,0 +1,46 @@
+
+PROJECT_NAME           = "BMAGS Ballistic Trajectory Calculator"
+OUTPUT_DIRECTORY       = docs
+CREATE_SUBDIRS         = NO
+OPTIMIZE_OUTPUT_FOR_C  = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+EXTRACT_LOCAL_CLASSES  = YES
+INPUT                  = src include doxyDocs
+FILE_PATTERNS          = *.c *.h *.dox
+RECURSIVE              = YES
+GENERATE_HTML          = YES
+USE_PDFLATEX           = YES
+LATEX_CMD_NAME         = pdflatex
+GENERATE_TREEVIEW      = YES
+FULL_PATH_NAMES        = NO
+STRIP_FROM_PATH        = ../
+PDF_HYPERLINKS         = YES
+HAVE_DOT               = YES
+DOT_NUM_THREADS        = 4
+DOT_IMAGE_FORMAT       = eps
+INTERACTIVE_SVG        = NO
+DOT_PATH               = /usr/bin
+
+
+
+# Must be YES for formulas to render
+USE_MATHJAX           = YES
+GENERATE_LATEX        = YES
+EXTRACT_ALL           = YES
+
+
+# Optional but good
+LATEX_BATCHMODE       = NO
+LATEX_HIDE_INDICES    = NO
+
+# So doxygen plays nice with the compiler macros
+ENABLE_PREPROCESSING  = YES
+MACRO_EXPANSION       = YES
+EXPAND_ONLY_PREDEF    = YES
+PREDEFINED           += DOXYGEN \
+                        ALIGN(x)= \
+                        LIKELY(x)=x \
+                        UNLIKELY(x)=x \
+                        HOT= \
+                        EXPORT_SYMBOL=

@@ -1,0 +1,47 @@
+\doxysection{quat.\+h}
+\hypertarget{quat_8h_source}{}\label{quat_8h_source}\index{quat.h@{quat.h}}
+\mbox{\hyperlink{quat_8h}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#ifndef\ QUAT\_H}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#define\ QUAT\_H}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#ifdef\ \_\_cplusplus}}
+\DoxyCodeLine{00010\ \ \ \ \ \textcolor{keyword}{extern}\ \textcolor{stringliteral}{"{}C"{}}\{}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{compiler__macros_8h}{compiler\_macros.h}}"{}}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00025\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{group__OptimizationMacros_gada9d7622865275ae4289dff050f1589e}{ALIGN}}(64)}
+\DoxyCodeLine{00026\ \{}
+\DoxyCodeLine{00027\ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{structQuat_a454a60ad9af1b3ca644b0026ba37a954}{w}};\ \ }
+\DoxyCodeLine{00028\ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{structQuat_a6aa1caf29371ebc06326c4338731e39f}{x}};\ \ }
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{structQuat_a27a9f65a05aefe077c6651ccf91bdc00}{y}};\ \ }
+\DoxyCodeLine{00030\ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{structQuat_af98d19071354075f7f8eb55219bb478a}{z}};\ \ }
+\DoxyCodeLine{00031\ \}\ \mbox{\hyperlink{structQuat}{Quat}};}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00039\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{group__QuaternionUtilities_gaf1a2dc4413b04ab6fb4508f147b845b0}{quat\_normalize}}(\mbox{\hyperlink{structQuat}{Quat}}\ *q);}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00047\ \mbox{\hyperlink{structQuat}{Quat}}\ \mbox{\hyperlink{group__QuaternionUtilities_gadfcb29fdbc6bb0fed10df905dbe31651}{quat\_multiply}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structQuat}{Quat}}\ *q1,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structQuat}{Quat}}\ *q2);}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00054\ \mbox{\hyperlink{structQuat}{Quat}}\ \mbox{\hyperlink{group__QuaternionUtilities_ga3673e9e5770d09f6ec241f69f4e2ddeb}{quat\_conjugate}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structQuat}{Quat}}\ *q);}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00069\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{group__QuaternionUtilities_ga032eb9b7eb1d9d251023857aa607b398}{quat\_rotate\_vector}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structQuat}{Quat}}\ *q,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ vect[3],\ \textcolor{keywordtype}{double}\ outVect[3]);}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00079\ \mbox{\hyperlink{structQuat}{Quat}}\ \mbox{\hyperlink{group__QuaternionUtilities_gafaacfb44f8654f8b6061a4978ccb9f52}{quat\_from\_axis\_angle}}(\textcolor{keywordtype}{double}\ axis\_x,\ \textcolor{keywordtype}{double}\ axis\_y,\ \textcolor{keywordtype}{double}\ axis\_z,\ \textcolor{keywordtype}{double}\ angleRad);}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00089\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{group__QuaternionUtilities_gac3ca94dd79ace3ea9646ca2fb8f4e54f}{quat\_integrate\_angular\_velocity}}(\mbox{\hyperlink{structQuat}{Quat}}\ *q,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ w[3],\ \textcolor{keywordtype}{double}\ dt);}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00107\ \mbox{\hyperlink{structQuat}{Quat}}\ \mbox{\hyperlink{group__QuaternionUtilities_ga78f7e17f7b4bb25400a47f61cf2c91c4}{quat\_add\_scaled}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structQuat}{Quat}}\ *q,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structQuat}{Quat}}\ *dq,\ \textcolor{keywordtype}{double}\ scale);}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00110\ \textcolor{comment}{//\ end\ of\ group\ "{}QuaternionUtilities"{}}}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \textcolor{preprocessor}{\#ifdef\ \_\_cplusplus}}
+\DoxyCodeLine{00113\ \}}
+\DoxyCodeLine{00114\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ QUAT\_H\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ }
+
+\end{DoxyCode}

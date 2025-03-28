@@ -1,0 +1,199 @@
+/**
+ * @page a_core_6dof Six Degrees of Freedom (6DOF) Physics Engine
+ * @tableofcontents
+ *
+ * @section intro Introduction
+ *
+ * The 6DOF (Six Degrees of Freedom) solver in BBTC models a bullet’s full spatial motion:
+ * translation in X, Y, Z and rotation around pitch, yaw, and roll axes. It is a high-precision
+ * simulation that treats the projectile as a rigid body subject to aerodynamic, gravitational,
+ * and rotational forces.
+ *
+ * This is not a simplistic point-mass solver. It tracks:
+ * - 3D position and linear velocity
+ * - 3D angular velocity and orientation using quaternions
+ * - Environmental variables (air density, wind, humidity, etc.)
+ * - Variable drag coefficients from Mach-dependent tables (G1, G7)
+ *
+ * The system runs at fixed time steps and integrates motion using RK4 (Runge-Kutta 4th order) for
+ * both translational and rotational dynamics, ensuring accurate trajectories even under extreme
+ * velocities and long times of flight.
+ *
+ * @section motion Translational Dynamics
+ *
+ * <b>Newton’s Second Law</b> governs linear acceleration:
+ *
+ * @f[
+ * \mathbf{F}_{\mathrm{net}} = m \cdot \mathbf{a} \Rightarrow \vec{a} = \frac{\mathbf{F}_{\mathrm{net}}}{m}
+ * @f]
+ *
+ * Forces computed per step:
+ * - Gravity: @f$ \mathbf{F}_g = m \cdot \mathbf{g} @f$
+ * - Drag: @f$ \mathbf{F}_d = -\frac{1}{2} \rho C_d A \|\mathbf{v}\| \mathbf{v} @f$
+ * - Wind correction (if enabled)
+ *
+ * Drag coefficient @f$ C_d @f$ is determined dynamically using Mach number and interpolated
+ * from the drag table selected by the user that coresponds to their desired drag model.
+ *
+ * RK4 integration is applied:
+ *
+ * @f[
+ * \begin{array}{rl}
+ * k_1 & = f(t, \mathbf{v}) \\\\
+ * k_2 & = f\left(t + \frac{\Delta t}{2}, \mathbf{v} + \frac{\Delta t}{2}k_1\right) \\\\
+ * k_3 & = f\left(t + \frac{\Delta t}{2}, \mathbf{v} + \frac{\Delta t}{2}k_2\right) \\\\
+ * k_4 & = f(t + \Delta t, \mathbf{v} + \Delta t \cdot k_3) \\\\
+ * \mathbf{v}_{t+\Delta t} & = \mathbf{v}_t + \frac{\Delta t}{6}(k_1 + 2k_2 + 2k_3 + k_4)
+ * \end{array}
+ * @f]
+ *
+ *
+ * @section rotation Rotational Dynamics
+ *
+ * Angular velocity @f$ \mathbf{\omega} @f$ is integrated via quaternion differential equations.
+ * The quaternion @f$ q @f$ representing orientation is updated as:
+ *
+ * @f[ \frac{dq}{dt} = \frac{1}{2} q \otimes \omega_q @f]
+ *
+ * Where:
+ * - @f$ \omega_q = (0, \mathbf{\omega}) @f$ is the angular velocity as a pure quaternion
+ * - @f$ \otimes @f$ is quaternion multiplication
+ *
+ * The rotational integration also uses RK4 and includes normalization at every step to prevent
+ * drift from accumulating.
+ *
+ * @section forces Forces Modeled
+ *
+ * Current aerodynamic and environmental forces modeled:
+ * - Gravity
+ * - Mach-dependent drag
+ * - Static wind (constant direction and magnitude)
+ * - Air density variation via altitude and humidity
+ * - Speed of sound adjustment via temperature and humidity
+ * - Bullet spin decay due to air resistance
+ * - Lift via yaw-induced and pitch-induced terms
+ * - Coriolis force (Earth’s rotation)
+ * - Eötvös effect (horizontal velocity interacting with Earth rotation)
+ * - Latitude-based gravity and curvature approximation
+ *
+ * Wind is modeled as a fixed 3D vector for now. The idea of sinusoidal fluctuation (e.g., gusting wind
+ * patterns modeled by sine waves) is **not yet implemented** but may be considered in future releases.
+ *
+ * Spin decay is modeled by reducing angular velocity over time with air resistance:
+ * @f[ \mathbf{\omega}_{\mathrm{new}} = \mathbf{\omega}_{\mathrm{old}} \cdot (1 - \alpha \Delta t) @f]
+ * where @f$ \alpha @f$ is an empirical decay constant.
+ *
+ * @section stability Numerical Stability and Performance
+ *
+ * RK4 offers excellent tradeoff between stability and speed. Time steps must remain small enough
+ * to capture high-speed changes, especially in supersonic regimes.
+ *
+ * Units are strictly <b>SI internally</b>.
+ *
+ * <b>No dynamic memory allocation </b> is used anywhere in the solver. It’s completely stack-based and
+ * deterministic for maximum speed, portability, and safety.
+ *
+ * @section output Output Logging
+ *
+ * Output is written to a CSV file for every time step, including:
+ * - Time, position, and velocity
+ * - Orientation (quaternion and Euler angles)
+ * - Angular velocity
+ * - Mach number and drag
+ * - Air density, temperature, speed of sound
+ *
+ * This allows for visualization in gnuplot or post-hoc analysis tools.
+ *
+ * @section sim_loop 6DOF Simulation Loop
+ *
+ * This diagram outlines the core loop of the 6-degree-of-freedom simulation engine.
+ * It shows how the state of the bullet is advanced over time through force computation
+ * and integration. Each box represents a high-level operation performed per timestep.
+ *
+ * @dot
+ * digraph sixdof_loop {
+ *     rankdir=LR;
+ *     node [shape=box, style=filled, fillcolor=lightgray];
+ *
+ *     Init          [label="Initialize State"];
+ *     ComputeForces [label="Compute Forces & Torques"];
+ *     Integrate     [label="Integrate (RK4)"];
+ *     UpdateState   [label="Update Position & Rotation"];
+ *     LogData       [label="Log Output"];
+ *     CheckExit     [label="Check Termination Condition"];
+ *
+ *     Init          -> ComputeForces;
+ *     ComputeForces -> Integrate;
+ *     Integrate     -> UpdateState;
+ *     UpdateState   -> LogData;
+ *     LogData       -> CheckExit;
+ *     CheckExit     -> ComputeForces [label="if not done", style=dashed];
+ *     CheckExit     -> End           [label="if done", color=darkgreen, fontcolor=darkgreen];
+ *
+ *     End [shape=oval, style=filled, fillcolor=lightgreen, label="End Simulation"];
+ * }
+ * @enddot
+ *
+ * @subsection theory_vs_impl Theory vs. Implementation Table
+ *
+ * This table maps physical models used in the 6DOF simulation to their mathematical
+ * formulations and code-level implementations based on the actual contents of \c 6dof.c ,
+ * \c environment.c , \c quat.c , and \c load_drag_tables.c.
+ *
+@subsection theory_vs_impl Theory vs. Implementation
+
+@latexonly
+
+\begin{longtable}{|p{4.2cm}|p{7.2cm}|p{4.2cm}|}
+\hline
+\textbf{Physical Concept} & \textbf{Mathematical Formulation} & \textbf{Implemented In} \\
+\hline
+\endfirsthead
+
+\hline
+\textbf{Physical Concept} & \textbf{Mathematical Formulation} & \textbf{Implemented In} \\
+\hline
+\endhead
+
+Translational Motion & \( F = m a \) & compute\_6dof\_derivatives() \\
+\hline
+Rotational Motion & \( \tau = I \alpha + \omega \times (I \omega) \) & compute\_6dof\_derivatives() \\
+\hline
+Drag Force & \( F_d = -\frac{1}{2} \rho C_d A \|v\| v \) & compute\_6dof\_derivatives(), interpolate\_cd\_from\_table() \\
+\hline
+Magnus Drift & \( F_m \propto \omega \times v \) & compute\_6dof\_derivatives() \\
+\hline
+Coriolis Force & \( a_c = -2 \omega_E \times v \) & compute\_6dof\_derivatives() \\
+\hline
+Eötvös Effect & \( a_e = 2 \omega_E v \cos \phi \) & compute\_6dof\_derivatives() \\
+\hline
+Gravitational Force & \( F_g = m g(h, \phi) \) & compute\_6dof\_derivatives() \\
+\hline
+Spin Decay / Gyroscopic Drift & \( \frac{d\omega}{dt} = \mathrm{precession} \) & compute\_6dof\_derivatives() \\
+\hline
+Quaternion Update & \( \dot{q} = \frac{1}{2} q \otimes \omega \) & quaternion\_derivative(), quaternion\_update() \\
+\hline
+Numerical Integration & 4th-Order Runge-Kutta (RK4) & rk4\_integrate() \\
+\hline
+Wind Effects & \( v_{\mathrm{rel}} = v_{\mathrm{bullet}} - v_{\mathrm{wind}} \) & \hyperref[func_compute_6dof_derivatives]{compute\_6dof\_derivatives()}, Environment struct \\
+\hline
+
+\end{longtable}
+
+@endlatexonly
+
+ *
+ * @section next Future Work
+ *
+ * Planned and Potential additions:
+ * - An optional second CSV in U.S. Customary units, if enabled
+ * - Gusting wind (sinusoidal or Perlin-based)
+ * - Live weather and location gathering for user to apply weather parameters based on their location
+ * - Real-time zeroing correction
+ * - Surface impact modeling (angle, penetration, ricochet logic)
+ * - User-defined targets and hit/miss logging
+ * - Integration with graphical front-end (OpenGL or SDL)
+ *
+ * BBTC’s 6DOF engine serves as both an educational reference and a highly accurate simulator
+ * for short- and long-range, real-world inspired ballistics.
+ */

@@ -1,0 +1,100 @@
+/**
+ * @page cli_opts Command-Line Interface (CLI)
+ * @ingroup AllPages
+ *
+ * @section cli_overview Overview
+ *
+ * This page documents the command-line interface (CLI) for BBTC, the Ballistic Trajectory Calculator.
+ * All user input is passed via command-line arguments and parsed into the `CLI_inputs` structure
+ * defined in @ref cli_opts.h.
+ *
+ * Internally, argument parsing is handled with `getopt_long()`, supporting both short `-x` and long
+ * `--option` style flags. Invalid options trigger a usage printout and immediate exit.
+ *
+ * ---
+ *
+ * @section cli_usage Usage Syntax
+ * ```
+ * ./bbtc [OPTIONS...]
+ * ```
+ *
+ * @subsection cli_flags Supported Options
+ * The following options are implemented and parsed directly by `parse_options()`:
+ *
+ * | Short | Long Option      | Argument     | Description |
+ * |:-----:|:------------------|:-------------|:------------|
+ * | `-m`  | `--magnus`        | *(none)*     | Enable Magnus effect modeling |
+ * | `-c`  | `--coriolis`      | *(none)*     | Enable Coriolis force modeling |
+ * | `-e`  | `--eotvos`        | *(none)*     | Enable Eötvös effect modeling |
+ * | `-y`  | `--yawRepose`     | *(none)*     | Enable yaw-of-repose modeling |
+ * | `-t`  | `--tilt`          | *(none)*     | Enable tilt modeling |
+ * | `-Y`  | `--yawFactor`     | `<float>`    | Set custom yaw scaling factor |
+ * | `-T`  | `--tiltFactor`    | `<float>`    | Set custom tilt scaling factor |
+ * | `-M`  | `--mass`          | `<kg>`       | Set bullet mass in kilograms |
+ * | `-v`  | `--velocity`      | `<m/s>`      | Set muzzle velocity in meters per second |
+ * | `-d`  | `--diameter`      | `<m>`        | Set bullet diameter in meters |
+ * | `-a`  | `--angle`         | `<deg>`      | Set elevation angle above horizontal |
+ * | `-D`  | `--direction`     | `<deg>`      | Set azimuth angle in degrees (0 = North) |
+ * | `-w`  | `--twistRate`     | `<in>`       | Set barrel twist rate in inches per turn |
+ * | `-s`  | `--timeStep`      | `<sec>`      | Set simulation time step (seconds) |
+ * | `-x`  | `--shotTemp`      | `<K>`        | Set ambient temperature at muzzle in Kelvin |
+ * | `-G`  | `--dragModel`     | `<string>`   | Select drag model: G1, G2, G5, G6, G7, G8, GI, GL, RA4 |
+ * | `-L`  | `--latitude`      | `<deg>`      | Set firing latitude in degrees |
+ * | `-A`  | `--altitude`      | `<m>`        | Set muzzle altitude above sea level in meters |
+ * | `-h`  | `--help`          | *(none)*     | Show usage information and exit |
+ *
+ * ---
+ *
+ * @section cli_struct CLI_inputs Structure
+ *
+ * All parsed values are stored in a `CLI_inputs` structure:
+ *
+ * @code
+ * typedef struct {
+ *     SolverOptions options;     // Solver feature flags (Magnus, etc.)
+ *     double muzzleSpeed;        // m/s
+ *     double muzzleAngleDeg;     // degrees
+ *     double tiltFactor;         // unitless
+ *     double yawFactor;          // unitless
+ *     double diam;               // meters
+ *     double shotAngle;          // unused
+ *     double twistInches;        // inches per rotation
+ *     double timeStep;           // seconds
+ *     double azimuthDeg;         // degrees
+ *     double ambientTemp;        // Kelvin
+ *     double mass;               // kg
+ *     double latitude;           // degrees
+ *     double altitude;           // meters
+ *     DragModel dragModelChoice;// Enum (G1, G7, etc.)
+ * } CLI_inputs;
+ * @endcode
+ *
+ * ---
+ *
+ * @section cli_defaults Default Values
+ *
+ * These are initialized by `initialize_CLI_inputs()`:
+ *
+ * | Field             | Default        |
+ * |------------------|----------------|
+ * | muzzleSpeed       | `800.0`        |
+ * | muzzleAngleDeg    | `1.0`          |
+ * | azimuthDeg        | `90.0`         |
+ * | timeStep          | `0.001`        |
+ * | twistInches       | `7.0`          |
+ * | diam              | `0.00556`      |
+ * | ambientTemp       | `288.15`       |
+ * | mass              | `0.0065`       |
+ * | dragModelChoice   | `G1`           |
+ *
+ * ---
+ *
+ * @section cli_example Example Command
+ *
+ * ```
+ * ./bbtc -mct -v 820 -a 1.5 -d 0.006 -M 0.007 -G G7 -L 45.0 -A 1000
+ * ```
+ * This enables Magnus, Coriolis, and tilt, sets bullet parameters and drag model to G7,
+ * and fires from 1000m elevation at latitude 45°.
+ *
+ */

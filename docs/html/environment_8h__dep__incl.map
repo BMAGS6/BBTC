@@ -1,0 +1,16 @@
+<map id="environment.h" name="environment.h">
+<area shape="rect" id="Node000001" title="Declarations for environment &amp; weather calculations." alt="" coords="144,5,248,31"/>
+<area shape="rect" id="Node000002" href="$6dof_8h.html" title="6 degrees&#45;of&#45;freedom (6&#45;DOF) ballistic solver interface and data structures." alt="" coords="23,79,81,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="162,39,77,81,74,76,160,34"/>
+<area shape="rect" id="Node000004" href="$main_8c.html" title="Prototype interface for the 6&#45;DOF ballistic solver, now with actual drag table usage." alt="" coords="88,152,149,177"/>
+<area shape="poly" id="edge6_Node000001_Node000004" title=" " alt="" coords="176,42,148,80,132,119,123,152,118,151,127,117,143,77,172,39"/>
+<area shape="rect" id="Node000005" href="$cli__opts_8c.html" title="Definitions of functions for user input through the command line." alt="" coords="157,79,235,104"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="199,44,199,79,193,79,193,44"/>
+<area shape="rect" id="Node000006" href="$environment_8c.html" title="Implements functions for atmospheric and environmental calculations." alt="" coords="260,79,364,104"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="228,35,294,76,292,81,225,40"/>
+<area shape="rect" id="Node000007" href="$quat_8c.html" title="Implements quaternion&#45;based rotation utilities." alt="" coords="388,79,447,104"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="245,32,389,78,387,83,244,37"/>
+<area shape="rect" id="Node000003" href="$6dof_8c.html" title="6 degrees&#45;of&#45;freedom (6 D.O.F.) ballistic solver implementation." alt="" coords="5,152,64,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="49,118,40,153,35,151,43,117"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="74,113,110,150,106,154,71,116"/>
+</map>
