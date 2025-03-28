@@ -1,0 +1,154 @@
+\doxysection{CLI Option Parsing}
+\hypertarget{group__CLI__Parsing}{}\label{group__CLI__Parsing}\index{CLI Option Parsing@{CLI Option Parsing}}
+\doxysubsubsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structCLI__inputs}{CLI\+\_\+inputs}}
+\begin{DoxyCompactList}\small\item\em Composite type that holds the command-\/line input parameters specified by the user. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{group__CLI__Parsing_ga464246c8023836fadaead439d71dc97d}{initialize\+\_\+\+CLI\+\_\+inputs}} (\mbox{\hyperlink{structCLI__inputs}{CLI\+\_\+inputs}} \texorpdfstring{$\ast$}{*}cli)
+\begin{DoxyCompactList}\small\item\em Initializes defaults for CLI\+\_\+\+Inputs, so we have a baseline. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{group__CLI__Parsing_gacdd3189c1d563aede4bf528077cbb76c}{parse\+\_\+options}} (\mbox{\hyperlink{structCLI__inputs}{CLI\+\_\+inputs}} \texorpdfstring{$\ast$}{*}cli, int argc, char \texorpdfstring{$\ast$}{*}argv\mbox{[}$\,$\mbox{]})
+\begin{DoxyCompactList}\small\item\em Parses the command-\/line arguments for the solver. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{DoxyCompactItemize}
+\item 
+struct option \mbox{\hyperlink{group__CLI__Parsing_ga9dbb3a4179558154a5d0212ced82dc59}{long\+Opts}} \mbox{[}$\,$\mbox{]}
+\begin{DoxyCompactList}\small\item\em The global array describing our long options. \end{DoxyCompactList}\item 
+static const char \texorpdfstring{$\ast$}{*} \mbox{\hyperlink{group__CLI__Parsing_gac812488933e5a6ce556517ce50a45b74}{short\+Opts}} = "{}mcey\+M\+:t\+Y\+:\+T\+:v\+:d\+:a\+:\+D\+:w\+:s\+:x\+:\+G\+:\+L\+:\+A\+:h"{}
+\begin{DoxyCompactList}\small\item\em Character array of possible short options. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{group__CLI__Parsing_ga44a21bc5a9b58128c4fb0b68130f698a}{print\+\_\+usage\+\_\+instructions}} (const char \texorpdfstring{$\ast$}{*}prog\+Name)
+\begin{DoxyCompactList}\small\item\em Prints usage instructions for the user, listing all recognized options. \end{DoxyCompactList}\item 
+static int \mbox{\hyperlink{group__CLI__Parsing_ga74686568953ea8bbe8b1920cc927a20c}{str\+\_\+cmp\+\_\+ignoring\+\_\+case}} (const char \texorpdfstring{$\ast$}{*}str1, const char \texorpdfstring{$\ast$}{*}str2)
+\begin{DoxyCompactList}\small\item\em Case-\/insensitive string compare. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+\doxysubsection{Function Documentation}
+\Hypertarget{group__CLI__Parsing_ga464246c8023836fadaead439d71dc97d}\label{group__CLI__Parsing_ga464246c8023836fadaead439d71dc97d} 
+\index{CLI Option Parsing@{CLI Option Parsing}!initialize\_CLI\_inputs@{initialize\_CLI\_inputs}}
+\index{initialize\_CLI\_inputs@{initialize\_CLI\_inputs}!CLI Option Parsing@{CLI Option Parsing}}
+\doxysubsubsection{\texorpdfstring{initialize\_CLI\_inputs()}{initialize\_CLI\_inputs()}}
+{\footnotesize\ttfamily void initialize\+\_\+\+CLI\+\_\+inputs (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structCLI__inputs}{CLI\+\_\+inputs}} \texorpdfstring{$\ast$}{*}}]{cli }\end{DoxyParamCaption})}
+
+
+
+Initializes defaults for CLI\+\_\+\+Inputs, so we have a baseline. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em cli} & pointer to CLI\+\_\+\+Inputs struct\\
+\hline
+\end{DoxyParams}
+This function zeroes out the struct and then sets default values such as muzzle\+Speed = 800.\+0, muzzle\+Angle\+Deg = 1.\+0, mass = 0.\+0065, etc.
+
+Initializes defaults for CLI\+\_\+\+Inputs, so we have a baseline. \Hypertarget{group__CLI__Parsing_gacdd3189c1d563aede4bf528077cbb76c}\label{group__CLI__Parsing_gacdd3189c1d563aede4bf528077cbb76c} 
+\index{CLI Option Parsing@{CLI Option Parsing}!parse\_options@{parse\_options}}
+\index{parse\_options@{parse\_options}!CLI Option Parsing@{CLI Option Parsing}}
+\doxysubsubsection{\texorpdfstring{parse\_options()}{parse\_options()}}
+{\footnotesize\ttfamily int parse\+\_\+options (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structCLI__inputs}{CLI\+\_\+inputs}} \texorpdfstring{$\ast$}{*}}]{cli,  }\item[{int}]{argc,  }\item[{char \texorpdfstring{$\ast$}{*}}]{argv\mbox{[}$\,$\mbox{]} }\end{DoxyParamCaption})}
+
+
+
+Parses the command-\/line arguments for the solver. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\texttt{ in}}  & {\em cli} & Pointer to CLI\+\_\+\+Inputs to store the user choices \\
+\hline
+\mbox{\texttt{ in}}  & {\em argc} & Argument count \\
+\hline
+\mbox{\texttt{ in}}  & {\em argv} & Argument vector \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+0 on success, non-\/zero on error or if user requested help
+\end{DoxyReturn}
+This function uses {\ttfamily getopt\+\_\+long} to handle short and long options. The recognized options and their effect are documented in \doxylink{group__CLI__Parsing_ga44a21bc5a9b58128c4fb0b68130f698a}{print\+\_\+usage\+\_\+instructions()}. \Hypertarget{group__CLI__Parsing_ga44a21bc5a9b58128c4fb0b68130f698a}\label{group__CLI__Parsing_ga44a21bc5a9b58128c4fb0b68130f698a} 
+\index{CLI Option Parsing@{CLI Option Parsing}!print\_usage\_instructions@{print\_usage\_instructions}}
+\index{print\_usage\_instructions@{print\_usage\_instructions}!CLI Option Parsing@{CLI Option Parsing}}
+\doxysubsubsection{\texorpdfstring{print\_usage\_instructions()}{print\_usage\_instructions()}}
+{\footnotesize\ttfamily void print\+\_\+usage\+\_\+instructions (\begin{DoxyParamCaption}\item[{const char \texorpdfstring{$\ast$}{*}}]{prog\+Name }\end{DoxyParamCaption})}
+
+
+
+Prints usage instructions for the user, listing all recognized options. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em prog\+Name} & The name of the executable (argv\mbox{[}0\mbox{]}) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{group__CLI__Parsing_ga74686568953ea8bbe8b1920cc927a20c}\label{group__CLI__Parsing_ga74686568953ea8bbe8b1920cc927a20c} 
+\index{CLI Option Parsing@{CLI Option Parsing}!str\_cmp\_ignoring\_case@{str\_cmp\_ignoring\_case}}
+\index{str\_cmp\_ignoring\_case@{str\_cmp\_ignoring\_case}!CLI Option Parsing@{CLI Option Parsing}}
+\doxysubsubsection{\texorpdfstring{str\_cmp\_ignoring\_case()}{str\_cmp\_ignoring\_case()}}
+{\footnotesize\ttfamily static int str\+\_\+cmp\+\_\+ignoring\+\_\+case (\begin{DoxyParamCaption}\item[{const char \texorpdfstring{$\ast$}{*}}]{str1,  }\item[{const char \texorpdfstring{$\ast$}{*}}]{str2 }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Case-\/insensitive string compare. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em str1} & First string \\
+\hline
+{\em str2} & Second string \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+1 if equal ignoring case, 0 if mismatch, -\/1 if either is NULL 
+\end{DoxyReturn}
+
+
+\doxysubsection{Variable Documentation}
+\Hypertarget{group__CLI__Parsing_ga9dbb3a4179558154a5d0212ced82dc59}\label{group__CLI__Parsing_ga9dbb3a4179558154a5d0212ced82dc59} 
+\index{CLI Option Parsing@{CLI Option Parsing}!longOpts@{longOpts}}
+\index{longOpts@{longOpts}!CLI Option Parsing@{CLI Option Parsing}}
+\doxysubsubsection{\texorpdfstring{longOpts}{longOpts}}
+{\footnotesize\ttfamily struct option long\+Opts\mbox{[}$\,$\mbox{]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{=}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ \ \{\textcolor{stringliteral}{"{}magnus"{}},\ \ \ \ \ \ no\_argument,\ \ \ \ \ \ \ \ 0,\ \textcolor{charliteral}{'m'}\},}
+\DoxyCodeLine{\ \ \ \ \{\textcolor{stringliteral}{"{}coriolis"{}},\ \ \ \ no\_argument,\ \ \ \ \ \ \ \ 0,\ \textcolor{charliteral}{'c'}\},}
+\DoxyCodeLine{\ \ \ \ \{\textcolor{stringliteral}{"{}eotvos"{}},\ \ \ \ \ \ no\_argument,\ \ \ \ \ \ \ \ 0,\ \textcolor{charliteral}{'e'}\},}
+\DoxyCodeLine{\ \ \ \ \{\textcolor{stringliteral}{"{}yawRepose"{}},\ \ \ no\_argument,\ \ \ \ \ \ \ \ 0,\ \textcolor{charliteral}{'y'}\},}
+\DoxyCodeLine{\ \ \ \ \{\textcolor{stringliteral}{"{}mass"{}},\ \ \ \ \ \ \ \ required\_argument,\ \ 0,\ \textcolor{charliteral}{'M'}\},}
+\DoxyCodeLine{\ \ \ \ \{\textcolor{stringliteral}{"{}tilt"{}},\ \ \ \ \ \ \ \ no\_argument,\ \ \ \ \ \ \ \ 0,\ \textcolor{charliteral}{'t'}\},}
+\DoxyCodeLine{\ \ \ \ \{\textcolor{stringliteral}{"{}yawFactor"{}},\ \ \ required\_argument,\ \ 0,\ \textcolor{charliteral}{'Y'}\},}
+\DoxyCodeLine{\ \ \ \ \{\textcolor{stringliteral}{"{}tiltFactor"{}},\ \ required\_argument,\ \ 0,\ \textcolor{charliteral}{'T'}\},}
+\DoxyCodeLine{\ \ \ \ \{\textcolor{stringliteral}{"{}velocity"{}},\ \ \ \ required\_argument,\ \ 0,\ \textcolor{charliteral}{'v'}\},}
+\DoxyCodeLine{\ \ \ \ \{\textcolor{stringliteral}{"{}diameter"{}},\ \ \ \ required\_argument,\ \ 0,\ \textcolor{charliteral}{'d'}\},}
+\DoxyCodeLine{\ \ \ \ \{\textcolor{stringliteral}{"{}angle"{}},\ \ \ \ \ \ \ required\_argument,\ \ 0,\ \textcolor{charliteral}{'a'}\},}
+\DoxyCodeLine{\ \ \ \ \{\textcolor{stringliteral}{"{}direction"{}},\ \ \ required\_argument,\ \ 0,\ \textcolor{charliteral}{'D'}\},}
+\DoxyCodeLine{\ \ \ \ \{\textcolor{stringliteral}{"{}twistRate"{}},\ \ \ required\_argument,\ \ 0,\ \textcolor{charliteral}{'w'}\},}
+\DoxyCodeLine{\ \ \ \ \{\textcolor{stringliteral}{"{}timeStep"{}},\ \ \ \ required\_argument,\ \ 0,\ \textcolor{charliteral}{'s'}\},}
+\DoxyCodeLine{\ \ \ \ \{\textcolor{stringliteral}{"{}shotTemp"{}},\ \ \ \ required\_argument,\ \ 0,\ \textcolor{charliteral}{'x'}\},}
+\DoxyCodeLine{\ \ \ \ \{\textcolor{stringliteral}{"{}dragModel"{}},\ \ \ required\_argument,\ \ 0,\ \textcolor{charliteral}{'G'}\},}
+\DoxyCodeLine{\ \ \ \ \{\textcolor{stringliteral}{"{}latitude"{}},\ \ \ \ required\_argument,\ \ 0,\ \textcolor{charliteral}{'L'}\},}
+\DoxyCodeLine{\ \ \ \ \{\textcolor{stringliteral}{"{}altitude"{}},\ \ \ \ required\_argument,\ \ 0,\ \textcolor{charliteral}{'A'}\},}
+\DoxyCodeLine{\ \ \ \ \{\textcolor{stringliteral}{"{}help"{}},\ \ \ \ \ \ \ \ no\_argument,\ \ \ \ \ \ \ \ 0,\ \textcolor{charliteral}{'h'}\},}
+\DoxyCodeLine{\ \ \ \ \{0,\ 0,\ 0,\ 0\}\ }
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+The global array describing our long options. 
+
+\Hypertarget{group__CLI__Parsing_gac812488933e5a6ce556517ce50a45b74}\label{group__CLI__Parsing_gac812488933e5a6ce556517ce50a45b74} 
+\index{CLI Option Parsing@{CLI Option Parsing}!shortOpts@{shortOpts}}
+\index{shortOpts@{shortOpts}!CLI Option Parsing@{CLI Option Parsing}}
+\doxysubsubsection{\texorpdfstring{shortOpts}{shortOpts}}
+{\footnotesize\ttfamily const char\texorpdfstring{$\ast$}{*} short\+Opts = "{}mcey\+M\+:t\+Y\+:\+T\+:v\+:d\+:a\+:\+D\+:w\+:s\+:x\+:\+G\+:\+L\+:\+A\+:h"{}\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Character array of possible short options. 
+

@@ -1,0 +1,52 @@
+\doxysection{6dof.\+h File Reference}
+\hypertarget{6dof_8h}{}\label{6dof_8h}\index{6dof.h@{6dof.h}}
+
+
+6 degrees-\/of-\/freedom (6-\/DOF) ballistic solver interface and data structures.  
+
+
+{\ttfamily \#include $<$stddef.\+h$>$}\newline
+{\ttfamily \#include "{}pstate.\+h"{}}\newline
+{\ttfamily \#include "{}environment.\+h"{}}\newline
+{\ttfamily \#include "{}compiler\+\_\+macros.\+h"{}}\newline
+{\ttfamily \#include "{}solver\+\_\+options.\+h"{}}\newline
+Include dependency graph for 6dof.\+h\+:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{6dof_8h__incl}
+\end{center}
+\end{figure}
+This graph shows which files directly or indirectly include this file\+:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=188pt]{6dof_8h__dep__incl}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structInertia}{Inertia}}
+\begin{DoxyCompactList}\small\item\em Moments of inertia for the projectile in principal axes. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structAeroCoeffs}{Aero\+Coeffs}}
+\begin{DoxyCompactList}\small\item\em Aerodynamic coefficients for advanced torque/force modeling. \end{DoxyCompactList}\item 
+struct \mbox{\hyperlink{structSixDOFSpecs}{Six\+DOFSpecs}}
+\begin{DoxyCompactList}\small\item\em Extended projectile specifications for 6-\/DOF. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{group__SixDOF__Solver_ga46780e005f4e6eae6b66b1ba1cef7af7}{STANDARD\+\_\+\+EARTH\+\_\+\+ROTATION}}~7.\+292115e-\/5
+\item 
+\#define \mbox{\hyperlink{group__SixDOF__Solver_gae71449b1cc6e6250b91f539153a7a0d3}{M\+\_\+\+PI}}~3.\+14159265358979323846
+\item 
+\#define \mbox{\hyperlink{group__SixDOF__Solver_gab7aee7b3221fb08bac0a8360ad6dfeb4}{PI\+\_\+\+OVER\+\_\+180}}~(\mbox{\hyperlink{group__SixDOF__Solver_gae71449b1cc6e6250b91f539153a7a0d3}{M\+\_\+\+PI}} / 180.\+0)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+6 degrees-\/of-\/freedom (6-\/DOF) ballistic solver interface and data structures. 
+
+This header defines the data structures and function prototypes for simulating a full six-\/degrees-\/of-\/freedom projectile. It models translation (3 DOF) and rotation (3 DOF) using quaternion-\/based orientation, angular velocities, and an inertia tensor. Supports Magnus force, Coriolis effect, spin damping, yaw of repose, and other aerodynamic torques.
+
+See core\+\_\+6dof for how these operations are used in the simulator. 

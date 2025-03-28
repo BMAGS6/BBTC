@@ -39,6 +39,7 @@ doc-pdf: doc
 	fi
 	cp $(IMAGE_FILES) $(LATEX_DIR)/
 	cd $(LATEX_DIR) && $(PDFLATEX) refman.tex && $(PDFLATEX) refman.tex
+	cp $(LATEX_DIR)/refman.pdf refman.pdf
 
 # === View PDF Documentation ===
 view:

@@ -1,0 +1,58 @@
+\doxysection{load\+\_\+drag\+\_\+tables.\+h}
+\hypertarget{load__drag__tables_8h_source}{}\label{load__drag__tables_8h_source}\index{load\_drag\_tables.h@{load\_drag\_tables.h}}
+\mbox{\hyperlink{load__drag__tables_8h}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#ifndef\ LOAD\_DRAG\_TABLES\_H}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#define\ LOAD\_DRAG\_TABLES\_H}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#ifdef\ \_\_cplusplus}}
+\DoxyCodeLine{00010\ \ \ \ \ \textcolor{keyword}{extern}\ \textcolor{stringliteral}{"{}C"{}}\ \{}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <stdlib.h>}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{compiler__macros_8h}{compiler\_macros.h}}"{}}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00038\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{enum}}
+\DoxyCodeLine{00039\ \{}
+\DoxyCodeLine{00040\ \ \ \ \ \mbox{\hyperlink{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15aaec6d2231567cdb9063f093d8effa224}{G1}},\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00041\ \ \ \ \ \mbox{\hyperlink{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15aedce8067580fa0c4c235f8534f25a7b3}{G2}},\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00042\ \ \ \ \ \mbox{\hyperlink{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15a33e4e589075c868910acfa95b14efb5f}{G5}},\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00043\ \ \ \ \ \mbox{\hyperlink{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15a6ab0f7aca08fd2ba5505168472501d98}{G6}},\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00044\ \ \ \ \ \mbox{\hyperlink{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15ae236ad64088ffc77d9e098628d5ba342}{G7}},\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00045\ \ \ \ \ \mbox{\hyperlink{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15aa1c865ccd52132fb116c4587969e6ad8}{G8}},\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00046\ \ \ \ \ \mbox{\hyperlink{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15a7f7fa110446e4371d106f7e1d3c56b59}{GL}},\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00047\ \ \ \ \ \mbox{\hyperlink{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15a9c922c72676cab2b540d081a8bb3788a}{GS}},\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00048\ \ \ \ \ \mbox{\hyperlink{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15ae21608b5801d6215e4dc527e466f394a}{GI}},\ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00049\ \ \ \ \ \mbox{\hyperlink{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15a566fa6b4b472c54ce458883f1afd6b15}{RA4}},\ \ \ \ \ }
+\DoxyCodeLine{00050\ \ \ \ \ \mbox{\hyperlink{group__DragTableFunctions_gga326940386c828daadb8613c8eddf8d15a4959281332ebd81e59cc8d125b15da56}{G\_UNKNOWN}}\ \ }
+\DoxyCodeLine{00051\ \}\ \mbox{\hyperlink{group__DragTableFunctions_ga326940386c828daadb8613c8eddf8d15}{DragModel}};}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00062\ \textcolor{keyword}{typedef}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{group__OptimizationMacros_gada9d7622865275ae4289dff050f1589e}{ALIGN}}(64)}
+\DoxyCodeLine{00063\ \{}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{structDragEntry_a973942a07199b77d0f382f7e22efb3b7}{mach}};\ \ \ \ }
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{structDragEntry_a7cbcb2bb2609921e2bdcd2340e6113d0}{Cd}};\ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00066\ \}\ \mbox{\hyperlink{structDragEntry}{DragEntry}};}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00074\ \textcolor{keyword}{extern}\ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{group__DragTableFunctions_gaff941223492c755b6a75be14bfc7e834}{lookupTable}}[];}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00088\ \textcolor{keywordtype}{size\_t}\ \mbox{\hyperlink{group__DragTableFunctions_ga08e47092c6f2d59115f2f587d0cf9ee8}{load\_drag\_table\_CSV}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *filename);}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00100\ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{group__DragTableFunctions_ga75273f11053c06ff9ec8ed76a80ac9f9}{interpolate\_cd\_from\_table}}(\textcolor{keywordtype}{double}\ mach);}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00112\ \textcolor{keywordtype}{double}\ \mbox{\hyperlink{group__DragTableFunctions_gadcb2dd0c4acd7053fae6288d3f01bd36}{fast\_interpolate\_cd}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ *restrict\ \mbox{\hyperlink{group__DragTableFunctions_gaff941223492c755b6a75be14bfc7e834}{lookupTable}},\ \textcolor{keywordtype}{double}\ mach);}
+\DoxyCodeLine{00113\ }
+\DoxyCodeLine{00122\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{group__DragTableFunctions_ga1ef367f143c9df1c3cab577448b47eab}{precompute\_drag\_lookup\_table}}(\textcolor{keywordtype}{double}\ *restrict\ \mbox{\hyperlink{group__DragTableFunctions_gaff941223492c755b6a75be14bfc7e834}{lookupTable}});}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00132\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ \mbox{\hyperlink{group__DragTableFunctions_gace0bb54ddce60d35912fea956619bf15}{get\_drag\_model\_file}}(\mbox{\hyperlink{group__DragTableFunctions_ga326940386c828daadb8613c8eddf8d15}{DragModel}}\ model);}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00135\ \textcolor{comment}{//\ end\ of\ Doxygen\ parsing\ group\ "{}DragTableFunctions"{}}}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \textcolor{preprocessor}{\#ifdef\ \_\_cplusplus}}
+\DoxyCodeLine{00138\ \}}
+\DoxyCodeLine{00139\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00140\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ LOAD\_DRAG\_TABLES\_H\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ }
+
+\end{DoxyCode}

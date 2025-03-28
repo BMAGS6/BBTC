@@ -1,0 +1,70 @@
+\chapter{Environmental Modeling System}
+\hypertarget{environment}{}\label{environment}\index{Environmental Modeling System@{Environmental Modeling System}}
+\hypertarget{quat_math_overview}{}\doxysection{\texorpdfstring{Overview}{Overview}}\label{quat_math_overview}
+BBTC\textquotesingle{}s environmental modeling system dynamically computes atmospheric variables that influence projectile behavior during flight. These variables include air temperature, pressure, density, humidity, and the speed of sound, each of which contributes to realistic drag, lift, and sound barrier effects.
+
+This system ensures that long-\/range simulations remain accurate across altitude bands, weather conditions, and geographic locations.\hypertarget{environment_model_components}{}\doxysection{\texorpdfstring{Core Atmospheric Variables}{Core Atmospheric Variables}}\label{environment_model_components}
+The following variables are computed or adjusted during each simulation step\+:
+
+
+\begin{DoxyItemize}
+\item {\bfseries{Temperature}} ( $ T $ ) — Measured in kelvin (K), derived from user input or standard conditions.
+\item {\bfseries{Pressure}} ( $ P $ ) — Calculated from altitude using the barometric formula\+: \[ P = P_0 \cdot \left(1 - \frac{L h}{T_0} \right)^{\frac{g M}{R L}} \] where\+:
+\begin{DoxyItemize}
+\item $ P_0 $\+: sea level pressure (101325 Pa)
+\item $ L $\+: lapse rate (0.\+0065 K/m)
+\item $ h $\+: altitude above sea level (m)
+\item $ T_0 $\+: reference temperature (K)
+\item $ g $\+: gravitational acceleration (9.\+80665 m/s²)
+\item $ M $\+: molar mass of Earth\textquotesingle{}s air (0.\+0289644 kg/mol)
+\item $ R $\+: universal gas constant (8.\+31447 J/(mol·K))
+\end{DoxyItemize}
+\item {\bfseries{Humidity}} (H) — Impacts the effective air density and speed of sound.
+\item {\bfseries{Air}} {\bfseries{Density}} $ \rho $ — Adjusted based on altitude, temperature, and humidity\+: \[ \rho = \frac{P}{R_d T} + \frac{e}{R_v T} \] where\+:
+\begin{DoxyItemize}
+\item $ e $\+: vapor pressure from humidity
+\item $ R_d $\+: specific gas constant for dry air
+\item $ R_v $\+: specific gas constant for water vapor
+\end{DoxyItemize}
+\item {\bfseries{Speed}} {\bfseries{of}} {\bfseries{Sound}} ( $a$) — Influences Mach number and drag coefficient lookup\+: \[ a = \sqrt{\gamma R T} \] $ \gamma $ and $ R $ are adjusted for humidity using weighted mixing rules.
+\end{DoxyItemize}\hypertarget{environment_wind}{}\doxysection{\texorpdfstring{Wind Modeling}{Wind Modeling}}\label{environment_wind}
+Wind is currently modeled as a fixed 3D vector, representing a constant wind condition throughout the simulation. It is subtracted from the projectile\textquotesingle{}s velocity to obtain a relative airspeed used in drag and lift calculations\+:
+
+\[ \mathbf{v}_{\mathrm{rel}} = \mathbf{v}_{\mathrm{bullet}} - \mathbf{v}_{\mathrm{wind}} \]
+
+The wind vector is defined in world coordinates (e.\+g., east/north/up), and its effect is consistent over time.
+
+Future versions of BBTC may implement time-\/varying wind patterns, terrain-\/influenced wind behavior, or stochastic gust models.\hypertarget{environment_altitude}{}\doxysection{\texorpdfstring{Altitude Effects}{Altitude Effects}}\label{environment_altitude}
+All environmental variables dynamically update based on the bullet\textquotesingle{}s instantaneous altitude. As the bullet ascends or descends, pressure and temperature change according to the International Standard Atmosphere (ISA) model, and density is recalculated accordingly.
+
+These changes allow BBTC to realistically model supersonic transition behavior and long-\/range arcing flight paths.\hypertarget{environment_units}{}\doxysection{\texorpdfstring{Units and Internal Format}{Units and Internal Format}}\label{environment_units}
+Internally, the environmental model uses strict SI units\+:
+\begin{DoxyItemize}
+\item Temperature\+: K (Kelvin)
+\item Pressure\+: Pa (Pascals = 0.\+000145038 psi = 0.\+00750062 mm\+Hg)
+\item Humidity\+: \% (0.\+0 to 1.\+0, where 1.\+0 = 100\%)
+\item Density\+: kg/m³ (kilograms per cubic meter = 0.\+062428 lb/ft³)
+\item Speed of sound\+: m/s (meters per second = 3.\+28084 ft/s = 2.\+23694 mph)
+\end{DoxyItemize}\hypertarget{environment_output}{}\doxysection{\texorpdfstring{Output Logging}{Output Logging}}\label{environment_output}
+The environment model contributes the following to each output step\+:
+\begin{DoxyItemize}
+\item Air density
+\item Temperature
+\item Pressure
+\item Speed of sound
+\item Relative velocity (for drag and Mach)
+\end{DoxyItemize}
+
+These values are logged alongside core trajectory information to allow deep post-\/analysis and visualization.\hypertarget{environment_extensions}{}\doxysection{\texorpdfstring{Future Enhancements}{Future Enhancements}}\label{environment_extensions}
+Planned improvements to the environmental system include\+:
+\begin{DoxyItemize}
+\item Input able to be entered in U.\+S. customary units and to be converted to SI on ingest. The simulation could optionally output a secondary CSV log in U.\+S. units for convenience.
+\item Dynamic wind profiles
+\item Weather layer ingestion (e.\+g., METAR or grib2 feeds)
+\item Pressure wave modeling
+\item Humidity-\/based fog effects or index of refraction simulation
+\item Layered atmospheric models with inversion zones
+\item Custom weather and location data uploaded by the user or downloaded by the user to the program through a weather API
+\end{DoxyItemize}
+
+BBTC’s environmental engine ensures that projectile motion is grounded in physical reality and can adapt to a wide range of shooting scenarios. 

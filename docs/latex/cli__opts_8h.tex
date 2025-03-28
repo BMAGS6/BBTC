@@ -1,0 +1,42 @@
+\doxysection{cli\+\_\+opts.\+h File Reference}
+\hypertarget{cli__opts_8h}{}\label{cli__opts_8h}\index{cli\_opts.h@{cli\_opts.h}}
+
+
+Function declarations and datatypes for user input through the command line.  
+
+
+{\ttfamily \#include $<$stdio.\+h$>$}\newline
+{\ttfamily \#include $<$getopt.\+h$>$}\newline
+{\ttfamily \#include "{}solver\+\_\+options.\+h"{}}\newline
+{\ttfamily \#include "{}load\+\_\+drag\+\_\+tables.\+h"{}}\newline
+Include dependency graph for cli\+\_\+opts.\+h\+:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{cli__opts_8h__incl}
+\end{center}
+\end{figure}
+This graph shows which files directly or indirectly include this file\+:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=204pt]{cli__opts_8h__dep__incl}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structCLI__inputs}{CLI\+\_\+inputs}}
+\begin{DoxyCompactList}\small\item\em Composite type that holds the command-\/line input parameters specified by the user. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{group__CLI__Parsing_ga464246c8023836fadaead439d71dc97d}{initialize\+\_\+\+CLI\+\_\+inputs}} (\mbox{\hyperlink{structCLI__inputs}{CLI\+\_\+inputs}} \texorpdfstring{$\ast$}{*}cli)
+\begin{DoxyCompactList}\small\item\em Initializes defaults for CLI\+\_\+\+Inputs, so we have a baseline. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{group__CLI__Parsing_gacdd3189c1d563aede4bf528077cbb76c}{parse\+\_\+options}} (\mbox{\hyperlink{structCLI__inputs}{CLI\+\_\+inputs}} \texorpdfstring{$\ast$}{*}cli, int argc, char \texorpdfstring{$\ast$}{*}argv\mbox{[}$\,$\mbox{]})
+\begin{DoxyCompactList}\small\item\em Parses the command-\/line arguments for the solver. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Function declarations and datatypes for user input through the command line. 
+

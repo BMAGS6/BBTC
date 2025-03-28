@@ -1,0 +1,19 @@
+<map id="environment.c" name="environment.c">
+<area shape="rect" id="Node000001" title="Implements functions for atmospheric and environmental calculations." alt="" coords="140,5,244,31"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,79,67,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="168,33,75,75,73,70,166,28"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="91,79,154,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="182,33,145,71,141,67,179,29"/>
+<area shape="rect" id="Node000004" href="$environment_8h.html" title="Declarations for environment &amp; weather calculations." alt="" coords="230,79,391,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="212,28,281,69,278,74,210,33"/>
+<area shape="rect" id="Node000005" href="$pstate_8h.html" title="Defines the projectile state in 3D (position, velocity, orientation, etc.)." alt="" coords="215,152,284,177"/>
+<area shape="poly" id="edge9_Node000001_Node000005" title=" " alt="" coords="198,30,221,103,239,139,234,141,216,105,192,32"/>
+<area shape="rect" id="Node000007" href="$compiler__macros_8h.html" title="Contains macros for cross&#45;compatible compiler optimizations and compatibility." alt="" coords="253,299,385,324"/>
+<area shape="poly" id="edge10_Node000001_Node000007" title=" " alt="" coords="245,24,339,44,380,59,406,77,420,104,423,133,419,163,408,193,376,248,342,290,338,286,371,245,403,191,414,162,418,133,415,106,402,80,378,63,337,49,244,29"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="303,106,270,143,266,140,299,103"/>
+<area shape="poly" id="edge8_Node000004_Node000007" title=" " alt="" coords="314,104,320,284,315,285,308,104"/>
+<area shape="rect" id="Node000006" href="$quat_8h.html" title="Declarations for quaternion&#45;based rotation utilities." alt="" coords="197,225,256,251"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="248,178,237,213,232,211,243,177"/>
+<area shape="poly" id="edge7_Node000005_Node000007" title=" " alt="" coords="257,177,310,285,305,287,253,179"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="243,249,295,288,291,292,240,253"/>
+</map>

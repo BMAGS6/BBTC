@@ -1,0 +1,67 @@
+\doxysection{environment.\+h File Reference}
+\hypertarget{environment_8h}{}\label{environment_8h}\index{environment.h@{environment.h}}
+
+
+Declarations for environment \& weather calculations.  
+
+
+{\ttfamily \#include "{}pstate.\+h"{}}\newline
+{\ttfamily \#include "{}compiler\+\_\+macros.\+h"{}}\newline
+Include dependency graph for environment.\+h\+:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=202pt]{environment_8h__incl}
+\end{center}
+\end{figure}
+This graph shows which files directly or indirectly include this file\+:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{environment_8h__dep__incl}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structEnvironment}{Environment}}
+\begin{DoxyCompactList}\small\item\em Holds environment data such as temperature, pressure, wind, etc. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{group__environment_ga92340563677c798b2bb1abd185604204}{TEMP\+\_\+\+SEA\+\_\+\+LVL\+\_\+K}}~288.\+15
+\item 
+\#define \mbox{\hyperlink{group__environment_ga8c29b765ea98e2ce5c2dab6bfc07ebe5}{TEMP\+\_\+\+SEA\+\_\+\+LVL\+\_\+C}}~15.\+0065
+\item 
+\#define \mbox{\hyperlink{group__environment_gacc5504316708c8f3e05c35babf83f7bd}{LAPSE\+\_\+\+RATE}}~0.\+0065
+\item 
+\#define \mbox{\hyperlink{group__environment_ga8293d310d212f147c1663e31cd9d03c0}{STANDARD\+\_\+\+PRESSURE}}~101325.\+0065
+\item 
+\#define \mbox{\hyperlink{group__environment_ga6801baa546c6112d19eb095111d24720}{GRAVITY}}~9.\+807
+\item 
+\#define \mbox{\hyperlink{group__environment_gaf65a979f3c7885133fb0fd6b21571394}{MOL\+\_\+\+M\+\_\+\+AIR}}~0.\+0289644
+\item 
+\#define \mbox{\hyperlink{group__environment_gafd66553d14150e40999c65cb3ad7426f}{R\+\_\+\+DRY\+\_\+\+AIR}}~287.\+052874
+\item 
+\#define \mbox{\hyperlink{group__environment_ga2d2e160c37a32963acd8e33a1167161d}{R\+\_\+\+H2\+O\+\_\+\+VAPOR}}~461.\+52
+\item 
+\#define \mbox{\hyperlink{group__environment_ga0ccf981dfb6aa02b2fd3c41ae2f0254e}{R\+\_\+\+UNIV}}~8.\+3144598
+\item 
+\#define \mbox{\hyperlink{group__environment_ga11931f9765bcee4ff773b4b0d11b107a}{GAMMA\+\_\+\+DRY\+\_\+\+AIR}}~1.\+461
+\item 
+\#define \mbox{\hyperlink{group__environment_ga2b0c8b49e94c1f7a4f42fd70e10f6b8e}{GAMMA\+\_\+\+H2\+O\+\_\+\+VAPOR}}~1.\+32
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+double \mbox{\hyperlink{group__environment_gaed7062b11a1d9a5b46f11c421058663f}{saturation\+\_\+vapor\+\_\+pressure}} (double tK)
+\begin{DoxyCompactList}\small\item\em Computes the saturation vapor pressure at temperature tK (Kelvin). \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{group__environment_ga8c9aadab972d06316655d537e560f9fa}{update\+\_\+environment}} (\mbox{\hyperlink{structEnvironment}{Environment}} \texorpdfstring{$\ast$}{*}restrict env, \mbox{\hyperlink{structPState}{PState}} \texorpdfstring{$\ast$}{*}restrict state)
+\begin{DoxyCompactList}\small\item\em Updates the environment based on projectile state (e.\+g., altitude). \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{group__environment_ga1ca564b2b16519b88dd0412d789204a4}{compute\+\_\+speed\+\_\+of\+\_\+sound}} (\mbox{\hyperlink{structEnvironment}{Environment}} \texorpdfstring{$\ast$}{*}restrict env)
+\begin{DoxyCompactList}\small\item\em Computes the speed of sound in the environment. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Declarations for environment \& weather calculations. 
+

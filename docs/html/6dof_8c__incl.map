@@ -1,0 +1,34 @@
+<map id="6dof.c" name="6dof.c">
+<area shape="rect" id="Node000001" title="6 degrees&#45;of&#45;freedom (6 D.O.F.) ballistic solver implementation." alt="" coords="413,5,472,31"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,86,67,111"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="414,24,268,41,174,58,79,81,73,83,71,78,78,76,173,53,268,36,413,19"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="91,86,154,111"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="414,27,307,48,174,81,165,84,163,79,173,76,306,43,413,22"/>
+<area shape="rect" id="Node000004" href="$6dof_8h.html" title="6 degrees&#45;of&#45;freedom (6&#45;DOF) ballistic solver interface and data structures." alt="" coords="385,86,500,111"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="445,31,445,72,440,72,440,31"/>
+<area shape="rect" id="Node000007" href="$quat_8h.html" title="Declarations for quaternion&#45;based rotation utilities." alt="" coords="469,313,528,339"/>
+<area shape="poly" id="edge15_Node000001_Node000007" title=" " alt="" coords="465,29,492,49,514,77,534,127,540,169,536,213,525,266,513,302,508,300,520,265,530,212,535,169,529,128,510,80,488,53,462,33"/>
+<area shape="rect" id="Node000008" href="$compiler__macros_8h.html" title="Contains macros for cross&#45;compatible compiler optimizations and compatibility." alt="" coords="366,387,498,412"/>
+<area shape="poly" id="edge16_Node000001_Node000008" title=" " alt="" coords="414,26,351,41,315,53,279,69,246,89,219,114,201,143,195,178,195,254,199,280,209,303,226,322,248,339,299,365,353,382,352,387,297,370,245,344,223,326,205,306,193,282,189,254,189,178,196,141,215,110,243,85,276,64,313,48,350,36,412,21"/>
+<area shape="rect" id="Node000010" href="$solver__options_8h.html" title="Defines toggles/flags controlling advanced solver effects." alt="" coords="603,167,720,192"/>
+<area shape="poly" id="edge20_Node000001_Node000010" title=" " alt="" coords="473,25,528,44,558,59,586,77,623,115,650,154,646,157,619,118,582,81,555,63,526,49,472,30"/>
+<area shape="rect" id="Node000011" href="$load__drag__tables_8h.html" title="Drag model support and CSV loading for standard ballistic drag functions." alt="" coords="690,79,825,119"/>
+<area shape="poly" id="edge17_Node000001_Node000011" title=" " alt="" coords="473,24,677,75,676,80,472,29"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="408,167,477,192"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="445,112,445,153,440,153,440,112"/>
+<area shape="rect" id="Node000006" href="$pstate_8h.html" title="Defines the projectile state in 3D (position, velocity, orientation, etc.)." alt="" coords="441,240,511,265"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="456,110,476,134,492,166,495,198,488,227,483,226,489,198,487,167,471,137,452,113"/>
+<area shape="poly" id="edge12_Node000004_Node000008" title=" " alt="" coords="386,108,354,115,322,127,293,144,270,168,258,198,260,228,272,257,293,287,319,314,348,339,403,377,399,382,345,343,316,318,289,290,267,260,254,229,253,197,266,165,290,140,320,122,353,110,385,103"/>
+<area shape="rect" id="Node000009" href="$environment_8h.html" title="Declarations for environment &amp; weather calculations." alt="" coords="280,167,384,192"/>
+<area shape="poly" id="edge9_Node000004_Node000009" title=" " alt="" coords="428,114,361,161,358,156,425,109"/>
+<area shape="poly" id="edge13_Node000004_Node000010" title=" " alt="" coords="475,109,617,160,616,165,474,114"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="482,265,493,299,488,301,477,266"/>
+<area shape="poly" id="edge8_Node000006_Node000008" title=" " alt="" coords="475,266,460,314,442,374,437,373,455,313,470,265"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="490,341,454,378,450,375,486,337"/>
+<area shape="poly" id="edge10_Node000009_Node000006" title=" " alt="" coords="356,190,441,231,439,236,354,194"/>
+<area shape="poly" id="edge11_Node000009_Node000008" title=" " alt="" coords="340,191,423,373,418,375,335,193"/>
+<area shape="poly" id="edge14_Node000010_Node000008" title=" " alt="" coords="657,194,613,260,580,302,542,341,508,365,474,383,471,378,505,360,538,337,576,299,609,257,653,191"/>
+<area shape="poly" id="edge19_Node000011_Node000008" title=" " alt="" coords="758,119,750,155,734,193,699,244,665,279,625,307,572,341,526,366,481,385,479,380,524,361,569,336,622,303,661,275,695,241,730,191,745,153,753,118"/>
+<area shape="rect" id="Node000012" title=" " alt="" coords="795,167,859,192"/>
+<area shape="poly" id="edge18_Node000011_Node000012" title=" " alt="" coords="776,117,809,154,805,158,772,121"/>
+</map>
