@@ -2,7 +2,7 @@
 # Ballistic Trajectory Calculator (6DOF)
 
 > *A detailed and accurate external ballistic calculator implementing a comprehensive 6-degree-of-freedom physics model.*
-
+## NOTE: This project is still in an ALPHA phase, and is not near production level. Things might break or be incomplete.
 ## 📖 Overview
 
 This project is a powerful yet user-friendly external ballistic trajectory calculator capable of modeling detailed projectile flight behavior using a sophisticated physics engine. Whether you're a marksman, physicist, engineer, or hobbyist, this calculator gives deep insights into the science of projectile motion, environmental factors, and quaternion-based rotational dynamics.
