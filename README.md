@@ -72,11 +72,12 @@ Here's how to run a basic simulation example with custom parameters:
 ./BBTC --velocity 850 --angle 2 --mass 0.0095 --magnus --coriolis --yawRepose
 ```
 
-*(Refer to the detailed documentation for more CLI options.)*
+*(Refer to the detailed documentation (refman.pdf) for more CLI options.)*
 
 ##‍🔬 Documentation
 
 The PDF file that is generated through Doxygen is **essential** to learning what this program is all about.
+It is named "refman.pdf"in the repo.
 To generate and open the PDF documentation:
 
 ```bash
