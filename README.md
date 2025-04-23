@@ -111,7 +111,7 @@ things won't look as nice, as I made the documentation custom-tailored to make P
 
 Feel free to reach out if you have any questions or suggestions! This is my first piece of software that I started during
 my sophomore year as a CS student, so I am certain that there are things in here that I can change, improve, or otherwise
-make better.
+make better, especially when it comes to GitHub---I barely have an idea on how to use Git XD.
 
 - **GitHub:** [BMAGS6](https://github.com/BMAGS6)
 - **Email:** brandonmagoni111@gmail.com
