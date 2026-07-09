@@ -74,7 +74,7 @@ Here's how to run a basic simulation example with custom parameters:
 
 *(Refer to the detailed documentation (refman.pdf) for more CLI options.)*
 
-##‍Documentation
+## Documentation
 
 The PDF file that is generated through Doxygen is **essential** to learning what this program is all about.
 It is named "refman.pdf"in the repo.
