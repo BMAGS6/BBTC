@@ -51,8 +51,8 @@ Ensure these dependencies are installed on your system:
 Clone this repository and build:
 
 ```bash
-git clone https://github.com/yourusername/BallisticTrajectoryCalculator.git
-cd BallisticTrajectoryCalculator
+git clone https://github.com/BMAGS6/BBTC.git
+cd BBTC
 make
 ```
 
