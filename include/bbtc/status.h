@@ -2,15 +2,13 @@
  * @file
  * @brief Public API status codes and their stable text representation.
  */
-
 #ifndef BBTC_STATUS_H
 #define BBTC_STATUS_H
 
 #include <stdint.h>
 
 #ifdef __cplusplus
-extern "C"
-{
+    extern "C" {
 #endif
 
 /**
@@ -69,7 +67,6 @@ const char*
 bbtc_status_string(bbtc_status_e status);
 
 #ifdef __cplusplus
-}
+}   /* extern "C" */
 #endif
-
 #endif /* BBTC_STATUS_H */
