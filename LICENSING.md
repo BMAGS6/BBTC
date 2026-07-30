@@ -1,6 +1,6 @@
 # BBTC Licensing
 
-Copyright 2026 L. Brandon Magoni.
+Copyright © 2026 L. Brandon Magoni.
 
 ## Public noncommercial license
 

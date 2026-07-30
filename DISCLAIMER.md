@@ -15,7 +15,7 @@ chamber and bore geometry, temperature, manufacturing tolerances, measurement
 method, and other effects that a model may omit or approximate. Small input
 changes can produce large pressure changes.
 
-Do not use BBTC output as a substitute for:
+Do **NOT** use BBTC output as a substitute for:
 
 - published load data from reputable component or ammunition manufacturers;
 - the instructions and limits in current reloading manuals;
@@ -32,5 +32,5 @@ Model assumptions, applicability limits, warnings, and validation evidence must
 be reviewed alongside every result. Passing software tests does not establish
 physical validation.
 
-The software is provided without warranty under the terms in `LICENSE.md`. This
+The software is provided **WITHOUT WARRANTY** under the terms in `LICENSE.md`. This
 notice supplements those terms; it does not replace them.

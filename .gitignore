@@ -23,6 +23,7 @@ rules.ninja
 *.lib
 *.o
 *.obj
+*.elf
 *.so
 *.so.*
 /bbtc
@@ -30,6 +31,8 @@ rules.ninja
 
 # Generated reports and documentation
 /docs/api/
+*.log
+*.results
 /trajectory_log.csv
 
 # Editor and operating-system debris

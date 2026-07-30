@@ -67,7 +67,7 @@ private link-anchor symbol; it exists only to verify this empty foundation.
 ## Safety
 
 BBTC produces experimental model output, not measured pressure data or approved
-ammunition-loading instructions. It must never be used to declare a real
+ammunition-loading instructions. It **MUST NEVER** be used to declare a real
 cartridge, charge, firearm, or procedure safe. Read
 [`DISCLAIMER.md`](DISCLAIMER.md) before using future simulation output.
 
