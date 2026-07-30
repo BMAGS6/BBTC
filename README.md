@@ -7,17 +7,20 @@ Cubes of Honor.
 
 ## Current status
 
-The rewrite is in **IB0.2a**. This checkpoint contains only:
+The rewrite is in **IB0.2b**. This checkpoint contains:
 
 - a strict C23 CMake/Ninja library target;
 - the namespaced CMake alias `bbtc::bbtc`;
 - top-level and subproject-aware test defaults;
-- a private temporary link anchor; and
-- a CTest link smoke test.
+- public `<bbtc/bbtc.h>` and `<bbtc/status.h>` headers;
+- the fixed-width `bbtc_status_e` API-status contract;
+- immutable, nonlocalized status strings; and
+- CTest coverage for every status value, unknown values, and C++ header use.
 
-There is no ballistic solver, public C API, command-line application, or
-validated firing solution in this checkpoint. Those pieces will be added only
-after their individual contracts and tests are reviewed.
+There is still no ballistic solver, physical termination API, warning API,
+command-line application, or validated firing solution in this checkpoint.
+Those pieces will be added only after their individual contracts and tests are
+reviewed.
 
 The accepted reconstruction rules live in
 [`docs/design/BBTC_DESIGN_CONTRACT.md`](docs/design/BBTC_DESIGN_CONTRACT.md).
@@ -30,7 +33,8 @@ Requirements:
 
 - CMake 3.22 or newer;
 - Ninja;
-- a C compiler with ISO C23 support.
+- a C compiler with ISO C23 support; and
+- optionally, a C++11 compiler for the public-header compatibility test.
 
 Configure, build, and test:
 
@@ -61,8 +65,16 @@ add_subdirectory(path/to/BBTC)
 target_link_libraries(your_target PRIVATE bbtc::bbtc)
 ```
 
-The first public headers will arrive in IB0.2b. Do not depend on the current
-private link-anchor symbol; it exists only to verify this empty foundation.
+A consumer can then include the umbrella header:
+
+```c
+#include <bbtc/bbtc.h>
+```
+
+`bbtc_status_e` reports whether an API call completed successfully.
+`bbtc_status_string()` returns immutable text for known and unknown status
+values. Neither interface reports physical termination, model warnings,
+applicability, or firearm safety.
 
 ## Safety
 

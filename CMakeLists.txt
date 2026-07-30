@@ -26,10 +26,19 @@ unset(BBTC_BUILD_TESTS_DEFAULT)
 add_library(
     bbtc
     STATIC
-    src/bbtc.c
+    include/bbtc/bbtc.h
+    include/bbtc/status.h
+    src/status.c
 )
 
 add_library(bbtc::bbtc ALIAS bbtc)
+
+target_include_directories(
+    bbtc
+    PUBLIC
+        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+        "$<INSTALL_INTERFACE:include>"
+)
 
 target_compile_features(
     bbtc

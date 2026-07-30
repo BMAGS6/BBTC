@@ -1,0 +1,11 @@
+/**
+ * @file
+ * @brief Umbrella header for BBTC's public C API.
+ */
+
+#ifndef BBTC_BBTC_H
+#define BBTC_BBTC_H
+
+#include <bbtc/status.h>
+
+#endif /* BBTC_BBTC_H */

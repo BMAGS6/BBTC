@@ -1,16 +1,16 @@
 add_executable(
-    bbtc_test_link_smoke
-    test_link.c
+    bbtc_test_status
+    test_status.c
 )
 
 target_link_libraries(
-    bbtc_test_link_smoke
+    bbtc_test_status
     PRIVATE
         bbtc::bbtc
 )
 
 set_target_properties(
-    bbtc_test_link_smoke
+    bbtc_test_status
     PROPERTIES
         C_EXTENSIONS OFF
         C_STANDARD 23
@@ -18,6 +18,46 @@ set_target_properties(
 )
 
 add_test(
-    NAME bbtc.link_smoke
-    COMMAND bbtc_test_link_smoke
+    NAME bbtc.status
+    COMMAND bbtc_test_status
 )
+
+# C++ is optional and is used only to verify public-header interoperability.
+if(NOT CMAKE_CXX_COMPILER_LOADED)
+    include(CheckLanguage)
+    check_language(CXX)
+
+    if(CMAKE_CXX_COMPILER)
+        enable_language(CXX)
+    endif()
+endif()
+
+if(CMAKE_CXX_COMPILER_LOADED)
+    add_executable(
+        bbtc_test_cpp_header
+        test_cpp_header.cpp
+    )
+
+    target_link_libraries(
+        bbtc_test_cpp_header
+        PRIVATE
+            bbtc::bbtc
+    )
+
+    target_compile_features(
+        bbtc_test_cpp_header
+        PRIVATE
+            cxx_std_11
+    )
+
+    set_target_properties(
+        bbtc_test_cpp_header
+        PROPERTIES
+            CXX_EXTENSIONS OFF
+    )
+
+    add_test(
+        NAME bbtc.cpp_header
+        COMMAND bbtc_test_cpp_header
+    )
+endif()

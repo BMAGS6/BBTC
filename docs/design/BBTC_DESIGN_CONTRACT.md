@@ -1,8 +1,8 @@
 # BBTC Reconstruction Design Contract
 
-**Contract version:** 0.1.1
+**Contract version:** 0.1.2
 
-**Project phase:** IB0.2a
+**Project phase:** IB0.2b
 
 **Applies to:** `rewrite/library_first_v1`
 
@@ -425,6 +425,40 @@ categories MUST distinguish at least:
 Status value zero is success. A nonzero status MUST never mean "success with a
 physical warning."
 
+IB0.2b fixes the underlying representation of `bbtc_status_e` as `uint32_t`
+and assigns the following stable values and nonlocalized strings:
+
+| Value | Enumerator                                |
+| ----: | ----------------------------------------- |
+|     0 | `BBTC_STATUS_SUCCESS`                     |
+|     1 | `BBTC_STATUS_INVALID_ARGUMENT`            |
+|     2 | `BBTC_STATUS_NONFINITE_INPUT`             |
+|     3 | `BBTC_STATUS_OUTSIDE_DOMAIN`              |
+|     4 | `BBTC_STATUS_INCONSISTENT_CONFIGURATION`  |
+|     5 | `BBTC_STATUS_UNSUPPORTED_MODEL_OR_OPTION` |
+|     6 | `BBTC_STATUS_INSUFFICIENT_STORAGE`        |
+|     7 | `BBTC_STATUS_NUMERICAL_FAILURE`           |
+|     8 | `BBTC_STATUS_ITERATION_LIMIT`             |
+|     9 | `BBTC_STATUS_INTERNAL_INVARIANT_FAILURE`  |
+
+| Value | Status string                              |
+| ----: | ------------------------------------------ |
+|     0 | `"success"`                                |
+|     1 | `"invalid argument"`                       |
+|     2 | `"non-finite input"`                       |
+|     3 | `"value outside mathematical domain"`      |
+|     4 | `"inconsistent geometry or configuration"` |
+|     5 | `"unsupported model or option"`            |
+|     6 | `"insufficient caller-provided storage"`   |
+|     7 | `"numerical failure"`                      |
+|     8 | `"iteration or step limit reached"`        |
+|     9 | `"internal invariant failure"`             |
+
+Existing values MUST NOT be renumbered, aliased, or reused for another meaning.
+`bbtc_status_string()` MUST return `"unknown BBTC status"` for every
+unrecognized numeric value. The function MUST NOT return a null pointer,
+allocate memory, or modify shared state.
+
 ### 9.2 Physical termination
 
 Internal-ballistics termination is distinct from API status. Named termination
@@ -834,9 +868,24 @@ The initial verification compilers are GCC and Clang. A complete supported
 compiler and platform matrix remains deferred until those combinations have
 repeatable CI or equivalent recorded verification.
 
-## 22. Decisions deferred to later checkpoints
+## 22. Decisions resolved in IB0.2b
 
-The following choices are deliberately not smuggled into IB0.1:
+The following decisions define the first public BBTC API:
+
+1. **Status representation.** `bbtc_status_e` uses a fixed `uint32_t`
+   underlying type and the stable numeric assignments in section 9.1.
+2. **Public status headers.** `<bbtc/status.h>` owns the status declaration,
+   while `<bbtc/bbtc.h>` is the public umbrella header. Both are valid from
+   ISO C23 and C++11 or newer.
+3. **Status text.** `bbtc_status_string()` returns immutable, nonlocalized
+   static text, has no mutable global state, and maps unknown values to one
+   stable fallback string.
+4. **Scope boundary.** This checkpoint adds no solver, physical termination
+   reason, warning flag, validity mask, applicability flag, or safety judgment.
+
+## 23. Decisions deferred to later checkpoints
+
+The following choices remain deliberately deferred:
 
 1. **History delivery API.** Caller buffer, synchronous callback, or both will
    be chosen during the IB0.2 public-API review.
@@ -849,7 +898,7 @@ The following choices are deliberately not smuggled into IB0.1:
    are constrained here, but their concrete representation belongs to the CLI
    contract.
 
-## 23. Acceptance criteria for IB0.1
+## 24. Acceptance criteria for IB0.1
 
 IB0.1 is complete when:
 
@@ -861,6 +910,22 @@ IB0.1 is complete when:
 - no physics result is claimed merely because the future architecture is
   described here.
 
-The next phase, IB0.2, will turn the accepted rules into the smallest possible
-CMake library skeleton and public status/diagnostic API. It will not yet pretend
-to simulate internal ballistics.
+IB0.2a turned the accepted rules into the smallest possible CMake library
+skeleton. IB0.2b replaces its private link anchor with the public status API
+without pretending to simulate internal ballistics.
+
+## 25. Acceptance criteria for IB0.2b
+
+IB0.2b is complete when:
+
+- the public headers compile as ISO C23 and as C++11 or newer;
+- `bbtc_status_e` has `uint32_t` representation and the exact values in
+  section 9.1;
+- `bbtc_status_string()` returns the exact documented string for every known
+  status and the documented fallback for representative unknown values;
+- status lookup requires no allocation and uses no mutable global state;
+- the temporary private build-anchor symbol and its smoke test are removed;
+- GCC and Clang builds pass the registered status and C++ compatibility tests;
+- the public meaning and unknown-value behavior are documented; and
+- no solver, physical result, warning, termination, applicability, or safety
+  API is introduced.
