@@ -1,7 +1,0 @@
-<map id="cli_opts.h" name="cli_opts.h">
-<area shape="rect" id="Node000001" title="Function declarations and datatypes for user input through the command line." alt="" coords="52,5,131,31"/>
-<area shape="rect" id="Node000002" href="$cli__opts_8c.html" title="Definitions of functions for user input through the command line." alt="" coords="5,79,84,104"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="78,44,54,80,50,77,74,41"/>
-<area shape="rect" id="Node000003" href="$main_8c.html" title="Prototype interface for the 6&#45;DOF ballistic solver, now with actual drag table usage." alt="" coords="109,79,170,104"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="109,41,134,77,129,80,105,44"/>
-</map>

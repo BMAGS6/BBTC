@@ -1,2 +1,41 @@
-trajectory_log.csv
+# CMake and Ninja build trees
+/build/
+/build-*/
+/build_*/
+CMakeCache.txt
+CMakeFiles/
+CTestTestfile.cmake
+DartConfiguration.tcl
+Testing/
+build.ninja
+cmake_install.cmake
+compile_commands.json
+install_manifest.txt
+rules.ninja
+.ninja_deps
+.ninja_log
+
+# Compiled outputs
+*.a
+*.dll
+*.dylib
+*.exe
+*.lib
 *.o
+*.obj
+*.so
+*.so.*
+/bbtc
+/bbtc_cli
+
+# Generated reports and documentation
+/docs/api/
+/trajectory_log.csv
+
+# Editor and operating-system debris
+*.kate-swp
+*.swp
+*~
+.DS_Store
+Thumbs.db
+CMakeUserPresets.json

@@ -1,8 +1,8 @@
 # BBTC Reconstruction Design Contract
 
-**Contract version:** 0.1.0
+**Contract version:** 0.1.1
 
-**Project phase:** IB0.1
+**Project phase:** IB0.2a
 
 **Applies to:** `rewrite/library_first_v1`
 
@@ -818,24 +818,38 @@ A change is incomplete until:
 If implementation and this contract disagree, the discrepancy MUST be resolved
 explicitly. Neither code nor prose silently wins.
 
-## 21. Decisions deferred to later checkpoints
+## 21. Decisions resolved in IB0.2a
+
+The following decisions were explicitly approved after IB0.1:
+
+1. **Project license.** BBTC is publicly available under the PolyForm
+   Noncommercial License 1.0.0. Commercial use requires a separate written
+   license or written permission from the copyright holder. Project-specific
+   terms and contact information live in `LICENSING.md`.
+2. **Minimum CMake version.** BBTC requires CMake 3.22 or newer. This matches
+   the Cubes of Honor baseline and provides C23 standard-selection support plus
+   top-level/subproject detection without requiring newer CMake features.
+
+The initial verification compilers are GCC and Clang. A complete supported
+compiler and platform matrix remains deferred until those combinations have
+repeatable CI or equivalent recorded verification.
+
+## 22. Decisions deferred to later checkpoints
 
 The following choices are deliberately not smuggled into IB0.1:
 
-1. **Project license.** zlib, MIT, or another license requires explicit owner
-   approval and a separate change.
-2. **History delivery API.** Caller buffer, synchronous callback, or both will
+1. **History delivery API.** Caller buffer, synchronous callback, or both will
    be chosen during the IB0.2 public-API review.
-3. **Public-struct evolution mechanism.** Struct-size/version fields versus
+2. **Public-struct evolution mechanism.** Struct-size/version fields versus
    pre-1.0 source-level evolution will be decided before the first public
    simulation structure is frozen.
-4. **Minimum CMake version and supported compiler matrix.** These will be based
-   on BBTC and Cubes of Honor's actual supported environments.
-5. **Exact CLI exit-code table and machine-readable schemas.** Their categories
+3. **Supported compiler and platform matrix.** This will be expanded only from
+   recorded builds and tests rather than inferred from language claims.
+4. **Exact CLI exit-code table and machine-readable schemas.** Their categories
    are constrained here, but their concrete representation belongs to the CLI
    contract.
 
-## 22. Acceptance criteria for IB0.1
+## 23. Acceptance criteria for IB0.1
 
 IB0.1 is complete when:
 

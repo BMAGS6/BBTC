@@ -1,8 +1,0 @@
-<map id="pstate.h" name="pstate.h">
-<area shape="rect" id="Node000001" title="Defines the projectile state in 3D (position, velocity, orientation, etc.)." alt="" coords="37,5,106,31"/>
-<area shape="rect" id="Node000002" href="$quat_8h.html" title="Declarations for quaternion&#45;based rotation utilities." alt="" coords="9,79,67,104"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="68,32,52,67,47,65,63,30"/>
-<area shape="rect" id="Node000003" href="$compiler__macros_8h.html" title="Contains macros for cross&#45;compatible compiler optimizations and compatibility." alt="" coords="5,152,137,177"/>
-<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="76,31,82,79,78,138,73,138,77,79,71,31"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="46,103,63,139,58,141,41,105"/>
-</map>
