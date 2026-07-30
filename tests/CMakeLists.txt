@@ -22,6 +22,30 @@ add_test(
     COMMAND bbtc_test_status
 )
 
+add_executable(
+    bbtc_test_diagnostics
+    test_diagnostics.c
+)
+
+target_link_libraries(
+    bbtc_test_diagnostics
+    PRIVATE
+        bbtc::bbtc
+)
+
+set_target_properties(
+    bbtc_test_diagnostics
+    PROPERTIES
+        C_EXTENSIONS OFF
+        C_STANDARD 23
+        C_STANDARD_REQUIRED ON
+)
+
+add_test(
+    NAME bbtc.diagnostics
+    COMMAND bbtc_test_diagnostics
+)
+
 # C++ is optional and is used only to verify public-header interoperability.
 if(NOT CMAKE_CXX_COMPILER_LOADED)
     include(CheckLanguage)

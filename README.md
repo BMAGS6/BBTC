@@ -7,20 +7,25 @@ Cubes of Honor.
 
 ## Current status
 
-The rewrite is in **IB0.2b**. This checkpoint contains:
+The rewrite is in **IB0.2c**. This checkpoint contains:
 
 - a strict C23 CMake/Ninja library target;
 - the namespaced CMake alias `bbtc::bbtc`;
 - top-level and subproject-aware test defaults;
-- public `<bbtc/bbtc.h>` and `<bbtc/status.h>` headers;
+- public `<bbtc/bbtc.h>`, `<bbtc/status.h>`, and
+  `<bbtc/diagnostics.h>` headers;
 - the fixed-width `bbtc_status_e` API-status contract;
-- immutable, nonlocalized status strings; and
-- CTest coverage for every status value, unknown values, and C++ header use.
+- the fixed-width `bbtc_ib_termination_e` physical-termination contract;
+- fixed `uint64_t` warning and model-applicability flag contracts;
+- immutable, nonlocalized strings for statuses, termination reasons, and
+  individual diagnostic flags; and
+- CTest coverage for every defined value, representative unknown and combined
+  values, and C++ header use.
 
-There is still no ballistic solver, physical termination API, warning API,
+There is still no ballistic solver, result record, result-field validity mask,
 command-line application, or validated firing solution in this checkpoint.
-Those pieces will be added only after their individual contracts and tests are
-reviewed.
+These diagnostic types define how future results communicate; they do not
+pretend that a result exists yet.
 
 The accepted reconstruction rules live in
 [`docs/design/BBTC_DESIGN_CONTRACT.md`](docs/design/BBTC_DESIGN_CONTRACT.md).
@@ -73,8 +78,14 @@ A consumer can then include the umbrella header:
 
 `bbtc_status_e` reports whether an API call completed successfully.
 `bbtc_status_string()` returns immutable text for known and unknown status
-values. Neither interface reports physical termination, model warnings,
-applicability, or firearm safety.
+values.
+
+`bbtc_ib_termination_e` independently describes why a future
+internal-ballistics simulation stopped. `bbtc_warning_flags_t` and
+`bbtc_applicability_flags_t` carry nonfatal computational conditions and
+scientific model limitations. A successful status, a zero warning mask, or a
+zero applicability mask does not establish that ammunition or a firearm is
+safe.
 
 ## Safety
 

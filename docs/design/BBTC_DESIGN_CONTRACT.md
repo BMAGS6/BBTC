@@ -1,8 +1,8 @@
 # BBTC Reconstruction Design Contract
 
-**Contract version:** 0.1.2
+**Contract version:** 0.1.3
 
-**Project phase:** IB0.2b
+**Project phase:** IB0.2c
 
 **Applies to:** `rewrite/library_first_v1`
 
@@ -461,35 +461,93 @@ allocate memory, or modify shared state.
 
 ### 9.2 Physical termination
 
-Internal-ballistics termination is distinct from API status. Named termination
-reasons will include, as applicable:
+Internal-ballistics termination is distinct from API status.
+`bbtc_ib_termination_e` uses a fixed `uint32_t` underlying representation and
+the following stable values:
 
-- muzzle exit;
-- no ignition;
-- projectile did not begin moving;
-- projectile stopped before muzzle exit;
-- caller time guard reached;
-- caller pressure guard reached;
-- solver step guard reached;
-- numerical failure.
+| Value | Enumerator                                                  |
+| ----: | ----------------------------------------------------------- |
+|     0 | `BBTC_IB_TERMINATION_NOT_RUN`                               |
+|     1 | `BBTC_IB_TERMINATION_MUZZLE_EXIT`                           |
+|     2 | `BBTC_IB_TERMINATION_NO_IGNITION`                           |
+|     3 | `BBTC_IB_TERMINATION_PROJECTILE_NOT_STARTED`                |
+|     4 | `BBTC_IB_TERMINATION_PROJECTILE_STOPPED_BEFORE_MUZZLE_EXIT` |
+|     5 | `BBTC_IB_TERMINATION_TIME_GUARD_REACHED`                    |
+|     6 | `BBTC_IB_TERMINATION_PRESSURE_GUARD_REACHED`                |
+|     7 | `BBTC_IB_TERMINATION_STEP_GUARD_REACHED`                    |
+|     8 | `BBTC_IB_TERMINATION_NUMERICAL_FAILURE`                     |
 
-A successfully computed stuck projectile or incomplete burn is a physical model
-outcome, not automatically an API error.
+`BBTC_IB_TERMINATION_NOT_RUN` is the zero-initialized sentinel and MUST NOT be
+reported as the endpoint of an attempted simulation.
+
+Muzzle exit, no ignition, a projectile that did not start, a projectile that
+stopped in the bore, and a caller-requested guard are computed simulation
+endpoints. If BBTC produces their required result metadata coherently, the API
+status is `BBTC_STATUS_SUCCESS`. `BBTC_IB_TERMINATION_NUMERICAL_FAILURE`
+accompanies `BBTC_STATUS_NUMERICAL_FAILURE` when integration began but could
+not produce a coherent modeled endpoint.
+
+`BBTC_STATUS_ITERATION_LIMIT` is reserved for an internal iterative operation
+whose own limit prevented the requested API operation from completing. It is
+not another spelling for a caller-configured time, pressure, or accepted-step
+guard.
+
+`bbtc_ib_termination_string()` returns the following immutable, nonlocalized
+strings:
+
+| Value | Termination string                                |
+| ----: | ------------------------------------------------- |
+|     0 | `"simulation not run"`                            |
+|     1 | `"projectile reached muzzle exit"`                |
+|     2 | `"ignition did not occur"`                        |
+|     3 | `"projectile did not begin moving"`               |
+|     4 | `"projectile stopped before muzzle exit"`         |
+|     5 | `"caller time guard reached"`                     |
+|     6 | `"caller pressure guard reached"`                 |
+|     7 | `"caller step guard reached"`                     |
+|     8 | `"numerical failure"`                             |
+
+Every unrecognized numeric value maps to
+`"unknown BBTC internal-ballistics termination"`. The function MUST NOT return
+a null pointer, allocate memory, or modify shared state.
 
 ### 9.3 Warning flags
 
-Nonfatal computational or reporting conditions use a bitmask. Candidate
-warnings include:
+Nonfatal computational or reporting conditions use
+`bbtc_warning_flags_t`, which is exactly `uint64_t`. Individual bit declarations
+use `bbtc_warning_flag_e` with `uint64_t` representation:
 
-- requested history was truncated;
-- energy-accounting residual exceeded its requested tolerance;
-- burn remained incomplete at muzzle exit;
-- a fallback approximation was used;
-- an event was located with reduced accuracy;
-- a supplied data record was extrapolated.
+| Bit | Value  | Enumerator                                     |
+| --: | -----: | ---------------------------------------------- |
+|   - | `0x00` | `BBTC_WARNING_NONE`                            |
+|   0 | `0x01` | `BBTC_WARNING_HISTORY_TRUNCATED`               |
+|   1 | `0x02` | `BBTC_WARNING_ENERGY_RESIDUAL_EXCEEDED`        |
+|   2 | `0x04` | `BBTC_WARNING_INCOMPLETE_BURN_AT_MUZZLE_EXIT`  |
+|   3 | `0x08` | `BBTC_WARNING_FALLBACK_APPROXIMATION_USED`     |
+|   4 | `0x10` | `BBTC_WARNING_REDUCED_EVENT_LOCATION_ACCURACY` |
+|   5 | `0x20` | `BBTC_WARNING_DATA_EXTRAPOLATED`               |
 
-Every warning bit MUST have one stable meaning. Warning text is presentation;
-the bit is the programmatic contract.
+Zero means that no warning defined by this contract was reported. It does not
+mean that the model is applicable, validated, or safe. Multiple nonzero bits
+MAY be combined in one mask. Existing bits MUST NOT be renumbered, aliased, or
+reused, and unassigned bits are reserved.
+
+`bbtc_warning_flag_string()` describes `BBTC_WARNING_NONE` or one individual
+defined warning bit:
+
+| Value  | Warning string                                    |
+| -----: | ------------------------------------------------- |
+| `0x00` | `"no warning reported"`                           |
+| `0x01` | `"requested history was truncated"`               |
+| `0x02` | `"energy-accounting residual tolerance exceeded"` |
+| `0x04` | `"propellant burn incomplete at muzzle exit"`     |
+| `0x08` | `"fallback approximation used"`                   |
+| `0x10` | `"event located with reduced accuracy"`           |
+| `0x20` | `"data record extrapolated"`                      |
+
+An unrecognized value or a combination of multiple bits maps to
+`"unknown or combined BBTC warning flag"`. The string function is a diagnostic
+convenience; the bitmask remains the programmatic contract.
 
 ### 9.4 Result-field validity
 
@@ -501,16 +559,56 @@ of the corresponding scalar family to make accidental use visible. Integer
 counters and bitmasks SHOULD be initialized to zero. Callers MUST still consult
 status and validity metadata; NaN is a tripwire, not the API.
 
+The public validity representation and bit assignments are deliberately
+deferred until concrete result fields are reviewed. Validity bits MUST map
+unambiguously to actual result fields or documented field groups; BBTC MUST NOT
+publish speculative validity bits for fields that do not yet exist.
+
+A valid field means only that BBTC computed and populated it according to the
+selected model and termination path. Field validity does not erase warnings,
+establish model applicability, or make a firearm-safety claim.
+
 ### 9.5 Model applicability
 
 Computational success **DOES NOT imply scientific validity** for every input.
-Model-limit or applicability flags MUST identify conditions such as:
+Model-limit conditions use `bbtc_applicability_flags_t`, which is exactly
+`uint64_t`. Individual bit declarations use `bbtc_applicability_flag_e` with
+`uint64_t` representation:
 
-- use outside a parameter set's documented calibration domain;
-- missing experimental validation for the selected model combination;
-- assumptions materially stressed by the supplied geometry or state;
-- a user-supplied parameter set with unknown provenance;
-- use of an approximation in place of a requested physical effect.
+| Bit | Value  | Enumerator                                           |
+| --: | -----: | ---------------------------------------------------- |
+|   - | `0x00` | `BBTC_APPLICABILITY_NONE_REPORTED`                   |
+|   0 | `0x01` | `BBTC_APPLICABILITY_OUTSIDE_CALIBRATION_DOMAIN`      |
+|   1 | `0x02` | `BBTC_APPLICABILITY_MODEL_COMBINATION_UNVALIDATED`   |
+|   2 | `0x04` | `BBTC_APPLICABILITY_ASSUMPTIONS_MATERIALLY_STRESSED` |
+|   3 | `0x08` | `BBTC_APPLICABILITY_DATA_PROVENANCE_UNKNOWN`         |
+|   4 | `0x10` | `BBTC_APPLICABILITY_REQUESTED_EFFECT_APPROXIMATED`   |
+
+Zero means that no limitation defined by this contract was reported. It does
+not prove that a result is experimentally validated, approved, or safe.
+Multiple nonzero bits MAY be combined in one mask. Existing bits MUST NOT be
+renumbered, aliased, or reused, and unassigned bits are reserved.
+
+`bbtc_applicability_flag_string()` describes the zero value or one individual
+defined applicability bit:
+
+| Value  | Applicability string                                |
+| -----: | --------------------------------------------------- |
+| `0x00` | `"no applicability limitation reported"`            |
+| `0x01` | `"outside documented calibration domain"`           |
+| `0x02` | `"model combination lacks experimental validation"` |
+| `0x04` | `"model assumptions materially stressed"`           |
+| `0x08` | `"data provenance unknown"`                         |
+| `0x10` | `"requested physical effect approximated"`          |
+
+An unrecognized value or a combination of multiple bits maps to
+`"unknown or combined BBTC applicability flag"`.
+
+Warning and applicability flags are not mutually exclusive. For example, an
+extrapolated data record may set both `BBTC_WARNING_DATA_EXTRAPOLATED` and
+`BBTC_APPLICABILITY_OUTSIDE_CALIBRATION_DOMAIN`. A fallback used for a
+requested effect may set both corresponding warning and applicability bits.
+Each channel retains its separate meaning.
 
 No flag may be named or documented as `safe`, `unsafe`, `proofed`, or
 `approved`.
@@ -883,7 +981,32 @@ The following decisions define the first public BBTC API:
 4. **Scope boundary.** This checkpoint adds no solver, physical termination
    reason, warning flag, validity mask, applicability flag, or safety judgment.
 
-## 23. Decisions deferred to later checkpoints
+## 23. Decisions resolved in IB0.2c
+
+The following decisions define BBTC's first public diagnostic metadata:
+
+1. **Header ownership.** `<bbtc/diagnostics.h>` owns termination, warning, and
+   applicability declarations and is included by `<bbtc/bbtc.h>`.
+2. **Termination representation.** `bbtc_ib_termination_e` uses `uint32_t`
+   representation and the stable values in section 9.2. Its zero value means
+   that no simulation has run.
+3. **Flag representation.** `bbtc_warning_flags_t` and
+   `bbtc_applicability_flags_t` are exactly `uint64_t`. Their individual
+   declarations use fixed `uint64_t` enumeration types, and every assigned
+   nonzero value is one independent bit.
+4. **Separate meanings.** API status reports whether an operation completed;
+   termination reports why a simulation stopped; warnings report nonfatal
+   computational or reporting conditions; applicability flags report limits on
+   scientific interpretation.
+5. **Diagnostic text.** Termination and individual-flag string functions return
+   immutable, nonlocalized static text. Combined or unknown flag values receive
+   an explicit fallback instead of an invented aggregate sentence.
+6. **Validity timing.** Result-field validity remains mandatory, but its public
+   representation is deferred until concrete result fields exist.
+7. **Scope boundary.** This checkpoint adds no solver, result structure,
+   validity bit, physical prediction, or safety judgment.
+
+## 24. Decisions deferred to later checkpoints
 
 The following choices remain deliberately deferred:
 
@@ -898,7 +1021,7 @@ The following choices remain deliberately deferred:
    are constrained here, but their concrete representation belongs to the CLI
    contract.
 
-## 24. Acceptance criteria for IB0.1
+## 25. Acceptance criteria for IB0.1
 
 IB0.1 is complete when:
 
@@ -912,9 +1035,11 @@ IB0.1 is complete when:
 
 IB0.2a turned the accepted rules into the smallest possible CMake library
 skeleton. IB0.2b replaces its private link anchor with the public status API
-without pretending to simulate internal ballistics.
+without pretending to simulate internal ballistics. IB0.2c defines how a future
+simulation reports termination, warnings, and model-applicability limitations
+while still producing no physical result.
 
-## 25. Acceptance criteria for IB0.2b
+## 26. Acceptance criteria for IB0.2b
 
 IB0.2b is complete when:
 
@@ -929,3 +1054,25 @@ IB0.2b is complete when:
 - the public meaning and unknown-value behavior are documented; and
 - no solver, physical result, warning, termination, applicability, or safety
   API is introduced.
+
+## 27. Acceptance criteria for IB0.2c
+
+IB0.2c is complete when:
+
+- the public diagnostic header compiles as ISO C23 and as C++11 or newer;
+- `bbtc_ib_termination_e` has `uint32_t` representation and the exact values in
+  section 9.2;
+- warning and applicability aggregate masks are exactly `uint64_t`;
+- individual warning and applicability enumeration types have `uint64_t`
+  representation and the exact one-bit assignments in sections 9.3 and 9.5;
+- every defined termination, warning, and applicability value returns its exact
+  documented string;
+- representative unknown termination values, combined flag values, and
+  unassigned high bits return their documented fallback strings;
+- string lookup requires no allocation and uses no mutable global state;
+- GCC and Clang builds pass the status, diagnostic, and C++ compatibility
+  tests;
+- result-field validity remains explicitly deferred until result fields are
+  reviewed; and
+- no solver, result structure, physical prediction, or safety judgment is
+  introduced.

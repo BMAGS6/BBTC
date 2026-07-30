@@ -44,7 +44,10 @@ typedef enum bbtc_status_e : uint32_t
     /** A numerical operation failed to produce a valid result. */
     BBTC_STATUS_NUMERICAL_FAILURE = 7,
 
-    /** An iteration or integration-step limit prevented completion. */
+    /**
+     * An internal iteration limit prevented API completion; this is not a
+     * caller-configured simulation guard.
+     */
     BBTC_STATUS_ITERATION_LIMIT = 8,
 
     /** An internal invariant was violated. */
