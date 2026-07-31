@@ -1,0 +1,78 @@
+# Configure, build, and execute the independent BBTC consumer fixture.
+
+file(
+    REMOVE_RECURSE
+    "@BBTC_CONSUMER_FIXTURE_BINARY_DIR@"
+)
+
+set(
+    configure_command
+    "@CMAKE_COMMAND@"
+    -S
+    "@BBTC_CONSUMER_FIXTURE_SOURCE_DIR@"
+    -B
+    "@BBTC_CONSUMER_FIXTURE_BINARY_DIR@"
+    -G
+    "@CMAKE_GENERATOR@"
+    "-DBBTC_SOURCE_DIR:PATH=@PROJECT_SOURCE_DIR@"
+    "-DCMAKE_C_COMPILER:FILEPATH=@CMAKE_C_COMPILER@"
+)
+
+if(NOT "@CMAKE_MAKE_PROGRAM@" STREQUAL "")
+    list(
+        APPEND
+        configure_command
+        "-DCMAKE_MAKE_PROGRAM:FILEPATH=@CMAKE_MAKE_PROGRAM@"
+    )
+endif()
+
+if(NOT "@CMAKE_BUILD_TYPE@" STREQUAL "")
+    list(
+        APPEND
+        configure_command
+        "-DCMAKE_BUILD_TYPE:STRING=@CMAKE_BUILD_TYPE@"
+    )
+endif()
+
+execute_process(
+    COMMAND ${configure_command}
+    RESULT_VARIABLE configure_result
+)
+
+if(NOT configure_result EQUAL 0)
+    message(
+        FATAL_ERROR
+        "The independent BBTC consumer fixture failed to configure"
+    )
+endif()
+
+execute_process(
+    COMMAND
+        "@CMAKE_COMMAND@"
+        --build
+        "@BBTC_CONSUMER_FIXTURE_BINARY_DIR@"
+    RESULT_VARIABLE build_result
+)
+
+if(NOT build_result EQUAL 0)
+    message(
+        FATAL_ERROR
+        "The independent BBTC consumer fixture failed to build"
+    )
+endif()
+
+execute_process(
+    COMMAND
+        "@CMAKE_CTEST_COMMAND@"
+        --test-dir
+        "@BBTC_CONSUMER_FIXTURE_BINARY_DIR@"
+        --output-on-failure
+    RESULT_VARIABLE test_result
+)
+
+if(NOT test_result EQUAL 0)
+    message(
+        FATAL_ERROR
+        "The independent BBTC consumer fixture failed at runtime"
+    )
+endif()

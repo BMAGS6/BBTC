@@ -46,6 +46,30 @@ add_test(
     COMMAND bbtc_test_diagnostics
 )
 
+set(
+    BBTC_CONSUMER_FIXTURE_SOURCE_DIR
+    "${CMAKE_CURRENT_SOURCE_DIR}/consumer"
+)
+
+set(
+    BBTC_CONSUMER_FIXTURE_BINARY_DIR
+    "${CMAKE_CURRENT_BINARY_DIR}/consumer"
+)
+
+configure_file(
+    consumer/run_consumer_fixture.cmake.in
+    run_consumer_fixture.cmake
+    @ONLY
+)
+
+add_test(
+    NAME bbtc.consumer
+    COMMAND
+        "${CMAKE_COMMAND}"
+        -P
+        "${CMAKE_CURRENT_BINARY_DIR}/run_consumer_fixture.cmake"
+)
+
 # C++ is optional and is used only to verify public-header interoperability.
 if(NOT CMAKE_CXX_COMPILER_LOADED)
     include(CheckLanguage)
