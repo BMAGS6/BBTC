@@ -1,0 +1,241 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  strict:
+    name: "Strict ${{ matrix.name }}"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: GCC
+            c_compiler: gcc
+            cxx_compiler: g++
+          - name: Clang
+            c_compiler: clang
+            cxx_compiler: clang++
+
+    env:
+      STRICT_C_FLAGS: >-
+        -Wall
+        -Wextra
+        -Wpedantic
+        -Wconversion
+        -Wsign-conversion
+        -Wswitch-enum
+        -Wswitch-default
+        -Wstrict-prototypes
+        -Wmissing-prototypes
+        -Wmissing-declarations
+        -Wold-style-definition
+        -Wshadow
+        -Wformat=2
+        -Wundef
+        -Werror
+      STRICT_CXX_FLAGS: >-
+        -Wall
+        -Wextra
+        -Wpedantic
+        -Wconversion
+        -Wsign-conversion
+        -Wswitch-enum
+        -Wswitch-default
+        -Wshadow
+        -Wformat=2
+        -Wundef
+        -Werror
+
+    steps:
+      - name: Check out BBTC
+        uses: actions/checkout@v6
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes               clang               cmake               g++               gcc               ninja-build
+
+      - name: Configure BBTC
+        run: |
+          cmake               -S .               -B "build/ci-strict-${{ matrix.name }}"               -G Ninja               -DCMAKE_BUILD_TYPE=Debug               -DCMAKE_C_COMPILER="${{ matrix.c_compiler }}"               -DCMAKE_CXX_COMPILER="${{ matrix.cxx_compiler }}"               -DCMAKE_C_FLAGS="${STRICT_C_FLAGS}"               -DCMAKE_CXX_FLAGS="${STRICT_CXX_FLAGS}"               -DBBTC_BUILD_TESTS=ON
+
+      - name: Build BBTC
+        run: |
+          cmake               --build "build/ci-strict-${{ matrix.name }}"               --verbose
+
+      - name: Test BBTC
+        run: |
+          ctest               --test-dir "build/ci-strict-${{ matrix.name }}"               --output-on-failure
+
+      - name: Configure independent consumer
+        run: |
+          cmake               -S tests/consumer               -B "build/ci-consumer-strict-${{ matrix.name }}"               -G Ninja               -DCMAKE_BUILD_TYPE=Debug               -DCMAKE_C_COMPILER="${{ matrix.c_compiler }}"               -DCMAKE_C_FLAGS="${STRICT_C_FLAGS}"               -DBBTC_SOURCE_DIR="${GITHUB_WORKSPACE}"
+
+      - name: Build independent consumer
+        run: |
+          cmake               --build "build/ci-consumer-strict-${{ matrix.name }}"               --verbose
+
+      - name: Test independent consumer
+        run: |
+          ctest               --test-dir "build/ci-consumer-strict-${{ matrix.name }}"               --output-on-failure
+
+  address-sanitizer:
+    name: AddressSanitizer
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    env:
+      ASAN_OPTIONS: "detect_leaks=1:halt_on_error=1:abort_on_error=1"
+      SANITIZER_C_FLAGS: >-
+        -Wall
+        -Wextra
+        -Wpedantic
+        -Wconversion
+        -Wsign-conversion
+        -Wswitch-enum
+        -Wswitch-default
+        -Wstrict-prototypes
+        -Wmissing-prototypes
+        -Wmissing-declarations
+        -Wold-style-definition
+        -Wshadow
+        -Wformat=2
+        -Wundef
+        -Werror
+        -fsanitize=address
+        -fno-omit-frame-pointer
+      SANITIZER_CXX_FLAGS: >-
+        -Wall
+        -Wextra
+        -Wpedantic
+        -Wconversion
+        -Wsign-conversion
+        -Wswitch-enum
+        -Wswitch-default
+        -Wshadow
+        -Wformat=2
+        -Wundef
+        -Werror
+        -fsanitize=address
+        -fno-omit-frame-pointer
+
+    steps:
+      - name: Check out BBTC
+        uses: actions/checkout@v6
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes               clang               cmake               ninja-build
+
+      - name: Configure BBTC with AddressSanitizer
+        run: |
+          cmake               -S .               -B build/ci-asan               -G Ninja               -DCMAKE_BUILD_TYPE=Debug               -DCMAKE_C_COMPILER=clang               -DCMAKE_CXX_COMPILER=clang++               -DCMAKE_C_FLAGS="${SANITIZER_C_FLAGS}"               -DCMAKE_CXX_FLAGS="${SANITIZER_CXX_FLAGS}"               -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address"               -DBBTC_BUILD_TESTS=ON
+
+      - name: Build BBTC with AddressSanitizer
+        run: |
+          cmake               --build build/ci-asan               --verbose
+
+      - name: Test BBTC with AddressSanitizer
+        run: |
+          ctest               --test-dir build/ci-asan               --output-on-failure
+
+      - name: Configure sanitized independent consumer
+        run: |
+          cmake               -S tests/consumer               -B build/ci-consumer-asan               -G Ninja               -DCMAKE_BUILD_TYPE=Debug               -DCMAKE_C_COMPILER=clang               -DCMAKE_C_FLAGS="${SANITIZER_C_FLAGS}"               -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address"               -DBBTC_SOURCE_DIR="${GITHUB_WORKSPACE}"
+
+      - name: Build sanitized independent consumer
+        run: |
+          cmake               --build build/ci-consumer-asan               --verbose
+
+      - name: Test sanitized independent consumer
+        run: |
+          ctest               --test-dir build/ci-consumer-asan               --output-on-failure
+
+  undefined-behavior-sanitizer:
+    name: UndefinedBehaviorSanitizer
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    env:
+      UBSAN_OPTIONS: "print_stacktrace=1:halt_on_error=1"
+      SANITIZER_C_FLAGS: >-
+        -Wall
+        -Wextra
+        -Wpedantic
+        -Wconversion
+        -Wsign-conversion
+        -Wswitch-enum
+        -Wswitch-default
+        -Wstrict-prototypes
+        -Wmissing-prototypes
+        -Wmissing-declarations
+        -Wold-style-definition
+        -Wshadow
+        -Wformat=2
+        -Wundef
+        -Werror
+        -fsanitize=undefined
+        -fno-sanitize-recover=all
+        -fno-omit-frame-pointer
+      SANITIZER_CXX_FLAGS: >-
+        -Wall
+        -Wextra
+        -Wpedantic
+        -Wconversion
+        -Wsign-conversion
+        -Wswitch-enum
+        -Wswitch-default
+        -Wshadow
+        -Wformat=2
+        -Wundef
+        -Werror
+        -fsanitize=undefined
+        -fno-sanitize-recover=all
+        -fno-omit-frame-pointer
+
+    steps:
+      - name: Check out BBTC
+        uses: actions/checkout@v6
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes               clang               cmake               ninja-build
+
+      - name: Configure BBTC with UndefinedBehaviorSanitizer
+        run: |
+          cmake               -S .               -B build/ci-ubsan               -G Ninja               -DCMAKE_BUILD_TYPE=Debug               -DCMAKE_C_COMPILER=clang               -DCMAKE_CXX_COMPILER=clang++               -DCMAKE_C_FLAGS="${SANITIZER_C_FLAGS}"               -DCMAKE_CXX_FLAGS="${SANITIZER_CXX_FLAGS}"               -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=undefined -fno-sanitize-recover=all"               -DBBTC_BUILD_TESTS=ON
+
+      - name: Build BBTC with UndefinedBehaviorSanitizer
+        run: |
+          cmake               --build build/ci-ubsan               --verbose
+
+      - name: Test BBTC with UndefinedBehaviorSanitizer
+        run: |
+          ctest               --test-dir build/ci-ubsan               --output-on-failure
+
+      - name: Configure sanitized independent consumer
+        run: |
+          cmake               -S tests/consumer               -B build/ci-consumer-ubsan               -G Ninja               -DCMAKE_BUILD_TYPE=Debug               -DCMAKE_C_COMPILER=clang               -DCMAKE_C_FLAGS="${SANITIZER_C_FLAGS}"               -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=undefined -fno-sanitize-recover=all"               -DBBTC_SOURCE_DIR="${GITHUB_WORKSPACE}"
+
+      - name: Build sanitized independent consumer
+        run: |
+          cmake               --build build/ci-consumer-ubsan               --verbose
+
+      - name: Test sanitized independent consumer
+        run: |
+          ctest               --test-dir build/ci-consumer-ubsan               --output-on-failure
