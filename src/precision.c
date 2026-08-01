@@ -23,15 +23,11 @@ bbtc_precision_string(const bbtc_precision_e precision)
 }
 
 bbtc_status_e
-bbtc_precision_info(
-    const bbtc_precision_e precision,
-    bbtc_precision_info_t* const out_info
-)
+bbtc_precision_info(const bbtc_precision_e       precision,
+                    bbtc_precision_info_t* const out_info)
 {
     if (out_info == NULL)
-    {
         return BBTC_STATUS_INVALID_ARGUMENT;
-    }
 
     *out_info = (bbtc_precision_info_t){0};
 
@@ -50,6 +46,7 @@ bbtc_precision_info(
             };
             return BBTC_STATUS_SUCCESS;
 
+
         case BBTC_PRECISION_DOUBLE:
             *out_info = (bbtc_precision_info_t)
             {
@@ -63,6 +60,7 @@ bbtc_precision_info(
             };
             return BBTC_STATUS_SUCCESS;
 
+
         case BBTC_PRECISION_LONG_DOUBLE:
             *out_info = (bbtc_precision_info_t)
             {
@@ -75,6 +73,7 @@ bbtc_precision_info(
                 .storage_bytes = (uint32_t)sizeof(long double)
             };
             return BBTC_STATUS_SUCCESS;
+
 
         default:
             return BBTC_STATUS_INVALID_ARGUMENT;
