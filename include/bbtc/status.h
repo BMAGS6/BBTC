@@ -22,39 +22,38 @@
 typedef enum bbtc_status_e : uint8_t
 {
     /** The operation completed successfully. */
-    BBTC_STATUS_SUCCESS                     = 0,
+    BBTC_STATUS_SUCCESS = 0,
 
     /** A required pointer was null or another argument was invalid. */
-    BBTC_STATUS_INVALID_ARGUMENT            = 1,
+    BBTC_STATUS_INVALID_ARGUMENT = 1,
 
     /** A floating-point input was NaN or infinite. */
-    BBTC_STATUS_NONFINITE_INPUT             = 2,
+    BBTC_STATUS_NONFINITE_INPUT = 2,
 
     /** A finite value was outside the mathematical domain of an operation. */
-    BBTC_STATUS_OUTSIDE_DOMAIN              = 3,
+    BBTC_STATUS_OUTSIDE_DOMAIN = 3,
 
     /** Supplied geometry or configuration values contradicted one another. */
-    BBTC_STATUS_INCONSISTENT_CONFIGURATION  = 4,
+    BBTC_STATUS_INCONSISTENT_CONFIGURATION = 4,
 
     /** The requested model or option is not implemented or available. */
     BBTC_STATUS_UNSUPPORTED_MODEL_OR_OPTION = 5,
 
     /** Caller-provided storage was insufficient for a required result. */
-    BBTC_STATUS_INSUFFICIENT_STORAGE        = 6,
+    BBTC_STATUS_INSUFFICIENT_STORAGE = 6,
 
     /** A numerical operation failed to produce a valid result. */
-    BBTC_STATUS_NUMERICAL_FAILURE           = 7,
+    BBTC_STATUS_NUMERICAL_FAILURE = 7,
 
     /**
      * An internal iteration limit prevented API completion; this is not a
      * caller-configured simulation guard.
      */
-    BBTC_STATUS_ITERATION_LIMIT             = 8,
+    BBTC_STATUS_ITERATION_LIMIT = 8,
 
     /** An internal invariant was violated. */
-    BBTC_STATUS_INTERNAL_INVARIANT_FAILURE  = 9
-}
-bbtc_status_e;
+    BBTC_STATUS_INTERNAL_INVARIANT_FAILURE = 9
+} bbtc_status_e;
 
 /**
  * @brief Returns immutable, nonlocalized text for a BBTC status value.

@@ -32,8 +32,7 @@ typedef enum bbtc_precision_e : uint8_t
 
     /** The ISO C `long double` scalar family. */
     BBTC_PRECISION_LONG_DOUBLE = 3
-}
-bbtc_precision_e;
+} bbtc_precision_e;
 
 /**
  * @brief Describes the host implementation of one BBTC scalar family.
@@ -44,6 +43,9 @@ bbtc_precision_e;
  */
 typedef struct bbtc_precision_info_t
 {
+    /** Scalar family described by this record. */
+    bbtc_precision_e precision;
+
     /** Floating-point radix reported by `FLT_RADIX`. */
     uint32_t radix;
 
@@ -61,24 +63,18 @@ typedef struct bbtc_precision_info_t
 
     /** Object-representation size reported by `sizeof`, in bytes. */
     uint32_t storage_bytes;
-
-    /** Scalar family described by this record. */
-    bbtc_precision_e precision;
-
-    uint8_t _unused_padding[3];
-}
-bbtc_precision_info_t;
+} bbtc_precision_info_t;
 
 /**
  * @brief Returns immutable, nonlocalized text for a precision value.
  *
- * The returned pointer is never NULL. It refers to immutable static storage,
+ * The returned pointer is never null. It refers to immutable static storage,
  * may be read concurrently, and must not be modified or freed. Unrecognized
  * values return `"unknown BBTC precision"`.
  *
  * @param precision Precision value to describe.
  *
- * @return A NUL-terminated string in immutable static storage.
+ * @return A null-terminated string in immutable static storage.
  */
 const char*
 bbtc_precision_string(bbtc_precision_e precision);
@@ -89,16 +85,18 @@ bbtc_precision_string(bbtc_precision_e precision);
  * On success, `out_info` is populated from `<float.h>` and `sizeof` properties
  * of the linked library build. When `precision` is zero or unrecognized, the
  * output record is cleared and `BBTC_STATUS_INVALID_ARGUMENT` is returned. A
- * NULL output pointer also returns `BBTC_STATUS_INVALID_ARGUMENT`.
+ * null output pointer also returns `BBTC_STATUS_INVALID_ARGUMENT`.
  *
  * @param precision Scalar family to query.
- * @param out_info  Caller-owned output record to populate.
+ * @param out_info Caller-owned output record to populate.
  *
  * @return `BBTC_STATUS_SUCCESS` on success; otherwise a nonzero status.
  */
 bbtc_status_e
-bbtc_precision_info(bbtc_precision_e       precision,
-                    bbtc_precision_info_t* out_info);
+bbtc_precision_info(
+    bbtc_precision_e precision,
+    bbtc_precision_info_t* out_info
+);
 
 #ifdef __cplusplus
 }   /* extern "C" */
