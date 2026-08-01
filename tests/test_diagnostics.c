@@ -23,7 +23,7 @@ typedef struct diagnostic_string_case
     const char* expected;
 } diagnostic_string_case_t;
 
-static_assert(sizeof(bbtc_ib_termination_e) == sizeof(uint32_t));
+static_assert(sizeof(bbtc_ib_termination_e) == sizeof(uint8_t));
 static_assert(BBTC_IB_TERMINATION_NOT_RUN == 0);
 static_assert(BBTC_IB_TERMINATION_MUZZLE_EXIT == 1);
 static_assert(BBTC_IB_TERMINATION_NO_IGNITION == 2);
@@ -219,7 +219,7 @@ check_termination_strings(void)
         check_string(
             "bbtc_ib_termination_string",
             UINT64_C(9),
-            bbtc_ib_termination_string((bbtc_ib_termination_e)UINT32_C(9)),
+            bbtc_ib_termination_string((bbtc_ib_termination_e)9),
             "unknown BBTC internal-ballistics termination"
         ) != EXIT_SUCCESS
     )
@@ -229,8 +229,8 @@ check_termination_strings(void)
 
     return check_string(
         "bbtc_ib_termination_string",
-        UINT32_MAX,
-        bbtc_ib_termination_string((bbtc_ib_termination_e)UINT32_MAX),
+        UINT8_MAX,
+        bbtc_ib_termination_string((bbtc_ib_termination_e)UINT8_MAX),
         "unknown BBTC internal-ballistics termination"
     );
 }

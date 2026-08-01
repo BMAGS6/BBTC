@@ -1,14 +1,14 @@
 # BBTC Reconstruction Design Contract
 
-**Contract version:** 0.1.3
+**Contract version:** 0.1.4
 
-**Project phase:** IB0.2c
+**Project phase:** IB0.3a
 
-**Applies to:** `rewrite/library_first_v1`
+**Applies to:** `rewrite/ib0_3_api_architecture_v1`
 
 **Status:** Accepted
 
-**Date:** 2026-07-30
+**Date:** 2026-07-31
 
 ## 1. Purpose
 
@@ -272,6 +272,34 @@ storage size of each enabled family. It MUST NOT describe the `long double`
 family as binary80, 80-bit, quadruple precision, or another specific format
 unless the platform actually provides that format.
 
+IB0.3a fixes `bbtc_precision_e` as a `uint8_t` public enumeration with the
+following stable values:
+
+| Value | Enumerator                   | ISO C family  |
+| ----: | ---------------------------- | ------------- |
+|     1 | `BBTC_PRECISION_FLOAT`       | `float`       |
+|     2 | `BBTC_PRECISION_DOUBLE`      | `double`      |
+|     3 | `BBTC_PRECISION_LONG_DOUBLE` | `long double` |
+
+Zero and every unrecognized value are invalid and select no scalar family.
+`bbtc_precision_string()` returns `"float"`, `"double"`, or
+`"long double"` for the defined values and `"unknown BBTC precision"`
+otherwise.
+
+`bbtc_precision_info_t` and `bbtc_precision_info()` report the linked
+library build's `FLT_RADIX`, matching `*_MANT_DIG`, `*_MIN_EXP`,
+`*_MAX_EXP`, `*_DECIMAL_DIG`, and `sizeof` values. Precision identity is
+metadata and MUST NOT replace precision-qualified simulation records or
+functions with a runtime `void*` dispatch interface.
+
+`_Float16` is not a first-class BBTC solver family. Its finite range cannot
+represent the required public SI pressure domain in pascals, and its
+precision is not suitable for the adaptive-integration and event-location
+contract. A future API MAY use an explicitly documented half-precision
+representation for bounded storage or interchange, but it MUST NOT advertise
+that format through `bbtc_precision_e` unless a complete, scientifically
+defensible solver family exists.
+
 ### 7.2 Concrete and generic APIs
 
 Actual linkable functions and public record types MUST be
@@ -287,9 +315,9 @@ bbtc_ib_simulate_double(...)
 bbtc_ib_simulate_long_double(...)
 ```
 
-The exact complete declarations will be reviewed in IB0.2, but an unsuffixed
-public `bbtc_real_t` whose meaning changes with a build definition is
-forbidden. Such a switch would make headers, object files, and ABI identity
+The exact simulation declarations will be reviewed as IB0.3 proceeds, but an
+unsuffixed public `bbtc_real_t` whose meaning changes with a build definition
+is forbidden. Such a switch would make headers, object files, and ABI identity
 depend on matching hidden configuration.
 
 For C callers, BBTC will provide an optional header-only `_Generic` convenience
@@ -425,8 +453,10 @@ categories MUST distinguish at least:
 Status value zero is success. A nonzero status MUST never mean "success with a
 physical warning."
 
-IB0.2b fixes the underlying representation of `bbtc_status_e` as `uint32_t`
-and assigns the following stable values and nonlocalized strings:
+IB0.3a fixes the underlying representation of `bbtc_status_e` as `uint8_t`
+and retains the following stable values and nonlocalized strings. This
+pre-release revision replaces the earlier IB0.2b `uint32_t` choice without
+renumbering any value:
 
 | Value | Enumerator                                |
 | ----: | ----------------------------------------- |
@@ -459,10 +489,10 @@ Existing values MUST NOT be renumbered, aliased, or reused for another meaning.
 unrecognized numeric value. The function MUST NOT return a null pointer,
 allocate memory, or modify shared state.
 
-### 9.2 Physical termination
+### 9.2 Simulation termination
 
 Internal-ballistics termination is distinct from API status.
-`bbtc_ib_termination_e` uses a fixed `uint32_t` underlying representation and
+`bbtc_ib_termination_e` uses a fixed `uint8_t` underlying representation and
 the following stable values:
 
 | Value | Enumerator                                                  |
@@ -970,8 +1000,9 @@ repeatable CI or equivalent recorded verification.
 
 The following decisions define the first public BBTC API:
 
-1. **Status representation.** `bbtc_status_e` uses a fixed `uint32_t`
-   underlying type and the stable numeric assignments in section 9.1.
+1. **Status representation.** IB0.2b originally used a fixed `uint32_t`
+   underlying type. IB0.3a supersedes only that width with `uint8_t`; the
+   stable numeric assignments in section 9.1 are unchanged.
 2. **Public status headers.** `<bbtc/status.h>` owns the status declaration,
    while `<bbtc/bbtc.h>` is the public umbrella header. Both are valid from
    ISO C23 and C++11 or newer.
@@ -987,9 +1018,9 @@ The following decisions define BBTC's first public diagnostic metadata:
 
 1. **Header ownership.** `<bbtc/diagnostics.h>` owns termination, warning, and
    applicability declarations and is included by `<bbtc/bbtc.h>`.
-2. **Termination representation.** `bbtc_ib_termination_e` uses `uint32_t`
-   representation and the stable values in section 9.2. Its zero value means
-   that no simulation has run.
+2. **Termination representation.** IB0.2c originally used `uint32_t`
+   representation. IB0.3a supersedes only that width with `uint8_t`; the
+   stable values in section 9.2 and the zero-value meaning are unchanged.
 3. **Flag representation.** `bbtc_warning_flags_t` and
    `bbtc_applicability_flags_t` are exactly `uint64_t`. Their individual
    declarations use fixed `uint64_t` enumeration types, and every assigned
@@ -1038,13 +1069,15 @@ skeleton. IB0.2b replaces its private link anchor with the public status API
 without pretending to simulate internal ballistics. IB0.2c defines how a future
 simulation reports termination, warnings, and model-applicability limitations
 while still producing no physical result.
+IB0.3a adds explicit scalar-family identity and host precision metadata while
+still introducing no ballistic problem, solver, or physical result.
 
 ## 26. Acceptance criteria for IB0.2b
 
 IB0.2b is complete when:
 
 - the public headers compile as ISO C23 and as C++11 or newer;
-- `bbtc_status_e` has `uint32_t` representation and the exact values in
+- `bbtc_status_e` has `uint8_t` representation and the exact values in
   section 9.1;
 - `bbtc_status_string()` returns the exact documented string for every known
   status and the documented fallback for representative unknown values;
@@ -1060,7 +1093,7 @@ IB0.2b is complete when:
 IB0.2c is complete when:
 
 - the public diagnostic header compiles as ISO C23 and as C++11 or newer;
-- `bbtc_ib_termination_e` has `uint32_t` representation and the exact values in
+- `bbtc_ib_termination_e` has `uint8_t` representation and the exact values in
   section 9.2;
 - warning and applicability aggregate masks are exactly `uint64_t`;
 - individual warning and applicability enumeration types have `uint64_t`

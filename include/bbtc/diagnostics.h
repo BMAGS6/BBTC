@@ -16,10 +16,11 @@
  *
  * Termination describes the modeled or numerical endpoint of a simulation. It
  * is separate from bbtc_status_e, warning flags, applicability flags, and any
- * firearm-safety judgment. Numeric values are part of the public interface and
- * must not be renumbered or reused.
+ * firearm-safety judgment. The one-byte underlying representation and numeric
+ * values are part of the public interface and must not be changed, renumbered,
+ * or reused without an explicit ABI revision.
  */
-typedef enum bbtc_ib_termination_e : uint32_t
+typedef enum bbtc_ib_termination_e : uint8_t
 {
     /** No internal-ballistics simulation has run. */
     BBTC_IB_TERMINATION_NOT_RUN = 0,

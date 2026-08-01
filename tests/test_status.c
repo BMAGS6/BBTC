@@ -15,7 +15,7 @@ typedef struct status_case
     const char* expected;
 } status_case_t;
 
-static_assert(sizeof(bbtc_status_e) == sizeof(uint32_t));
+static_assert(sizeof(bbtc_status_e) == sizeof(uint8_t));
 static_assert(BBTC_STATUS_SUCCESS == 0);
 static_assert(BBTC_STATUS_INVALID_ARGUMENT == 1);
 static_assert(BBTC_STATUS_NONFINITE_INPUT == 2);
@@ -44,8 +44,8 @@ check_status_string(const bbtc_status_e status, const char* const expected)
     {
         fprintf(
             stderr,
-            "bbtc_status_string(%" PRIu32 ") returned null\n",
-            (uint32_t)status
+            "bbtc_status_string(%" PRIuMAX ") returned null\n",
+            (uintmax_t)(uint8_t)status
         );
         return EXIT_FAILURE;
     }
@@ -54,9 +54,9 @@ check_status_string(const bbtc_status_e status, const char* const expected)
     {
         fprintf(
             stderr,
-            "bbtc_status_string(%" PRIu32
+            "bbtc_status_string(%" PRIuMAX
             ") returned \"%s\"; expected \"%s\"\n",
-            (uint32_t)status,
+            (uintmax_t)(uint8_t)status,
             actual,
             expected
         );
@@ -116,7 +116,7 @@ main(void)
 
     if (
         check_status_string(
-            (bbtc_status_e)UINT32_C(10),
+            (bbtc_status_e)10,
             "unknown BBTC status"
         ) != EXIT_SUCCESS
     )
@@ -126,7 +126,7 @@ main(void)
 
     if (
         check_status_string(
-            (bbtc_status_e)UINT32_MAX,
+            (bbtc_status_e)UINT8_MAX,
             "unknown BBTC status"
         ) != EXIT_SUCCESS
     )

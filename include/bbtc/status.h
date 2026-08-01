@@ -14,11 +14,12 @@
 /**
  * @brief Reports whether a BBTC API operation completed successfully.
  *
- * These values describe API execution, not physical termination conditions,
- * warnings, model applicability, or firearm safety. Numeric values are part of
- * the public interface and must not be renumbered or reused.
+ * These values describe API execution, not simulation termination conditions,
+ * warnings, model applicability, or firearm safety. The one-byte underlying
+ * representation and numeric values are part of the public interface and must
+ * not be changed, renumbered, or reused without an explicit ABI revision.
  */
-typedef enum bbtc_status_e : uint32_t
+typedef enum bbtc_status_e : uint8_t
 {
     /** The operation completed successfully. */
     BBTC_STATUS_SUCCESS = 0,

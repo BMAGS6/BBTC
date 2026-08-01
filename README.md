@@ -7,20 +7,24 @@ Cubes of Honor.
 
 ## Current status
 
-The rewrite is in **IB0.2c**. This checkpoint contains:
+The rewrite is in **IB0.3a**. This checkpoint contains:
 
 - a strict C23 CMake/Ninja library target;
 - the namespaced CMake alias `bbtc::bbtc`;
 - top-level and subproject-aware test defaults;
-- public `<bbtc/bbtc.h>`, `<bbtc/status.h>`, and
-  `<bbtc/diagnostics.h>` headers;
-- the fixed-width `bbtc_status_e` API-status contract;
-- the fixed-width `bbtc_ib_termination_e` physical-termination contract;
+- public `<bbtc/bbtc.h>`, `<bbtc/status.h>`, `<bbtc/diagnostics.h>`, and
+  `<bbtc/precision.h>` headers;
+- one-byte `bbtc_status_e` and `bbtc_ib_termination_e` contracts;
+- one-byte `bbtc_precision_e` identity for `float`, `double`, and `long double`;
+- queried host metadata for radix, significand precision, exponent range,
+  decimal round-trip digits, and scalar storage size;
 - fixed `uint64_t` warning and model-applicability flag contracts;
 - immutable, nonlocalized strings for statuses, termination reasons, and
-  individual diagnostic flags; and
+  individual diagnostic flags;
 - CTest coverage for every defined value, representative unknown and combined
-  values, and C++ header use.
+  values, C++ header use, and independent CMake consumption; and
+- GitHub Actions coverage for strict GCC, strict Clang, AddressSanitizer, and
+  UndefinedBehaviorSanitizer builds.
 
 There is still no ballistic solver, result record, result-field validity mask,
 command-line application, or validated firing solution in this checkpoint.
@@ -79,6 +83,11 @@ A consumer can then include the umbrella header:
 `bbtc_status_e` reports whether an API call completed successfully.
 `bbtc_status_string()` returns immutable text for known and unknown status
 values.
+
+`bbtc_precision_e` identifies the three first-class scalar families.
+`bbtc_precision_info()` reports the actual `<float.h>` and storage properties
+of the linked library build. This runtime identity is metadata; future
+simulations remain precision-qualified at compile time.
 
 `bbtc_ib_termination_e` independently describes why a future
 internal-ballistics simulation stopped. `bbtc_warning_flags_t` and

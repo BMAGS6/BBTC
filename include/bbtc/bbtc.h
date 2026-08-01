@@ -6,7 +6,8 @@
 #ifndef BBTC_BBTC_H
 #define BBTC_BBTC_H
 
-#include "bbtc/diagnostics.h"
-#include "bbtc/status.h"
+#include <bbtc/diagnostics.h>
+#include <bbtc/precision.h>
+#include <bbtc/status.h>
 
 #endif /* BBTC_BBTC_H */

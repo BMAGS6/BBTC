@@ -23,6 +23,30 @@ add_test(
 )
 
 add_executable(
+    bbtc_test_precision
+    test_precision.c
+)
+
+target_link_libraries(
+    bbtc_test_precision
+    PRIVATE
+        bbtc::bbtc
+)
+
+set_target_properties(
+    bbtc_test_precision
+    PROPERTIES
+        C_EXTENSIONS OFF
+        C_STANDARD 23
+        C_STANDARD_REQUIRED ON
+)
+
+add_test(
+    NAME bbtc.precision
+    COMMAND bbtc_test_precision
+)
+
+add_executable(
     bbtc_test_diagnostics
     test_diagnostics.c
 )

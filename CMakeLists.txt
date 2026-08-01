@@ -28,8 +28,10 @@ add_library(
     STATIC
     include/bbtc/bbtc.h
     include/bbtc/diagnostics.h
+    include/bbtc/precision.h
     include/bbtc/status.h
     src/diagnostics.c
+    src/precision.c
     src/status.c
 )
 

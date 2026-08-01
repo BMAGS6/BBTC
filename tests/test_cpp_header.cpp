@@ -7,9 +7,9 @@
 static_assert(
     std::is_same<
         std::underlying_type<bbtc_status_e>::type,
-        std::uint32_t
+        std::uint8_t
     >::value,
-    "bbtc_status_e must have uint32_t representation"
+    "bbtc_status_e must have uint8_t representation"
 );
 
 static_assert(
@@ -20,9 +20,17 @@ static_assert(
 static_assert(
     std::is_same<
         std::underlying_type<bbtc_ib_termination_e>::type,
-        std::uint32_t
+        std::uint8_t
     >::value,
-    "bbtc_ib_termination_e must have uint32_t representation"
+    "bbtc_ib_termination_e must have uint8_t representation"
+);
+
+static_assert(
+    std::is_same<
+        std::underlying_type<bbtc_precision_e>::type,
+        std::uint8_t
+    >::value,
+    "bbtc_precision_e must have uint8_t representation"
 );
 
 static_assert(
@@ -74,6 +82,23 @@ main()
         std::strcmp(
             bbtc_status_string(BBTC_STATUS_SUCCESS),
             "success"
+        ) != 0
+    )
+    {
+        return 1;
+    }
+
+    bbtc_precision_info_t precision_info = {};
+
+    if (
+        bbtc_precision_info(BBTC_PRECISION_DOUBLE, &precision_info)
+            != BBTC_STATUS_SUCCESS
+        || precision_info.precision != BBTC_PRECISION_DOUBLE
+        || precision_info.storage_bytes
+            != static_cast<std::uint32_t>(sizeof(double))
+        || std::strcmp(
+            bbtc_precision_string(BBTC_PRECISION_DOUBLE),
+            "double"
         ) != 0
     )
     {
