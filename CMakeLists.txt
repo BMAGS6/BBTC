@@ -28,9 +28,12 @@ add_library(
     STATIC
     include/bbtc/bbtc.h
     include/bbtc/diagnostics.h
+    include/bbtc/internal_ballistics.h
+    include/bbtc/internal_ballistics/geometry.h
     include/bbtc/precision.h
     include/bbtc/status.h
     src/diagnostics.c
+    src/internal/geometry.c
     src/precision.c
     src/status.c
 )

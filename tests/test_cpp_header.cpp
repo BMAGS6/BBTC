@@ -12,25 +12,19 @@ static_assert(
     "bbtc_status_e must have uint8_t representation"
 );
 
-static_assert(
-    BBTC_STATUS_SUCCESS == 0,
-    "BBTC status value zero must mean success"
+static_assert(BBTC_STATUS_SUCCESS == 0,
+              "BBTC status value zero must mean success");
+
+static_assert(std::is_same<std::underlying_type<bbtc_ib_termination_e>::type,
+                           std::uint8_t
+              >::value,
+              "bbtc_ib_termination_e must have uint8_t representation"
 );
 
-static_assert(
-    std::is_same<
-        std::underlying_type<bbtc_ib_termination_e>::type,
-        std::uint8_t
-    >::value,
-    "bbtc_ib_termination_e must have uint8_t representation"
-);
-
-static_assert(
-    std::is_same<
-        std::underlying_type<bbtc_precision_e>::type,
-        std::uint8_t
-    >::value,
-    "bbtc_precision_e must have uint8_t representation"
+static_assert(std::is_same<std::underlying_type<bbtc_precision_e>::type,
+                           std::uint8_t
+              >::value,
+              "bbtc_precision_e must have uint8_t representation"
 );
 
 static_assert(
@@ -75,8 +69,40 @@ static_assert(
     "applicability bits must combine into a uint64_t mask"
 );
 
-int
-main()
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_geometry_float_t{}
+                .initial_behind_projectile_volume_m3
+        ),
+        float
+    >::value,
+    "float geometry must use native float fields"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_geometry_double_t{}
+                .initial_behind_projectile_volume_m3
+        ),
+        double
+    >::value,
+    "double geometry must use native double fields"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_geometry_long_double_t{}
+                .initial_behind_projectile_volume_m3
+        ),
+        long double
+    >::value,
+    "long-double geometry must use native long-double fields"
+);
+
+int main()
 {
     if (
         std::strcmp(
@@ -101,6 +127,18 @@ main()
             "double"
         ) != 0
     )
+    {
+        return 1;
+    }
+
+
+    bbtc_ib_geometry_double_t geometry = {};
+    geometry.initial_behind_projectile_volume_m3 = 4.0e-6;
+    geometry.bore_cross_sectional_area_m2 = 5.0e-5;
+    geometry.projectile_effective_base_area_m2 = 4.8e-5;
+    geometry.projectile_travel_to_muzzle_m = 0.6;
+
+    if (bbtc_ib_geometry_validate_double(&geometry) != BBTC_STATUS_SUCCESS)
     {
         return 1;
     }

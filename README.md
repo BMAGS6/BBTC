@@ -7,17 +7,19 @@ Cubes of Honor.
 
 ## Current status
 
-The rewrite is in **IB0.3a**. This checkpoint contains:
+The rewrite is in **IB0.3b**. This checkpoint contains:
 
 - a strict C23 CMake/Ninja library target;
 - the namespaced CMake alias `bbtc::bbtc`;
 - top-level and subproject-aware test defaults;
-- public `<bbtc/bbtc.h>`, `<bbtc/status.h>`, `<bbtc/diagnostics.h>`, and
-  `<bbtc/precision.h>` headers;
+- public `<bbtc/bbtc.h>`, `<bbtc/status.h>`, `<bbtc/diagnostics.h>`,
+  `<bbtc/precision.h>`, and internal-ballistics geometry headers;
 - one-byte `bbtc_status_e` and `bbtc_ib_termination_e` contracts;
 - one-byte `bbtc_precision_e` identity for `float`, `double`, and `long double`;
 - queried host metadata for radix, significand precision, exponent range,
   decimal round-trip digits, and scalar storage size;
+- native `float`, `double`, and `long double` internal-ballistics geometry
+  records with explicit SI field meanings and validation;
 - fixed `uint64_t` warning and model-applicability flag contracts;
 - immutable, nonlocalized strings for statuses, termination reasons, and
   individual diagnostic flags;
@@ -26,10 +28,10 @@ The rewrite is in **IB0.3a**. This checkpoint contains:
 - GitHub Actions coverage for strict GCC, strict Clang, AddressSanitizer, and
   UndefinedBehaviorSanitizer builds.
 
-There is still no ballistic solver, result record, result-field validity mask,
-command-line application, or validated firing solution in this checkpoint.
-These diagnostic types define how future results communicate; they do not
-pretend that a result exists yet.
+There is still no ballistic solver, composed problem record, result record,
+result-field validity mask, command-line application, or validated firing
+solution in this checkpoint. Geometry validation establishes a public physical
+input component; it does not compute pressure, velocity, or another prediction.
 
 The accepted reconstruction rules live in
 [`docs/design/BBTC_DESIGN_CONTRACT.md`](docs/design/BBTC_DESIGN_CONTRACT.md).
@@ -88,6 +90,12 @@ values.
 `bbtc_precision_info()` reports the actual `<float.h>` and storage properties
 of the linked library build. This runtime identity is metadata; future
 simulations remain precision-qualified at compile time.
+
+`bbtc_ib_geometry_float_t`, `bbtc_ib_geometry_double_t`, and
+`bbtc_ib_geometry_long_double_t` describe the same four geometric quantities in
+native scalar families. Their concrete validators reject null, nonfinite, zero,
+and negative inputs without requiring the bore and projectile-base areas to be
+equal.
 
 `bbtc_ib_termination_e` independently describes why a future
 internal-ballistics simulation stopped. `bbtc_warning_flags_t` and

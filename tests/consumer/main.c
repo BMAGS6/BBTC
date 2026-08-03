@@ -18,22 +18,13 @@
  * @return `EXIT_SUCCESS` when the strings match; otherwise `EXIT_FAILURE`.
  */
 static int
-check_string(
-    const char* const actual,
-    const char* const expected
-)
+check_string(const char* const actual,
+             const char* const expected)
 {
     if (actual == NULL)
-    {
         return EXIT_FAILURE;
-    }
 
-    if (strcmp(actual, expected) != 0)
-    {
-        return EXIT_FAILURE;
-    }
-
-    return EXIT_SUCCESS;
+    return strcmp(actual, expected);
 }
 
 /**
@@ -47,27 +38,40 @@ check_precision_contract(void)
 {
     bbtc_precision_info_t info = {0};
 
-    if (
-        bbtc_precision_info(BBTC_PRECISION_DOUBLE, &info)
-        != BBTC_STATUS_SUCCESS
-    )
+    if (bbtc_precision_info(BBTC_PRECISION_DOUBLE, &info) != BBTC_STATUS_SUCCESS)
+        return EXIT_FAILURE;
+
+    if (info.precision     != BBTC_PRECISION_DOUBLE     ||
+        info.radix         < UINT32_C(2)                ||
+        info.storage_bytes != (uint32_t)sizeof(double))
     {
         return EXIT_FAILURE;
     }
 
-    if (
-        info.precision != BBTC_PRECISION_DOUBLE
-        || info.radix < UINT32_C(2)
-        || info.storage_bytes != (uint32_t)sizeof(double)
-    )
-    {
-        return EXIT_FAILURE;
-    }
+    return check_string(bbtc_precision_string(BBTC_PRECISION_DOUBLE),
+                        "double");
+}
 
-    return check_string(
-        bbtc_precision_string(BBTC_PRECISION_DOUBLE),
-        "double"
-    );
+/**
+ * @brief Verifies precision-qualified geometry through the consumer target.
+ *
+ * @return `EXIT_SUCCESS` when the geometry contract works; otherwise
+ *         `EXIT_FAILURE`.
+ */
+static uint8_t
+check_geometry_contract(void)
+{
+    const bbtc_ib_geometry_double_t geometry =
+    {
+        .initial_behind_projectile_volume_m3 = 4.0e-6,
+        .bore_cross_sectional_area_m2        = 5.0e-5,
+        .projectile_effective_base_area_m2   = 4.8e-5,
+        .projectile_travel_to_muzzle_m       = 0.6
+    };
+
+    return bbtc_ib_geometry_validate_double(&geometry) == BBTC_STATUS_SUCCESS
+        ? EXIT_SUCCESS
+        : EXIT_FAILURE;
 }
 
 /**
@@ -76,52 +80,35 @@ check_precision_contract(void)
  * @return `EXIT_SUCCESS` when the external consumer contract works; otherwise
  *         `EXIT_FAILURE`.
  */
-int
-main(void)
+int main(void)
 {
-    if (
-        check_string(
-            bbtc_status_string(BBTC_STATUS_SUCCESS),
-            "success"
-        ) != EXIT_SUCCESS
-    )
+    if (check_string(bbtc_status_string(BBTC_STATUS_SUCCESS),
+                     "success")
+        != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;
     }
 
     if (check_precision_contract() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
+
+    if (check_geometry_contract() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
+
+    if (check_string(bbtc_ib_termination_string(BBTC_IB_TERMINATION_MUZZLE_EXIT),
+                     "projectile reached muzzle exit")
+        != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;
     }
 
-    if (
-        check_string(
-            bbtc_ib_termination_string(
-                BBTC_IB_TERMINATION_MUZZLE_EXIT
-            ),
-            "projectile reached muzzle exit"
-        ) != EXIT_SUCCESS
-    )
+    if (check_string(bbtc_warning_flag_string(BBTC_WARNING_DATA_EXTRAPOLATED),
+                     "data record extrapolated")
+        != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;
     }
 
-    if (
-        check_string(
-            bbtc_warning_flag_string(
-                BBTC_WARNING_DATA_EXTRAPOLATED
-            ),
-            "data record extrapolated"
-        ) != EXIT_SUCCESS
-    )
-    {
-        return EXIT_FAILURE;
-    }
-
-    return check_string(
-        bbtc_applicability_flag_string(
-            BBTC_APPLICABILITY_OUTSIDE_CALIBRATION_DOMAIN
-        ),
-        "outside documented calibration domain"
-    );
+    return check_string(bbtc_applicability_flag_string(BBTC_APPLICABILITY_OUTSIDE_CALIBRATION_DOMAIN),
+                        "outside documented calibration domain");
 }

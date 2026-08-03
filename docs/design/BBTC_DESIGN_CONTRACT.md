@@ -1,14 +1,14 @@
 # BBTC Reconstruction Design Contract
 
-**Contract version:** 0.1.4
+**Contract version:** 0.1.5
 
-**Project phase:** IB0.3a
+**Project phase:** IB0.3b
 
-**Applies to:** `rewrite/ib0_3_api_architecture_v1`
+**Applies to:** `rewrite/ib0_3b_record_contract_v1`
 
 **Status:** Accepted
 
-**Date:** 2026-07-31
+**Date:** 2026-08-01
 
 ## 1. Purpose
 
@@ -670,6 +670,55 @@ Inputs that can be derived from other inputs MUST have one documented source of
 truth. If both a primitive value and a derived override are accepted, the
 precedence and consistency check MUST be explicit.
 
+### 10.1 Initial geometry record
+
+IB0.3b defines three precision-qualified geometry records:
+
+```c
+bbtc_ib_geometry_float_t
+bbtc_ib_geometry_double_t
+bbtc_ib_geometry_long_double_t
+```
+
+Each record contains the same four quantities in its native scalar family:
+
+- `initial_behind_projectile_volume_m3` is the enclosed geometric volume behind
+  the projectile at its initial modeled position before subtracting condensed
+  propellant volume. It is not water capacity or initial free-gas volume;
+- `bore_cross_sectional_area_m2` is the effective area used to increase volume
+  as the projectile advances;
+- `projectile_effective_base_area_m2` is the effective area used to convert
+  modeled projectile-base pressure into axial projectile force; and
+- `projectile_travel_to_muzzle_m` is the axial travel from the initial modeled
+  projectile reference position to the muzzle-exit event.
+
+Bore cross-sectional area and projectile effective base area are distinct
+physical concepts. Validation MUST NOT require them to be numerically equal.
+A later composed-problem validator may impose cross-record consistency rules
+only after the required projectile and propellant records exist.
+
+The three geometry records are distinct concrete types. The core solver API
+MUST NOT replace them with one runtime-tagged union. A higher-level CLI,
+configuration loader, or serialization adapter MAY later use a tagged union,
+but it must select and call the matching concrete precision-qualified API.
+
+A zero-initialized geometry record is deliberately invalid. BBTC provides no
+physical default geometry. Each validator returns:
+
+- `BBTC_STATUS_INVALID_ARGUMENT` for a null record pointer;
+- `BBTC_STATUS_NONFINITE_INPUT` when any field is NaN or infinite;
+- `BBTC_STATUS_OUTSIDE_DOMAIN` when any finite field is zero or negative; and
+- `BBTC_STATUS_SUCCESS` when all four fields are finite and positive.
+
+Validation treats the caller-owned record as immutable and performs no
+allocation. `float` and `long double` validation MUST use their native types and
+MUST NOT convert through `double`.
+
+Before version 1.0, these records use deliberate source-level evolution rather
+than public `struct_size`, version, reserved, or named-padding members. Such
+compatibility machinery may be introduced later only with a concrete supported
+ABI-evolution contract.
+
 ## 11. Propellant representation
 
 "Ball," "flake," "extruded," "single-base," and similar labels are not complete
@@ -1037,22 +1086,61 @@ The following decisions define BBTC's first public diagnostic metadata:
 7. **Scope boundary.** This checkpoint adds no solver, result structure,
    validity bit, physical prediction, or safety judgment.
 
-## 24. Decisions deferred to later checkpoints
+## 24. Decisions resolved in IB0.3a
+
+The following decisions define scalar-family identity and platform metadata:
+
+1. **Precision identity.** `bbtc_precision_e` uses `uint8_t` representation and
+   identifies the `float`, `double`, and `long double` families.
+2. **Metadata only.** Runtime precision identity reports host properties and
+   does not replace precision-qualified records or concrete functions.
+3. **Half precision.** `_Float16` is not a first-class solver family because it
+   cannot represent BBTC's required public SI pressure domain and does not meet
+   the numerical contract.
+4. **Enum refinement.** `bbtc_status_e` and `bbtc_ib_termination_e` use
+   `uint8_t` representation without changing their established values.
+5. **Scope boundary.** This checkpoint adds no ballistic input record, solver,
+   physical prediction, or result.
+
+## 25. Decisions resolved in IB0.3b
+
+The following decisions define the first public physical input component:
+
+1. **Header ownership.** `<bbtc/internal_ballistics.h>` is the public
+   internal-ballistics umbrella header, and
+   `<bbtc/internal_ballistics/geometry.h>` owns geometry declarations.
+2. **Concrete scalar records.** Float, double, and long-double geometry use
+   separate precision-qualified structures whose continuous fields remain in
+   their native scalar family.
+3. **Geometry boundary.** The four fields and their exact physical meanings are
+   fixed by section 10.1. The two effective areas remain distinct and need not
+   be equal.
+4. **Validation.** Null, nonfinite, and finite out-of-domain inputs return the
+   statuses specified in section 10.1. Validation does not modify its input.
+5. **No runtime union foundation.** A tagged union may exist later as an
+   adapter, but it is not the concrete solver ABI and does not replace static
+   precision identity.
+6. **No physical defaults.** Zero initialization is an invalid sentinel state;
+   BBTC supplies no imaginary default chamber, bore, or barrel geometry.
+7. **Pre-1.0 structure evolution.** Public structure evolution remains
+   deliberate at source level. This checkpoint adds no structure-size field,
+   version member, reserved array, or named padding.
+8. **Scope boundary.** This checkpoint validates geometry but adds no composed
+   problem, propellant model, integration state, solver, or physical result.
+
+## 26. Decisions deferred to later checkpoints
 
 The following choices remain deliberately deferred:
 
 1. **History delivery API.** Caller buffer, synchronous callback, or both will
-   be chosen during the IB0.2 public-API review.
-2. **Public-struct evolution mechanism.** Struct-size/version fields versus
-   pre-1.0 source-level evolution will be decided before the first public
-   simulation structure is frozen.
-3. **Supported compiler and platform matrix.** This will be expanded only from
+   be chosen during the public simulation-API review.
+2. **Supported compiler and platform matrix.** This will be expanded only from
    recorded builds and tests rather than inferred from language claims.
-4. **Exact CLI exit-code table and machine-readable schemas.** Their categories
+3. **Exact CLI exit-code table and machine-readable schemas.** Their categories
    are constrained here, but their concrete representation belongs to the CLI
    contract.
 
-## 25. Acceptance criteria for IB0.1
+## 27. Acceptance criteria for IB0.1
 
 IB0.1 is complete when:
 
@@ -1070,9 +1158,11 @@ without pretending to simulate internal ballistics. IB0.2c defines how a future
 simulation reports termination, warnings, and model-applicability limitations
 while still producing no physical result.
 IB0.3a adds explicit scalar-family identity and host precision metadata while
-still introducing no ballistic problem, solver, or physical result.
+still introducing no ballistic problem, solver, or physical result. IB0.3b adds
+the first precision-qualified physical input component and validates its
+mathematical domain without pretending to solve internal ballistics.
 
-## 26. Acceptance criteria for IB0.2b
+## 28. Acceptance criteria for IB0.2b
 
 IB0.2b is complete when:
 
@@ -1088,7 +1178,7 @@ IB0.2b is complete when:
 - no solver, physical result, warning, termination, applicability, or safety
   API is introduced.
 
-## 27. Acceptance criteria for IB0.2c
+## 29. Acceptance criteria for IB0.2c
 
 IB0.2c is complete when:
 
@@ -1108,4 +1198,36 @@ IB0.2c is complete when:
 - result-field validity remains explicitly deferred until result fields are
   reviewed; and
 - no solver, result structure, physical prediction, or safety judgment is
+  introduced.
+
+
+## 30. Acceptance criteria for IB0.3a
+
+IB0.3a is complete when:
+
+- `bbtc_precision_e` has `uint8_t` representation and the exact three scalar
+  family values documented in section 7.1;
+- runtime precision strings and host metadata match the linked build;
+- C and C++ consumers can use the precision declarations;
+- strict GCC, strict Clang, AddressSanitizer, and UndefinedBehaviorSanitizer
+  verification pass; and
+- no ballistic problem, solver, or physical result is introduced.
+
+## 31. Acceptance criteria for IB0.3b
+
+IB0.3b is complete when:
+
+- all three geometry records expose the exact fields and meanings in section
+  10.1 using native `float`, `double`, and `long double` members;
+- the public umbrella-header chain exposes geometry to C23 and C++11-or-newer
+  consumers;
+- each concrete validator reports null, nonfinite, and finite out-of-domain
+  inputs with the required status and accepts finite positive values;
+- unequal effective bore and projectile-base areas remain valid;
+- validation leaves the caller-owned record unchanged and allocates no memory;
+- tests cover each field and scalar family, including NaN, both infinities,
+  positive subnormal values, and finite maxima;
+- strict GCC, strict Clang, independent-consumer, AddressSanitizer, and
+  UndefinedBehaviorSanitizer verification pass; and
+- no composed problem, solver, physical prediction, or safety judgment is
   introduced.

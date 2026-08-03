@@ -7,6 +7,7 @@
 #define BBTC_BBTC_H
 
 #include <bbtc/diagnostics.h>
+#include <bbtc/internal_ballistics.h>
 #include <bbtc/precision.h>
 #include <bbtc/status.h>
 
