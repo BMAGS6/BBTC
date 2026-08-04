@@ -74,6 +74,26 @@ check_geometry_contract(void)
         : EXIT_FAILURE;
 }
 
+
+/**
+ * @brief Verifies precision-qualified projectile data through the consumer.
+ *
+ * @return `EXIT_SUCCESS` when the projectile contract works; otherwise
+ *         `EXIT_FAILURE`.
+ */
+static int
+check_projectile_contract(void)
+{
+    const bbtc_ib_projectile_double_t projectile =
+    {
+        .mass_kg = 0.01134
+    };
+
+    return bbtc_ib_projectile_validate_double(&projectile) == BBTC_STATUS_SUCCESS
+        ? EXIT_SUCCESS
+        : EXIT_FAILURE;
+}
+
 /**
  * @brief Exercises public BBTC headers and linked diagnostic symbols.
  *
@@ -93,6 +113,9 @@ int main(void)
         return EXIT_FAILURE;
 
     if (check_geometry_contract() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
+
+    if (check_projectile_contract() != EXIT_SUCCESS)
         return EXIT_FAILURE;
 
     if (check_string(bbtc_ib_termination_string(BBTC_IB_TERMINATION_MUZZLE_EXIT),

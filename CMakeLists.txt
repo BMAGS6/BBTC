@@ -30,10 +30,12 @@ add_library(
     include/bbtc/diagnostics.h
     include/bbtc/internal_ballistics.h
     include/bbtc/internal_ballistics/geometry.h
+    include/bbtc/internal_ballistics/projectile.h
     include/bbtc/precision.h
     include/bbtc/status.h
     src/diagnostics.c
     src/internal/geometry.c
+    src/internal/projectile.c
     src/precision.c
     src/status.c
 )

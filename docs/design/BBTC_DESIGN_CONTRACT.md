@@ -1,14 +1,14 @@
 # BBTC Reconstruction Design Contract
 
-**Contract version:** 0.1.5
+**Contract version:** 0.1.6
 
-**Project phase:** IB0.3b
+**Project phase:** IB0.3c
 
-**Applies to:** `rewrite/ib0_3b_record_contract_v1`
+**Applies to:** `rewrite/ib0_3c_projectile_contract_v1`
 
 **Status:** Accepted
 
-**Date:** 2026-08-01
+**Date:** 2026-08-03
 
 ## 1. Purpose
 
@@ -719,6 +719,50 @@ than public `struct_size`, version, reserved, or named-padding members. Such
 compatibility machinery may be introduced later only with a concrete supported
 ABI-evolution contract.
 
+### 10.2 Projectile record
+
+IB0.3c defines three precision-qualified projectile records:
+
+```c
+bbtc_ib_projectile_float_t
+bbtc_ib_projectile_double_t
+bbtc_ib_projectile_long_double_t
+```
+
+Each record contains one continuous quantity in its native scalar family:
+
+- `mass_kg` is the total translational inertial mass of the modeled projectile
+  assembly accelerated through the bore. It includes every component that
+  remains mechanically coupled during the modeled bore travel and excludes
+  propellant, cartridge-case, gas, and firearm recoiling mass.
+
+Projectile effective base area, the initial projectile reference position, and
+travel to muzzle exit remain geometry concepts defined by section 10.1 and MUST
+NOT be duplicated in the projectile record. Initial projectile velocity is not
+part of physical projectile identity; it remains deferred to a future initial
+state or composed-problem record.
+
+The three projectile records are distinct concrete types. The core solver API
+MUST NOT replace them with one runtime-tagged union. A higher-level adapter MAY
+store them in a tagged union only when it selects and calls the matching
+precision-qualified API.
+
+A zero-initialized projectile record is deliberately invalid. BBTC provides no
+physical default projectile. Each validator returns:
+
+- `BBTC_STATUS_INVALID_ARGUMENT` for a null record pointer;
+- `BBTC_STATUS_NONFINITE_INPUT` when `mass_kg` is NaN or infinite;
+- `BBTC_STATUS_OUTSIDE_DOMAIN` when finite `mass_kg` is zero or negative; and
+- `BBTC_STATUS_SUCCESS` when `mass_kg` is finite and positive.
+
+Validation treats the caller-owned record as immutable and performs no
+allocation. `float` and `long double` validation MUST use their native types and
+MUST NOT convert through `double`.
+
+The projectile records follow the pre-1.0 source-level evolution policy from
+section 10.1. They contain no public structure-size field, version member,
+reserved array, or named padding.
+
 ## 11. Propellant representation
 
 "Ball," "flake," "extruded," "single-base," and similar labels are not complete
@@ -1128,7 +1172,33 @@ The following decisions define the first public physical input component:
 8. **Scope boundary.** This checkpoint validates geometry but adds no composed
    problem, propellant model, integration state, solver, or physical result.
 
-## 26. Decisions deferred to later checkpoints
+## 26. Decisions resolved in IB0.3c
+
+The following decisions define the first public projectile component:
+
+1. **Header ownership.**
+   `<bbtc/internal_ballistics/projectile.h>` owns projectile declarations and is
+   included by `<bbtc/internal_ballistics.h>`.
+2. **Concrete scalar records.** Float, double, and long-double projectile data
+   use separate precision-qualified structures with native scalar `mass_kg`
+   members.
+3. **Mass boundary.** `mass_kg` has the exact physical meaning stated in section
+   10.2. Geometry-owned area and travel fields are not duplicated.
+4. **Initial state separation.** Initial projectile velocity is deferred to a
+   future initial-state or composed-problem record.
+5. **Validation.** Null, nonfinite, and finite out-of-domain inputs return the
+   statuses specified in section 10.2. Validation does not modify its input.
+6. **No runtime union foundation.** A tagged union may exist later as an
+   adapter, but it does not replace static precision identity or concrete
+   functions.
+7. **No physical defaults.** Zero initialization is an invalid sentinel state;
+   BBTC supplies no imaginary default projectile mass.
+8. **Pre-1.0 structure evolution.** Projectile records add no structure-size
+   field, version member, reserved array, or named padding.
+9. **Scope boundary.** This checkpoint validates projectile mass but adds no
+   composed problem, propellant model, integration state, solver, or result.
+
+## 27. Decisions deferred to later checkpoints
 
 The following choices remain deliberately deferred:
 
@@ -1140,7 +1210,7 @@ The following choices remain deliberately deferred:
    are constrained here, but their concrete representation belongs to the CLI
    contract.
 
-## 27. Acceptance criteria for IB0.1
+## 28. Acceptance criteria for IB0.1
 
 IB0.1 is complete when:
 
@@ -1160,9 +1230,11 @@ while still producing no physical result.
 IB0.3a adds explicit scalar-family identity and host precision metadata while
 still introducing no ballistic problem, solver, or physical result. IB0.3b adds
 the first precision-qualified physical input component and validates its
-mathematical domain without pretending to solve internal ballistics.
+mathematical domain without pretending to solve internal ballistics. IB0.3c
+adds native projectile-mass records and validation while preserving geometry,
+initial-state, solver, and result boundaries.
 
-## 28. Acceptance criteria for IB0.2b
+## 29. Acceptance criteria for IB0.2b
 
 IB0.2b is complete when:
 
@@ -1178,7 +1250,7 @@ IB0.2b is complete when:
 - no solver, physical result, warning, termination, applicability, or safety
   API is introduced.
 
-## 29. Acceptance criteria for IB0.2c
+## 30. Acceptance criteria for IB0.2c
 
 IB0.2c is complete when:
 
@@ -1201,7 +1273,7 @@ IB0.2c is complete when:
   introduced.
 
 
-## 30. Acceptance criteria for IB0.3a
+## 31. Acceptance criteria for IB0.3a
 
 IB0.3a is complete when:
 
@@ -1213,7 +1285,7 @@ IB0.3a is complete when:
   verification pass; and
 - no ballistic problem, solver, or physical result is introduced.
 
-## 31. Acceptance criteria for IB0.3b
+## 32. Acceptance criteria for IB0.3b
 
 IB0.3b is complete when:
 
@@ -1231,3 +1303,22 @@ IB0.3b is complete when:
   UndefinedBehaviorSanitizer verification pass; and
 - no composed problem, solver, physical prediction, or safety judgment is
   introduced.
+
+
+## 33. Acceptance criteria for IB0.3c
+
+IB0.3c is complete when:
+
+- all three projectile records expose exactly one native scalar `mass_kg` field
+  with the physical meaning defined in section 10.2;
+- the public umbrella-header chain exposes projectile declarations to C23 and
+  C++11-or-newer consumers;
+- each concrete validator reports null, nonfinite, and finite out-of-domain
+  inputs with the required status and accepts finite positive mass;
+- validation leaves the caller-owned record unchanged and allocates no memory;
+- tests cover every scalar family, including NaN, both infinities, zero,
+  negative values, positive subnormal values, and finite maxima;
+- strict GCC, strict Clang, independent-consumer, AddressSanitizer, and
+  UndefinedBehaviorSanitizer verification pass; and
+- no composed problem, initial-state record, solver, physical prediction, or
+  safety judgment is introduced.

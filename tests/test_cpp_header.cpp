@@ -102,6 +102,22 @@ static_assert(
     "long-double geometry must use native long-double fields"
 );
 
+
+static_assert(std::is_same<decltype(bbtc_ib_projectile_float_t{}.mass_kg),
+                           float
+              >::value,
+              "float projectile must use native float mass");
+
+static_assert(std::is_same<decltype(bbtc_ib_projectile_double_t{}.mass_kg),
+                           double
+              >::value,
+              "double projectile must use native double mass");
+
+static_assert(std::is_same<decltype(bbtc_ib_projectile_long_double_t{}.mass_kg),
+                           long double
+              >::value,
+              "long-double projectile must use native long-double mass");
+
 int main()
 {
     if (
@@ -139,6 +155,17 @@ int main()
     geometry.projectile_travel_to_muzzle_m = 0.6;
 
     if (bbtc_ib_geometry_validate_double(&geometry) != BBTC_STATUS_SUCCESS)
+    {
+        return 1;
+    }
+
+
+    const bbtc_ib_projectile_double_t projectile =
+    {
+        0.01134
+    };
+
+    if (bbtc_ib_projectile_validate_double(&projectile) != BBTC_STATUS_SUCCESS)
     {
         return 1;
     }

@@ -94,6 +94,30 @@ add_test(
     COMMAND bbtc_test_ib_geometry
 )
 
+add_executable(
+    bbtc_test_ib_projectile
+    test_ib_projectile.c
+)
+
+target_link_libraries(
+    bbtc_test_ib_projectile
+    PRIVATE
+        bbtc::bbtc
+)
+
+set_target_properties(
+    bbtc_test_ib_projectile
+    PROPERTIES
+        C_EXTENSIONS OFF
+        C_STANDARD 23
+        C_STANDARD_REQUIRED ON
+)
+
+add_test(
+    NAME bbtc.ib_projectile
+    COMMAND bbtc_test_ib_projectile
+)
+
 set(
     BBTC_CONSUMER_FIXTURE_SOURCE_DIR
     "${CMAKE_CURRENT_SOURCE_DIR}/consumer"
