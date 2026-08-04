@@ -7,13 +7,14 @@ Cubes of Honor.
 
 ## Current status
 
-The rewrite is in **IB0.3c**. This checkpoint contains:
+The rewrite is in **IB0.3d**. This checkpoint contains:
 
 - a strict C23 CMake/Ninja library target;
 - the namespaced CMake alias `bbtc::bbtc`;
 - top-level and subproject-aware test defaults;
 - public `<bbtc/bbtc.h>`, `<bbtc/status.h>`, `<bbtc/diagnostics.h>`,
-  `<bbtc/precision.h>`, and internal-ballistics geometry and projectile headers;
+  `<bbtc/precision.h>`, and internal-ballistics geometry, projectile, and
+  propellant-charge headers;
 - one-byte `bbtc_status_e` and `bbtc_ib_termination_e` contracts;
 - one-byte `bbtc_precision_e` identity for `float`, `double`, and `long double`;
 - queried host metadata for radix, significand precision, exponent range,
@@ -21,6 +22,8 @@ The rewrite is in **IB0.3c**. This checkpoint contains:
 - native `float`, `double`, and `long double` internal-ballistics geometry
   records with explicit SI field meanings and validation;
 - native precision-qualified projectile-mass records and validation;
+- native precision-qualified propellant-charge mass and condensed-phase-density
+  records with validation;
 - fixed `uint64_t` warning and model-applicability flag contracts;
 - immutable, nonlocalized strings for statuses, termination reasons, and
   individual diagnostic flags;
@@ -31,9 +34,9 @@ The rewrite is in **IB0.3c**. This checkpoint contains:
 
 There is still no ballistic solver, composed problem record, result record,
 result-field validity mask, command-line application, or validated firing
-solution in this checkpoint. Geometry and projectile validation establish
-public physical-input components; they do not compute pressure, velocity, or
-another prediction.
+solution in this checkpoint. Geometry, projectile, and propellant-charge
+validation establish public physical-input components; they do not compute
+pressure, velocity, burn rate, or another prediction.
 
 The accepted reconstruction rules live in
 [`docs/design/BBTC_DESIGN_CONTRACT.md`](docs/design/BBTC_DESIGN_CONTRACT.md).
@@ -103,6 +106,13 @@ equal.
 `bbtc_ib_projectile_long_double_t` carry the total modeled projectile-assembly
 mass in native scalar families. Their validators reject null, nonfinite, zero,
 and negative mass without inventing a default projectile.
+
+`bbtc_ib_propellant_charge_float_t`,
+`bbtc_ib_propellant_charge_double_t`, and
+`bbtc_ib_propellant_charge_long_double_t` carry initial charge mass and
+condensed propellant material density in native scalar families. Their
+validators reject null, nonfinite, zero, and negative inputs without treating
+bulk loading density or a commercial powder name as sufficient physical data.
 
 `bbtc_ib_termination_e` independently describes why a future
 internal-ballistics simulation stopped. `bbtc_warning_flags_t` and

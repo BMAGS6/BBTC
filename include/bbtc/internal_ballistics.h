@@ -8,5 +8,6 @@
 
 #include <bbtc/internal_ballistics/geometry.h>
 #include <bbtc/internal_ballistics/projectile.h>
+#include <bbtc/internal_ballistics/propellant_charge.h>
 
 #endif /* BBTC_INTERNAL_BALLISTICS_H */

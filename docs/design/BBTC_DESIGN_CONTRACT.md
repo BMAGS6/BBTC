@@ -1,10 +1,10 @@
 # BBTC Reconstruction Design Contract
 
-**Contract version:** 0.1.6
+**Contract version:** 0.1.7
 
-**Project phase:** IB0.3c
+**Project phase:** IB0.3d
 
-**Applies to:** `rewrite/ib0_3c_projectile_contract_v1`
+**Applies to:** `rewrite/ib0_3d_propellant_charge_contract_v1`
 
 **Status:** Accepted
 
@@ -763,6 +763,64 @@ The projectile records follow the pre-1.0 source-level evolution policy from
 section 10.1. They contain no public structure-size field, version member,
 reserved array, or named padding.
 
+
+### 10.3 Propellant charge record
+
+IB0.3d defines three precision-qualified propellant-charge records:
+
+```c
+bbtc_ib_propellant_charge_float_t
+bbtc_ib_propellant_charge_double_t
+bbtc_ib_propellant_charge_long_double_t
+```
+
+Each record contains the same two continuous quantities in its native scalar
+family:
+
+- `charge_mass_kg` is the total initial mass of the modeled propellant charge;
+  and
+- `condensed_phase_density_kg_per_m3` is the material density of the condensed
+  propellant phase, excluding intergranular void space.
+
+Condensed-phase density is not bulk loading density, gravimetric bulk density,
+gas density, or a burn-rate parameter. A commercial powder name or broad shape
+label does not provide this value by itself.
+
+The condensed material volume is a derived quantity with one source of truth:
+
+```c
+condensed_propellant_volume_m3 =
+    charge_mass_kg / condensed_phase_density_kg_per_m3
+```
+
+A future composed-problem validator will compare that derived material volume
+with `initial_behind_projectile_volume_m3` from section 10.1 to establish a
+positive initial free-gas volume. IB0.3d does not perform that cross-record
+calculation or claim that an individually valid charge fits within any
+particular cartridge geometry.
+
+The three propellant-charge records are distinct concrete types. The core
+solver API MUST NOT replace them with one runtime-tagged union. A higher-level
+adapter MAY store them in a tagged union only when it selects and calls the
+matching precision-qualified API.
+
+A zero-initialized propellant-charge record is deliberately invalid. BBTC
+provides no physical default charge mass or condensed-phase density. Each
+validator returns:
+
+- `BBTC_STATUS_INVALID_ARGUMENT` for a null record pointer;
+- `BBTC_STATUS_NONFINITE_INPUT` when either field is NaN or infinite;
+- `BBTC_STATUS_OUTSIDE_DOMAIN` when either finite field is zero or negative; and
+- `BBTC_STATUS_SUCCESS` when both fields are finite and positive.
+
+Validation treats the caller-owned record as immutable and performs no
+allocation. `float` and `long double` validation MUST use their native types and
+MUST NOT convert through `double`.
+
+The propellant-charge records follow the pre-1.0 source-level evolution policy
+from section 10.1. They contain no public structure-size field, version member,
+reserved array, or named padding.
+
 ## 11. Propellant representation
 
 "Ball," "flake," "extruded," "single-base," and similar labels are not complete
@@ -1198,7 +1256,38 @@ The following decisions define the first public projectile component:
 9. **Scope boundary.** This checkpoint validates projectile mass but adds no
    composed problem, propellant model, integration state, solver, or result.
 
-## 27. Decisions deferred to later checkpoints
+## 27. Decisions resolved in IB0.3d
+
+The following decisions define the first public propellant-charge component:
+
+1. **Header ownership.**
+   `<bbtc/internal_ballistics/propellant_charge.h>` owns propellant-charge
+   declarations and is included by `<bbtc/internal_ballistics.h>`.
+2. **Concrete scalar records.** Float, double, and long-double
+   propellant-charge data use separate precision-qualified structures with
+   native `charge_mass_kg` and `condensed_phase_density_kg_per_m3` members.
+3. **Density boundary.** Condensed-phase density is material density excluding
+   intergranular void space. Bulk loading density, powder shape, and product
+   identity are not substitutes.
+4. **Derived-volume source of truth.** Condensed propellant material volume is
+   derived from charge mass divided by condensed-phase density and is not stored
+   as a redundant public input.
+5. **Composition boundary.** Cross-record free-gas-volume validation remains
+   deferred until a composed problem record exists.
+6. **Validation.** Null, nonfinite, and finite out-of-domain inputs return the
+   statuses specified in section 10.3. Validation does not modify its input.
+7. **No runtime union foundation.** A tagged union may exist later as an
+   adapter, but it does not replace static precision identity or concrete
+   functions.
+8. **No physical defaults.** Zero initialization is an invalid sentinel state;
+   BBTC supplies no imaginary default charge or density.
+9. **Pre-1.0 structure evolution.** Propellant-charge records add no
+   structure-size field, version member, reserved array, or named padding.
+10. **Scope boundary.** This checkpoint validates primitive propellant-charge
+    data but adds no burn law, thermochemistry, grain model, composed problem,
+    integration state, solver, or result.
+
+## 28. Decisions deferred to later checkpoints
 
 The following choices remain deliberately deferred:
 
@@ -1210,7 +1299,7 @@ The following choices remain deliberately deferred:
    are constrained here, but their concrete representation belongs to the CLI
    contract.
 
-## 28. Acceptance criteria for IB0.1
+## 29. Acceptance criteria for IB0.1
 
 IB0.1 is complete when:
 
@@ -1232,9 +1321,12 @@ still introducing no ballistic problem, solver, or physical result. IB0.3b adds
 the first precision-qualified physical input component and validates its
 mathematical domain without pretending to solve internal ballistics. IB0.3c
 adds native projectile-mass records and validation while preserving geometry,
-initial-state, solver, and result boundaries.
+initial-state, solver, and result boundaries. IB0.3d adds primitive
+propellant-charge mass and condensed-phase-density records without
+pretending that charge fit, burn behavior, pressure, or velocity has been
+computed.
 
-## 29. Acceptance criteria for IB0.2b
+## 30. Acceptance criteria for IB0.2b
 
 IB0.2b is complete when:
 
@@ -1250,7 +1342,7 @@ IB0.2b is complete when:
 - no solver, physical result, warning, termination, applicability, or safety
   API is introduced.
 
-## 30. Acceptance criteria for IB0.2c
+## 31. Acceptance criteria for IB0.2c
 
 IB0.2c is complete when:
 
@@ -1273,7 +1365,7 @@ IB0.2c is complete when:
   introduced.
 
 
-## 31. Acceptance criteria for IB0.3a
+## 32. Acceptance criteria for IB0.3a
 
 IB0.3a is complete when:
 
@@ -1285,7 +1377,7 @@ IB0.3a is complete when:
   verification pass; and
 - no ballistic problem, solver, or physical result is introduced.
 
-## 32. Acceptance criteria for IB0.3b
+## 33. Acceptance criteria for IB0.3b
 
 IB0.3b is complete when:
 
@@ -1305,7 +1397,7 @@ IB0.3b is complete when:
   introduced.
 
 
-## 33. Acceptance criteria for IB0.3c
+## 34. Acceptance criteria for IB0.3c
 
 IB0.3c is complete when:
 
@@ -1322,3 +1414,25 @@ IB0.3c is complete when:
   UndefinedBehaviorSanitizer verification pass; and
 - no composed problem, initial-state record, solver, physical prediction, or
   safety judgment is introduced.
+
+## 35. Acceptance criteria for IB0.3d
+
+IB0.3d is complete when:
+
+- all three propellant-charge records expose native scalar `charge_mass_kg` and
+  `condensed_phase_density_kg_per_m3` fields with the meanings defined in
+  section 10.3;
+- the public umbrella-header chain exposes propellant-charge declarations to
+  C23 and C++11-or-newer consumers;
+- each concrete validator reports null, nonfinite, and finite out-of-domain
+  inputs with the required status and accepts finite positive values;
+- validation leaves the caller-owned record unchanged and allocates no memory;
+- tests cover both fields in every scalar family, including NaN, both
+  infinities, zero, negative values, positive subnormal values, and finite
+  maxima;
+- the contract distinguishes condensed material density from bulk loading
+  density and records the derived material-volume source of truth;
+- strict GCC, strict Clang, independent-consumer, AddressSanitizer, and
+  UndefinedBehaviorSanitizer verification pass; and
+- no composed problem, free-gas-volume result, burn law, thermochemistry, grain
+  model, solver, physical prediction, or safety judgment is introduced.

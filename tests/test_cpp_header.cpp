@@ -118,6 +118,64 @@ static_assert(std::is_same<decltype(bbtc_ib_projectile_long_double_t{}.mass_kg),
               >::value,
               "long-double projectile must use native long-double mass");
 
+
+static_assert(
+    std::is_same<
+        decltype(bbtc_ib_propellant_charge_float_t{}.charge_mass_kg),
+        float
+    >::value,
+    "float propellant charge must use native float mass"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_propellant_charge_float_t{}
+                .condensed_phase_density_kg_per_m3
+        ),
+        float
+    >::value,
+    "float propellant charge must use native float density"
+);
+
+static_assert(
+    std::is_same<
+        decltype(bbtc_ib_propellant_charge_double_t{}.charge_mass_kg),
+        double
+    >::value,
+    "double propellant charge must use native double mass"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_propellant_charge_double_t{}
+                .condensed_phase_density_kg_per_m3
+        ),
+        double
+    >::value,
+    "double propellant charge must use native double density"
+);
+
+static_assert(
+    std::is_same<
+        decltype(bbtc_ib_propellant_charge_long_double_t{}.charge_mass_kg),
+        long double
+    >::value,
+    "long-double propellant charge must use native long-double mass"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_propellant_charge_long_double_t{}
+                .condensed_phase_density_kg_per_m3
+        ),
+        long double
+    >::value,
+    "long-double propellant charge must use native long-double density"
+);
+
 int main()
 {
     if (
@@ -166,6 +224,18 @@ int main()
     };
 
     if (bbtc_ib_projectile_validate_double(&projectile) != BBTC_STATUS_SUCCESS)
+    {
+        return 1;
+    }
+
+
+    const bbtc_ib_propellant_charge_double_t charge =
+    {
+        0.0030,
+        1600.0
+    };
+
+    if (bbtc_ib_propellant_charge_validate_double(&charge) != BBTC_STATUS_SUCCESS)
     {
         return 1;
     }

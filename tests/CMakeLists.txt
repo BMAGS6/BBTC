@@ -118,6 +118,30 @@ add_test(
     COMMAND bbtc_test_ib_projectile
 )
 
+add_executable(
+    bbtc_test_ib_propellant_charge
+    test_ib_propellant_charge.c
+)
+
+target_link_libraries(
+    bbtc_test_ib_propellant_charge
+    PRIVATE
+        bbtc::bbtc
+)
+
+set_target_properties(
+    bbtc_test_ib_propellant_charge
+    PROPERTIES
+        C_EXTENSIONS OFF
+        C_STANDARD 23
+        C_STANDARD_REQUIRED ON
+)
+
+add_test(
+    NAME bbtc.ib_propellant_charge
+    COMMAND bbtc_test_ib_propellant_charge
+)
+
 set(
     BBTC_CONSUMER_FIXTURE_SOURCE_DIR
     "${CMAKE_CURRENT_SOURCE_DIR}/consumer"

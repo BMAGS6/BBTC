@@ -94,6 +94,27 @@ check_projectile_contract(void)
         : EXIT_FAILURE;
 }
 
+
+/**
+ * @brief Verifies precision-qualified propellant-charge data through the consumer.
+ *
+ * @return `EXIT_SUCCESS` when the propellant-charge contract works; otherwise
+ *         `EXIT_FAILURE`.
+ */
+static int
+check_propellant_charge_contract(void)
+{
+    const bbtc_ib_propellant_charge_double_t charge =
+    {
+        .charge_mass_kg                    = 0.0030,
+        .condensed_phase_density_kg_per_m3 = 1600.0
+    };
+
+    return bbtc_ib_propellant_charge_validate_double(&charge) == BBTC_STATUS_SUCCESS
+        ? EXIT_SUCCESS
+        : EXIT_FAILURE;
+}
+
 /**
  * @brief Exercises public BBTC headers and linked diagnostic symbols.
  *
@@ -116,6 +137,9 @@ int main(void)
         return EXIT_FAILURE;
 
     if (check_projectile_contract() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
+
+    if (check_propellant_charge_contract() != EXIT_SUCCESS)
         return EXIT_FAILURE;
 
     if (check_string(bbtc_ib_termination_string(BBTC_IB_TERMINATION_MUZZLE_EXIT),
