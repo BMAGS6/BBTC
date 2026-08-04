@@ -142,6 +142,30 @@ add_test(
     COMMAND bbtc_test_ib_propellant_charge
 )
 
+add_executable(
+    bbtc_test_ib_loading_state
+    test_ib_loading_state.c
+)
+
+target_link_libraries(
+    bbtc_test_ib_loading_state
+    PRIVATE
+        bbtc::bbtc
+)
+
+set_target_properties(
+    bbtc_test_ib_loading_state
+    PROPERTIES
+        C_EXTENSIONS OFF
+        C_STANDARD 23
+        C_STANDARD_REQUIRED ON
+)
+
+add_test(
+    NAME bbtc.ib_loading_state
+    COMMAND bbtc_test_ib_loading_state
+)
+
 set(
     BBTC_CONSUMER_FIXTURE_SOURCE_DIR
     "${CMAKE_CURRENT_SOURCE_DIR}/consumer"

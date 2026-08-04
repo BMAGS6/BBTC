@@ -7,14 +7,14 @@ Cubes of Honor.
 
 ## Current status
 
-The rewrite is in **IB0.3d**. This checkpoint contains:
+The rewrite is in **IB0.3e**. This checkpoint contains:
 
 - a strict C23 CMake/Ninja library target;
 - the namespaced CMake alias `bbtc::bbtc`;
 - top-level and subproject-aware test defaults;
 - public `<bbtc/bbtc.h>`, `<bbtc/status.h>`, `<bbtc/diagnostics.h>`,
-  `<bbtc/precision.h>`, and internal-ballistics geometry, projectile, and
-  propellant-charge headers;
+  `<bbtc/precision.h>`, and internal-ballistics geometry, projectile,
+  propellant-charge, and loading-state headers;
 - one-byte `bbtc_status_e` and `bbtc_ib_termination_e` contracts;
 - one-byte `bbtc_precision_e` identity for `float`, `double`, and `long double`;
 - queried host metadata for radix, significand precision, exponent range,
@@ -24,6 +24,8 @@ The rewrite is in **IB0.3d**. This checkpoint contains:
 - native precision-qualified projectile-mass records and validation;
 - native precision-qualified propellant-charge mass and condensed-phase-density
   records with validation;
+- composed precision-qualified loading states with cross-record volume
+  validation and derived initial-volume outputs;
 - fixed `uint64_t` warning and model-applicability flag contracts;
 - immutable, nonlocalized strings for statuses, termination reasons, and
   individual diagnostic flags;
@@ -32,11 +34,12 @@ The rewrite is in **IB0.3d**. This checkpoint contains:
 - GitHub Actions coverage for strict GCC, strict Clang, AddressSanitizer, and
   UndefinedBehaviorSanitizer builds.
 
-There is still no ballistic solver, composed problem record, result record,
+There is still no ballistic solver, complete problem record, result record,
 result-field validity mask, command-line application, or validated firing
-solution in this checkpoint. Geometry, projectile, and propellant-charge
-validation establish public physical-input components; they do not compute
-pressure, velocity, burn rate, or another prediction.
+solution in this checkpoint. The loading-state evaluator composes geometry,
+projectile, and propellant-charge records only far enough to validate component
+and initial-volume consistency. It does not compute pressure, velocity, burn
+rate, or another firing prediction.
 
 The accepted reconstruction rules live in
 [`docs/design/BBTC_DESIGN_CONTRACT.md`](docs/design/BBTC_DESIGN_CONTRACT.md).
@@ -113,6 +116,12 @@ and negative mass without inventing a default projectile.
 condensed propellant material density in native scalar families. Their
 validators reject null, nonfinite, zero, and negative inputs without treating
 bulk loading density or a commercial powder name as sufficient physical data.
+
+`bbtc_ib_loading_state_float_t`, `bbtc_ib_loading_state_double_t`, and
+`bbtc_ib_loading_state_long_double_t` compose matching geometry, projectile,
+and propellant-charge records. Their evaluators derive condensed propellant and
+initial free-gas volumes, reject zero or negative free-gas volume, clear outputs
+on failure, and make no ammunition- or firearm-safety judgment.
 
 `bbtc_ib_termination_e` independently describes why a future
 internal-ballistics simulation stopped. `bbtc_warning_flags_t` and

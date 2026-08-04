@@ -1,14 +1,14 @@
 # BBTC Reconstruction Design Contract
 
-**Contract version:** 0.1.7
+**Contract version:** 0.1.8
 
-**Project phase:** IB0.3d
+**Project phase:** IB0.3e
 
-**Applies to:** `rewrite/ib0_3d_propellant_charge_contract_v1`
+**Applies to:** `rewrite/ib0_3e_loading_state_contract_v1`
 
 **Status:** Accepted
 
-**Date:** 2026-08-03
+**Date:** 2026-08-04
 
 ## 1. Purpose
 
@@ -821,6 +821,49 @@ The propellant-charge records follow the pre-1.0 source-level evolution policy
 from section 10.1. They contain no public structure-size field, version member,
 reserved array, or named padding.
 
+### 10.4 Composed loading-state record
+
+IB0.3e defines three precision-qualified loading-state records:
+
+```c
+bbtc_ib_loading_state_float_t
+bbtc_ib_loading_state_double_t
+bbtc_ib_loading_state_long_double_t
+```
+
+Each record owns one matching-precision geometry, projectile, and
+propellant-charge record by value. The composed record introduces no alternate
+copy of a primitive field and contains no solver option, integration state, burn
+law, thermochemical input, or result.
+
+IB0.3e also defines matching derived-volume records with exactly two outputs:
+
+- `condensed_propellant_volume_m3` is charge mass divided by condensed-phase
+  density; and
+- `initial_free_gas_volume_m3` is initial behind-projectile geometric volume
+  minus condensed propellant volume.
+
+The concrete `bbtc_ib_loading_state_evaluate_*()` functions validate geometry,
+projectile, and propellant-charge components in that order and propagate the
+first non-success status. A nonnull output record is cleared before any failure
+return. Null input or output pointers return `BBTC_STATUS_INVALID_ARGUMENT`.
+
+After component validation, condensed propellant volume MUST be representable
+and strictly positive. It MUST also be strictly smaller than
+`initial_behind_projectile_volume_m3`. Equality is invalid because it produces
+zero initial free-gas volume. A larger condensed volume is invalid because the
+primitive records cannot occupy the stated geometry. Derived zero, nonfinite,
+or nonpositive volume returns `BBTC_STATUS_OUTSIDE_DOMAIN`.
+
+These checks establish only mathematical and dimensional consistency among the
+supplied model inputs. They do not establish safe pressure, safe charge mass,
+compatible ammunition, firearm strength, or suitability for real loading.
+
+The three loading-state and derived-volume families remain concrete native
+scalar types. They use no runtime-tagged union, implicit conversion through
+`double`, dynamic allocation, public size/version fields, reserved arrays, or
+named padding.
+
 ## 11. Propellant representation
 
 "Ball," "flake," "extruded," "single-base," and similar labels are not complete
@@ -1287,7 +1330,38 @@ The following decisions define the first public propellant-charge component:
     data but adds no burn law, thermochemistry, grain model, composed problem,
     integration state, solver, or result.
 
-## 28. Decisions deferred to later checkpoints
+## 28. Decisions resolved in IB0.3e
+
+The following decisions define the first composed physical-input boundary:
+
+1. **Header ownership.**
+   `<bbtc/internal_ballistics/loading_state.h>` owns loading-state and derived
+   initial-volume declarations and is included by
+   `<bbtc/internal_ballistics.h>`.
+2. **By-value composition.** Each loading state owns matching-precision
+   geometry, projectile, and propellant-charge components without duplicating
+   their primitive fields.
+3. **Derived source of truth.** Condensed propellant volume and initial free-gas
+   volume are outputs derived from existing primitives, not redundant caller
+   inputs.
+4. **Cross-record fit rule.** Condensed propellant volume must be representable,
+   positive, and strictly smaller than initial behind-projectile geometric
+   volume.
+5. **Output discipline.** A nonnull derived-volume output is zeroed before every
+   failure return. Null input or output pointers are invalid arguments.
+6. **Status propagation.** Component validation runs geometry, projectile, then
+   propellant charge and returns the first non-success status.
+7. **No runtime union foundation.** Concrete native scalar families remain the
+   public computational boundary.
+8. **No safety inference.** Passing composition validation says nothing about
+   real pressure, firearm strength, ammunition compatibility, or load safety.
+9. **Pre-1.0 structure evolution.** Loading-state records add no structure-size
+   field, version member, reserved array, or named padding.
+10. **Scope boundary.** This checkpoint adds no burn law, thermochemistry, grain
+    model, ignition state, resistance model, integration state, solver, result,
+    pressure, or velocity.
+
+## 29. Decisions deferred to later checkpoints
 
 The following choices remain deliberately deferred:
 
@@ -1299,7 +1373,7 @@ The following choices remain deliberately deferred:
    are constrained here, but their concrete representation belongs to the CLI
    contract.
 
-## 29. Acceptance criteria for IB0.1
+## 30. Acceptance criteria for IB0.1
 
 IB0.1 is complete when:
 
@@ -1324,9 +1398,11 @@ adds native projectile-mass records and validation while preserving geometry,
 initial-state, solver, and result boundaries. IB0.3d adds primitive
 propellant-charge mass and condensed-phase-density records without
 pretending that charge fit, burn behavior, pressure, or velocity has been
-computed.
+computed. IB0.3e composes the first three physical records, derives initial
+volumes from one source of truth, and rejects mathematically impossible volume
+relationships without claiming a safe or validated firing solution.
 
-## 30. Acceptance criteria for IB0.2b
+## 31. Acceptance criteria for IB0.2b
 
 IB0.2b is complete when:
 
@@ -1342,7 +1418,7 @@ IB0.2b is complete when:
 - no solver, physical result, warning, termination, applicability, or safety
   API is introduced.
 
-## 31. Acceptance criteria for IB0.2c
+## 32. Acceptance criteria for IB0.2c
 
 IB0.2c is complete when:
 
@@ -1365,7 +1441,7 @@ IB0.2c is complete when:
   introduced.
 
 
-## 32. Acceptance criteria for IB0.3a
+## 33. Acceptance criteria for IB0.3a
 
 IB0.3a is complete when:
 
@@ -1377,7 +1453,7 @@ IB0.3a is complete when:
   verification pass; and
 - no ballistic problem, solver, or physical result is introduced.
 
-## 33. Acceptance criteria for IB0.3b
+## 34. Acceptance criteria for IB0.3b
 
 IB0.3b is complete when:
 
@@ -1397,7 +1473,7 @@ IB0.3b is complete when:
   introduced.
 
 
-## 34. Acceptance criteria for IB0.3c
+## 35. Acceptance criteria for IB0.3c
 
 IB0.3c is complete when:
 
@@ -1415,7 +1491,7 @@ IB0.3c is complete when:
 - no composed problem, initial-state record, solver, physical prediction, or
   safety judgment is introduced.
 
-## 35. Acceptance criteria for IB0.3d
+## 36. Acceptance criteria for IB0.3d
 
 IB0.3d is complete when:
 
@@ -1436,3 +1512,28 @@ IB0.3d is complete when:
   UndefinedBehaviorSanitizer verification pass; and
 - no composed problem, free-gas-volume result, burn law, thermochemistry, grain
   model, solver, physical prediction, or safety judgment is introduced.
+
+## 37. Acceptance criteria for IB0.3e
+
+IB0.3e is complete when:
+
+- all three loading-state records own matching native geometry, projectile, and
+  propellant-charge components by value;
+- all three derived-volume records expose native scalar condensed-propellant and
+  initial-free-gas volume fields;
+- the public umbrella-header chain exposes loading-state declarations to C23 and
+  C++11-or-newer consumers;
+- each concrete evaluator validates components in the required order and
+  propagates the first non-success status;
+- null-pointer behavior and output clearing match section 10.4;
+- valid inputs derive condensed volume from mass divided by density and derive
+  free-gas volume from geometric volume minus condensed volume;
+- exact fill, overfill, arithmetic underflow to zero, and other nonpositive or
+  nonrepresentable derived-volume cases are rejected;
+- validation leaves every caller-owned input component unchanged and allocates
+  no memory;
+- strict GCC, strict Clang, independent-consumer, AddressSanitizer, and
+  UndefinedBehaviorSanitizer verification pass; and
+- no burn law, thermochemistry, grain model, ignition model, resistance model,
+  integration state, solver, pressure prediction, velocity prediction, or
+  safety judgment is introduced.

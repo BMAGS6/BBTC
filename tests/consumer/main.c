@@ -116,6 +116,51 @@ check_propellant_charge_contract(void)
 }
 
 /**
+ * @brief Verifies composed loading-state evaluation through the consumer.
+ *
+ * @return `EXIT_SUCCESS` when composition and derived volumes work; otherwise
+ *         `EXIT_FAILURE`.
+ */
+static int
+check_loading_state_contract(void)
+{
+    const bbtc_ib_loading_state_double_t loading_state =
+    {
+        .geometry =
+        {
+            .initial_behind_projectile_volume_m3 = 8.0,
+            .bore_cross_sectional_area_m2        = 1.0,
+            .projectile_effective_base_area_m2   = 1.0,
+            .projectile_travel_to_muzzle_m       = 1.0
+        },
+
+        .projectile =
+        {
+            .mass_kg = 1.0
+        },
+
+        .propellant_charge =
+        {
+            .charge_mass_kg                    = 6.0,
+            .condensed_phase_density_kg_per_m3 = 2.0
+        }
+    };
+
+    bbtc_ib_loading_state_volumes_double_t volumes = {0};
+
+    if (bbtc_ib_loading_state_evaluate_double(&loading_state, &volumes)
+        != BBTC_STATUS_SUCCESS)
+    {
+        return EXIT_FAILURE;
+    }
+
+    return volumes.condensed_propellant_volume_m3 == 3.0 && volumes.initial_free_gas_volume_m3 == 5.0
+        ? EXIT_SUCCESS
+        : EXIT_FAILURE;
+}
+
+
+/**
  * @brief Exercises public BBTC headers and linked diagnostic symbols.
  *
  * @return `EXIT_SUCCESS` when the external consumer contract works; otherwise
@@ -140,6 +185,9 @@ int main(void)
         return EXIT_FAILURE;
 
     if (check_propellant_charge_contract() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
+
+    if (check_loading_state_contract() != EXIT_SUCCESS)
         return EXIT_FAILURE;
 
     if (check_string(bbtc_ib_termination_string(BBTC_IB_TERMINATION_MUZZLE_EXIT),

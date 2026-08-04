@@ -176,6 +176,37 @@ static_assert(
     "long-double propellant charge must use native long-double density"
 );
 
+static_assert(
+    std::is_same<
+        decltype(bbtc_ib_loading_state_float_t{}.geometry),
+        bbtc_ib_geometry_float_t
+    >::value,
+    "float loading state must own native float geometry"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_loading_state_volumes_double_t{}
+                .initial_free_gas_volume_m3
+        ),
+        double
+    >::value,
+    "double loading-state volumes must use native double"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_loading_state_volumes_long_double_t{}
+                .condensed_propellant_volume_m3
+        ),
+        long double
+    >::value,
+    "long-double loading-state volumes must use native long double"
+);
+
+
 int main()
 {
     if (
@@ -239,6 +270,33 @@ int main()
     {
         return 1;
     }
+
+    const bbtc_ib_loading_state_double_t loading_state =
+    {
+        {
+            8.0,
+            1.0,
+            1.0,
+            1.0
+        },
+        {
+            1.0
+        },
+        {
+            6.0,
+            2.0
+        }
+    };
+    bbtc_ib_loading_state_volumes_double_t loading_volumes = {};
+
+    if (bbtc_ib_loading_state_evaluate_double(&loading_state, &loading_volumes)
+            != BBTC_STATUS_SUCCESS
+        || loading_volumes.condensed_propellant_volume_m3 != 3.0
+        || loading_volumes.initial_free_gas_volume_m3 != 5.0)
+    {
+        return 1;
+    }
+
 
     if (
         std::strcmp(
