@@ -166,6 +166,30 @@ add_test(
     COMMAND bbtc_test_ib_loading_state
 )
 
+add_executable(
+    bbtc_test_ib_initial_gas_state
+    test_ib_initial_gas_state.c
+)
+
+target_link_libraries(
+    bbtc_test_ib_initial_gas_state
+    PRIVATE
+        bbtc::bbtc
+)
+
+set_target_properties(
+    bbtc_test_ib_initial_gas_state
+    PROPERTIES
+        C_EXTENSIONS OFF
+        C_STANDARD 23
+        C_STANDARD_REQUIRED ON
+)
+
+add_test(
+    NAME bbtc.ib_initial_gas_state
+    COMMAND bbtc_test_ib_initial_gas_state
+)
+
 set(
     BBTC_CONSUMER_FIXTURE_SOURCE_DIR
     "${CMAKE_CURRENT_SOURCE_DIR}/consumer"

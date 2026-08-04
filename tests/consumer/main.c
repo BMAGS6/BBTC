@@ -161,6 +161,27 @@ check_loading_state_contract(void)
 
 
 /**
+ * @brief Verifies initial gas-state validation through the consumer.
+ *
+ * @return `EXIT_SUCCESS` when the initial gas-state contract works; otherwise
+ *         `EXIT_FAILURE`.
+ */
+static int
+check_initial_gas_state_contract(void)
+{
+    const bbtc_ib_initial_gas_state_double_t state =
+    {
+        .absolute_pressure_pa = 101325.0,
+        .temperature_k        = 293.15
+    };
+
+    return bbtc_ib_initial_gas_state_validate_double(&state) == BBTC_STATUS_SUCCESS
+        ? EXIT_SUCCESS
+        : EXIT_FAILURE;
+}
+
+
+/**
  * @brief Exercises public BBTC headers and linked diagnostic symbols.
  *
  * @return `EXIT_SUCCESS` when the external consumer contract works; otherwise
@@ -188,6 +209,9 @@ int main(void)
         return EXIT_FAILURE;
 
     if (check_loading_state_contract() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
+
+    if (check_initial_gas_state_contract() != EXIT_SUCCESS)
         return EXIT_FAILURE;
 
     if (check_string(bbtc_ib_termination_string(BBTC_IB_TERMINATION_MUZZLE_EXIT),

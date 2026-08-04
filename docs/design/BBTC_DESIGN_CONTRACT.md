@@ -1,10 +1,10 @@
 # BBTC Reconstruction Design Contract
 
-**Contract version:** 0.1.8
+**Contract version:** 0.1.9
 
-**Project phase:** IB0.3e
+**Project phase:** IB0.3f
 
-**Applies to:** `rewrite/ib0_3e_loading_state_contract_v1`
+**Applies to:** `rewrite/ib0_3f_initial_thermodynamic_state_contract_v1`
 
 **Status:** Accepted
 
@@ -864,6 +864,51 @@ scalar types. They use no runtime-tagged union, implicit conversion through
 `double`, dynamic allocation, public size/version fields, reserved arrays, or
 named padding.
 
+### 10.5 Initial gas-state record
+
+IB0.3f defines three precision-qualified initial gas-state records:
+
+```c
+bbtc_ib_initial_gas_state_float_t
+bbtc_ib_initial_gas_state_double_t
+bbtc_ib_initial_gas_state_long_double_t
+```
+
+Each record contains the same two intensive initial conditions in its native
+scalar family:
+
+- `absolute_pressure_pa` is the initial absolute pressure of the free gas behind
+  the projectile, in pascals; and
+- `temperature_k` is the initial absolute temperature of that gas, in kelvin.
+
+The pressure field is absolute rather than gauge pressure. Neither field is
+silently copied from the current ambient atmosphere, and BBTC provides no
+physical default. A zero-initialized record is deliberately invalid.
+
+Pressure and temperature are related by a future equation of state, but neither
+can be derived from the other alone. Such a derivation additionally requires
+quantities such as free-gas volume, gas amount or density, gas composition, and
+a selected equation-of-state model. IB0.3f therefore treats pressure and
+temperature as explicit caller-supplied initial boundary conditions.
+
+Each concrete validator returns:
+
+- `BBTC_STATUS_INVALID_ARGUMENT` for a null record pointer;
+- `BBTC_STATUS_NONFINITE_INPUT` when either field is NaN or infinite;
+- `BBTC_STATUS_OUTSIDE_DOMAIN` when either finite field is zero or negative; and
+- `BBTC_STATUS_SUCCESS` when both fields are finite and positive.
+
+Validation treats the caller-owned record as immutable and performs no
+allocation. `float` and `long double` validation use their native scalar
+families and do not convert through `double`.
+
+Passing validation establishes only the primitive mathematical domain. It does
+not establish consistency with a loading-state volume, gas quantity,
+composition, equation of state, energy balance, real ammunition, or firearm
+safety. The records add no public structure-size field, version member,
+reserved array, or named padding.
+
+
 ## 11. Propellant representation
 
 "Ball," "flake," "extruded," "single-base," and similar labels are not complete
@@ -1361,7 +1406,36 @@ The following decisions define the first composed physical-input boundary:
     model, ignition state, resistance model, integration state, solver, result,
     pressure, or velocity.
 
-## 29. Decisions deferred to later checkpoints
+## 29. Decisions resolved in IB0.3f
+
+The following decisions define the primitive initial gas-state boundary:
+
+1. **Header ownership.**
+   `<bbtc/internal_ballistics/initial_gas_state.h>` owns initial gas-state
+   declarations and is included by `<bbtc/internal_ballistics.h>`.
+2. **Concrete scalar records.** Float, double, and long-double records use
+   separate native scalar `absolute_pressure_pa` and `temperature_k` fields.
+3. **Absolute quantities.** Pressure is absolute rather than gauge pressure, and
+   temperature is expressed in kelvin.
+4. **Boundary-condition ownership.** The caller supplies both values explicitly.
+   BBTC does not silently substitute ambient conditions or physical defaults.
+5. **No unsupported derivation.** Pressure and temperature are not derived from
+   each other until gas quantity or density, composition, volume, and an
+   equation-of-state model establish a sufficient relationship.
+6. **Validation.** Null, nonfinite, and finite out-of-domain inputs return the
+   statuses specified in section 10.5. Validation does not modify its input.
+7. **No runtime union foundation.** Concrete native scalar families remain the
+   public computational boundary.
+8. **No safety inference.** Passing primitive validation says nothing about real
+   pressure evolution, ammunition compatibility, firearm strength, or load
+   safety.
+9. **Pre-1.0 structure evolution.** Initial gas-state records add no
+   structure-size field, version member, reserved array, or named padding.
+10. **Scope boundary.** This checkpoint adds no gas composition, gas amount,
+    equation of state, thermochemistry, energy balance, burn law, solver,
+    pressure evolution, velocity prediction, or result record.
+
+## 30. Decisions deferred to later checkpoints
 
 The following choices remain deliberately deferred:
 
@@ -1373,7 +1447,7 @@ The following choices remain deliberately deferred:
    are constrained here, but their concrete representation belongs to the CLI
    contract.
 
-## 30. Acceptance criteria for IB0.1
+## 31. Acceptance criteria for IB0.1
 
 IB0.1 is complete when:
 
@@ -1400,9 +1474,11 @@ propellant-charge mass and condensed-phase-density records without
 pretending that charge fit, burn behavior, pressure, or velocity has been
 computed. IB0.3e composes the first three physical records, derives initial
 volumes from one source of truth, and rejects mathematically impossible volume
-relationships without claiming a safe or validated firing solution.
+relationships without claiming a safe or validated firing solution. IB0.3f adds
+explicit initial free-gas absolute-pressure and temperature boundary conditions
+without inventing a missing gas model or deriving one quantity from the other.
 
-## 31. Acceptance criteria for IB0.2b
+## 32. Acceptance criteria for IB0.2b
 
 IB0.2b is complete when:
 
@@ -1418,7 +1494,7 @@ IB0.2b is complete when:
 - no solver, physical result, warning, termination, applicability, or safety
   API is introduced.
 
-## 32. Acceptance criteria for IB0.2c
+## 33. Acceptance criteria for IB0.2c
 
 IB0.2c is complete when:
 
@@ -1441,7 +1517,7 @@ IB0.2c is complete when:
   introduced.
 
 
-## 33. Acceptance criteria for IB0.3a
+## 34. Acceptance criteria for IB0.3a
 
 IB0.3a is complete when:
 
@@ -1453,7 +1529,7 @@ IB0.3a is complete when:
   verification pass; and
 - no ballistic problem, solver, or physical result is introduced.
 
-## 34. Acceptance criteria for IB0.3b
+## 35. Acceptance criteria for IB0.3b
 
 IB0.3b is complete when:
 
@@ -1473,7 +1549,7 @@ IB0.3b is complete when:
   introduced.
 
 
-## 35. Acceptance criteria for IB0.3c
+## 36. Acceptance criteria for IB0.3c
 
 IB0.3c is complete when:
 
@@ -1491,7 +1567,7 @@ IB0.3c is complete when:
 - no composed problem, initial-state record, solver, physical prediction, or
   safety judgment is introduced.
 
-## 36. Acceptance criteria for IB0.3d
+## 37. Acceptance criteria for IB0.3d
 
 IB0.3d is complete when:
 
@@ -1513,7 +1589,7 @@ IB0.3d is complete when:
 - no composed problem, free-gas-volume result, burn law, thermochemistry, grain
   model, solver, physical prediction, or safety judgment is introduced.
 
-## 37. Acceptance criteria for IB0.3e
+## 38. Acceptance criteria for IB0.3e
 
 IB0.3e is complete when:
 
@@ -1537,3 +1613,27 @@ IB0.3e is complete when:
 - no burn law, thermochemistry, grain model, ignition model, resistance model,
   integration state, solver, pressure prediction, velocity prediction, or
   safety judgment is introduced.
+
+## 39. Acceptance criteria for IB0.3f
+
+IB0.3f is complete when:
+
+- all three initial gas-state records expose native scalar
+  `absolute_pressure_pa` and `temperature_k` fields with the meanings defined in
+  section 10.5;
+- the public umbrella-header chain exposes initial gas-state declarations to C23
+  and C++11-or-newer consumers;
+- each concrete validator reports null, nonfinite, and finite out-of-domain
+  inputs with the required status and accepts finite positive values;
+- validation leaves the caller-owned record unchanged and allocates no memory;
+- tests cover both fields in every scalar family, including NaN, both
+  infinities, zero, negative values, positive subnormal values, and finite
+  maxima;
+- the contract records that pressure and temperature are explicit initial
+  boundary conditions and are not derivable from each other without additional
+  state information and an equation-of-state model;
+- strict GCC, strict Clang, independent-consumer, AddressSanitizer, and
+  UndefinedBehaviorSanitizer verification pass; and
+- no gas composition, gas quantity, equation of state, thermochemistry, energy
+  balance, burn law, solver, pressure evolution, velocity prediction, result
+  record, or safety judgment is introduced.

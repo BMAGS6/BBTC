@@ -30,6 +30,7 @@ add_library(
     include/bbtc/diagnostics.h
     include/bbtc/internal_ballistics.h
     include/bbtc/internal_ballistics/geometry.h
+    include/bbtc/internal_ballistics/initial_gas_state.h
     include/bbtc/internal_ballistics/loading_state.h
     include/bbtc/internal_ballistics/projectile.h
     include/bbtc/internal_ballistics/propellant_charge.h
@@ -37,6 +38,7 @@ add_library(
     include/bbtc/status.h
     src/diagnostics.c
     src/internal/geometry.c
+    src/internal/initial_gas_state.c
     src/internal/loading_state.c
     src/internal/projectile.c
     src/internal/propellant_charge.c

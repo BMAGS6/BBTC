@@ -207,6 +207,37 @@ static_assert(
 );
 
 
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_initial_gas_state_float_t{}
+                .absolute_pressure_pa
+        ),
+        float
+    >::value,
+    "float initial gas state must use native float pressure"
+);
+
+static_assert(
+    std::is_same<
+        decltype(bbtc_ib_initial_gas_state_double_t{}.temperature_k),
+        double
+    >::value,
+    "double initial gas state must use native double temperature"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_initial_gas_state_long_double_t{}
+                .absolute_pressure_pa
+        ),
+        long double
+    >::value,
+    "long-double initial gas state must use native long-double pressure"
+);
+
+
 int main()
 {
     if (
@@ -293,6 +324,19 @@ int main()
             != BBTC_STATUS_SUCCESS
         || loading_volumes.condensed_propellant_volume_m3 != 3.0
         || loading_volumes.initial_free_gas_volume_m3 != 5.0)
+    {
+        return 1;
+    }
+
+
+    const bbtc_ib_initial_gas_state_double_t initial_gas_state =
+    {
+        101325.0,
+        293.15
+    };
+
+    if (bbtc_ib_initial_gas_state_validate_double(&initial_gas_state)
+        != BBTC_STATUS_SUCCESS)
     {
         return 1;
     }
