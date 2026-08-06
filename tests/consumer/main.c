@@ -182,6 +182,29 @@ check_initial_gas_state_contract(void)
 
 
 /**
+ * @brief Verifies Noble-Abel gas-model validation through the consumer.
+ *
+ * @return `EXIT_SUCCESS` when the gas-model contract works; otherwise
+ *         `EXIT_FAILURE`.
+ */
+static int
+check_noble_abel_gas_model_contract(void)
+{
+    const bbtc_ib_noble_abel_gas_model_double_t model =
+    {
+        .specific_gas_constant_j_per_kg_k         = 287.0,
+        .constant_volume_specific_heat_j_per_kg_k = 718.0,
+        .covolume_m3_per_kg                        = 0.001
+    };
+
+    return bbtc_ib_noble_abel_gas_model_validate_double(&model)
+            == BBTC_STATUS_SUCCESS
+        ? EXIT_SUCCESS
+        : EXIT_FAILURE;
+}
+
+
+/**
  * @brief Exercises public BBTC headers and linked diagnostic symbols.
  *
  * @return `EXIT_SUCCESS` when the external consumer contract works; otherwise
@@ -212,6 +235,9 @@ int main(void)
         return EXIT_FAILURE;
 
     if (check_initial_gas_state_contract() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
+
+    if (check_noble_abel_gas_model_contract() != EXIT_SUCCESS)
         return EXIT_FAILURE;
 
     if (check_string(bbtc_ib_termination_string(BBTC_IB_TERMINATION_MUZZLE_EXIT),

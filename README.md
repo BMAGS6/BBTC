@@ -7,7 +7,7 @@ Cubes of Honor.
 
 ## Current status
 
-The rewrite is in **IB0.3f**. This checkpoint contains:
+The rewrite is in **IB0.3g**. This checkpoint contains:
 
 - a strict C23 CMake/Ninja library target;
 - the namespaced CMake alias `bbtc::bbtc`;
@@ -28,6 +28,8 @@ The rewrite is in **IB0.3f**. This checkpoint contains:
   validation and derived initial-volume outputs;
 - native precision-qualified initial gas absolute-pressure and temperature
   records with validation;
+- native precision-qualified calorically perfect Noble-Abel gas-model backend
+  records with explicit ideal-gas-limit semantics and validation;
 - fixed `uint64_t` warning and model-applicability flag contracts;
 - immutable, nonlocalized strings for statuses, termination reasons, and
   individual diagnostic flags;
@@ -38,11 +40,10 @@ The rewrite is in **IB0.3f**. This checkpoint contains:
 
 There is still no ballistic solver, complete problem record, result record,
 result-field validity mask, command-line application, or validated firing
-solution in this checkpoint. The loading-state evaluator establishes component
-and initial-volume consistency, while the initial gas-state validators accept
-explicit absolute pressure and temperature boundary conditions. They do not
-derive one from the other or compute pressure evolution, velocity, burn rate,
-or another firing prediction.
+solution in this checkpoint. The loading-state and initial-gas-state records
+establish initial geometry and boundary conditions, while the Noble-Abel backend record
+defines one explicit reduced constitutive model and its constant parameters. This checkpoint does not derive gas mass, evaluate pressure, integrate
+energy, compute velocity, or produce another firing prediction.
 
 The accepted reconstruction rules live in
 [`docs/design/BBTC_DESIGN_CONTRACT.md`](docs/design/BBTC_DESIGN_CONTRACT.md).
@@ -133,6 +134,22 @@ absolute pressure and temperature boundary conditions in native scalar
 families. Their validators reject null, nonfinite, zero, and negative inputs.
 Pressure and temperature are not derived from each other without an additional
 gas model and state information.
+
+`bbtc_ib_noble_abel_gas_model_float_t`,
+`bbtc_ib_noble_abel_gas_model_double_t`, and
+`bbtc_ib_noble_abel_gas_model_long_double_t` carry the specific gas constant,
+constant-volume specific heat, and specific covolume for a calorically perfect
+Noble-Abel gas. Their validators require positive gas constant and specific
+heat, permit zero covolume as the explicit ideal-gas limit, and reject negative
+or nonfinite parameters.
+
+Noble-Abel is one supported reduced equation-of-state backend, not BBTC's
+permanent universal gas model. Its fields describe an effective pseudo-gas and
+do not identify chemical composition, calibration range, provenance, or
+predictive uncertainty. Initial trapped fill gas and propellant combustion
+products are distinct gas populations; callers must not silently use one
+population's parameters for the other. Future first-order virial and
+higher-fidelity thermochemical reference backends remain permitted.
 
 `bbtc_ib_termination_e` independently describes why a future
 internal-ballistics simulation stopped. `bbtc_warning_flags_t` and

@@ -238,6 +238,40 @@ static_assert(
 );
 
 
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_noble_abel_gas_model_float_t{}
+                .specific_gas_constant_j_per_kg_k
+        ),
+        float
+    >::value,
+    "float Noble-Abel gas model must use native float"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_noble_abel_gas_model_double_t{}
+                .constant_volume_specific_heat_j_per_kg_k
+        ),
+        double
+    >::value,
+    "double Noble-Abel gas model must use native double"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_noble_abel_gas_model_long_double_t{}
+                .covolume_m3_per_kg
+        ),
+        long double
+    >::value,
+    "long-double Noble-Abel gas model must use native long double"
+);
+
+
 int main()
 {
     if (
@@ -336,6 +370,20 @@ int main()
     };
 
     if (bbtc_ib_initial_gas_state_validate_double(&initial_gas_state)
+        != BBTC_STATUS_SUCCESS)
+    {
+        return 1;
+    }
+
+
+    const bbtc_ib_noble_abel_gas_model_double_t gas_model =
+    {
+        287.0,
+        718.0,
+        0.001
+    };
+
+    if (bbtc_ib_noble_abel_gas_model_validate_double(&gas_model)
         != BBTC_STATUS_SUCCESS)
     {
         return 1;

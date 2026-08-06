@@ -1,10 +1,10 @@
 # BBTC Reconstruction Design Contract
 
-**Contract version:** 0.1.9
+**Contract version:** 0.1.10
 
-**Project phase:** IB0.3f
+**Project phase:** IB0.3g
 
-**Applies to:** `rewrite/ib0_3f_initial_thermodynamic_state_contract_v1`
+**Applies to:** `rewrite/ib0_3g_noble_abel_gas_model_contract_v1`
 
 **Status:** Accepted
 
@@ -909,6 +909,107 @@ safety. The records add no public structure-size field, version member,
 reserved array, or named padding.
 
 
+### 10.6 Calorically perfect Noble-Abel gas-model backend
+
+IB0.3g defines three precision-qualified gas-model records:
+
+```c
+bbtc_ib_noble_abel_gas_model_float_t
+bbtc_ib_noble_abel_gas_model_double_t
+bbtc_ib_noble_abel_gas_model_long_double_t
+```
+
+These records define one explicit reduced equation-of-state backend. They do
+not make Noble-Abel BBTC's universal or permanent gas model, and the future
+solver architecture MUST remain capable of selecting other documented
+constitutive backends.
+
+Each record contains the same three constant model parameters in its native
+scalar family:
+
+- `specific_gas_constant_j_per_kg_k` is the mixture-specific gas constant `R`,
+  in joules per kilogram-kelvin;
+- `constant_volume_specific_heat_j_per_kg_k` is the constant-volume specific
+  heat `c_v`, in joules per kilogram-kelvin; and
+- `covolume_m3_per_kg` is the Noble-Abel specific covolume `b`, in cubic meters
+  per kilogram.
+
+The future mechanical equation of state is:
+
+```text
+p * (V - m * b) = m * R * T
+```
+
+where `p` is absolute pressure, `V` is total free-gas geometric volume, `m` is
+gas mass, and `T` is absolute temperature. Every future evaluation MUST require
+the available translational volume `V - m * b` to be finite and strictly
+positive.
+
+The caloric closure treats `c_v` as constant over the model's documented
+applicability domain. Under this calorically perfect closure, constant-pressure
+specific heat and heat-capacity ratio are derived quantities:
+
+```text
+c_p   = c_v + R
+gamma = c_p / c_v
+```
+
+Neither `c_p` nor `gamma` is stored as a redundant public input.
+
+A zero covolume is valid and explicitly selects the ideal-gas limit of the
+mechanical equation. It is not interpreted as an omitted value. The specific
+gas constant and constant-volume specific heat MUST be finite and strictly
+positive. Covolume MUST be finite and nonnegative.
+
+The model record does not identify gas composition, propellant chemistry,
+combustion-product yield, flame temperature, energy release, parameter
+provenance, uncertainty, or calibration limits. Those concerns belong to future
+thermochemistry and data-provenance records.
+
+Initial trapped fill gas and propellant combustion-product gas are distinct
+conceptual populations. A caller MAY represent either population with this
+backend only when it supplies parameters calibrated for that population and
+documents the applicable density and temperature domain. BBTC MUST NOT
+silently reuse combustion-product parameters for initial air or treat an
+effective pseudo-gas as a species-resolved composition.
+
+A future first-order virial backend and higher-fidelity thermochemical
+reference models remain explicitly permitted. Reduced-model parameters require
+provenance, calibration conditions, and uncertainty metadata before BBTC may
+make validated predictive-accuracy claims.
+
+Combining this model with an initial absolute pressure `p`, initial temperature
+`T`, and initial free-gas volume `V` will later permit derivation of an initial
+gas mass:
+
+```text
+m = p * V / (R * T + p * b)
+```
+
+IB0.3g records the mathematical source of truth but does not expose that
+cross-record evaluator yet.
+
+Each concrete validator returns:
+
+- `BBTC_STATUS_INVALID_ARGUMENT` for a null record pointer;
+- `BBTC_STATUS_NONFINITE_INPUT` when any field is NaN or infinite;
+- `BBTC_STATUS_OUTSIDE_DOMAIN` when `R` or `c_v` is zero or negative, or when
+  `b` is negative; and
+- `BBTC_STATUS_SUCCESS` otherwise, including the explicit `b == 0` ideal-gas
+  limit.
+
+Validation treats the caller-owned record as immutable and performs no
+allocation. Native `float` and `long double` validation does not convert through
+`double`. The records contain no public structure-size field, version member,
+reserved array, or named padding.
+
+
+Passing validation establishes only the mathematical parameter domain. It does
+not establish calibration validity or a physical prediction error bound.
+Numerical convergence error and real-world model/input uncertainty MUST remain
+separately reported concepts.
+
+
 ## 11. Propellant representation
 
 "Ball," "flake," "extruded," "single-base," and similar labels are not complete
@@ -1435,7 +1536,39 @@ The following decisions define the primitive initial gas-state boundary:
     equation of state, thermochemistry, energy balance, burn law, solver,
     pressure evolution, velocity prediction, or result record.
 
-## 30. Decisions deferred to later checkpoints
+## 30. Decisions resolved in IB0.3g
+
+The following decisions define the first explicit gas constitutive model:
+
+1. **Header ownership.**
+   `<bbtc/internal_ballistics/noble_abel_gas_model.h>` owns Noble-Abel gas-model
+   declarations and is included by `<bbtc/internal_ballistics.h>`.
+2. **Concrete scalar records.** Float, double, and long-double records use
+   separate native scalar `R`, `c_v`, and specific-covolume fields with the
+   names and units in section 10.6.
+3. **Mechanical closure.** The selected pressure-volume-temperature relation is
+   the Noble-Abel equation in section 10.6.
+4. **Caloric closure.** The model is calorically perfect with constant `c_v`.
+   `c_p` and `gamma` are derived rather than stored as alternate sources of
+   truth.
+5. **Ideal-gas limit.** Zero covolume is valid and explicitly represents the
+   ideal-gas limit. Negative covolume is outside the model domain.
+6. **Initial-mass boundary.** The closed-form initial gas-mass relation is
+   documented, but its cross-record evaluator remains deferred.
+7. **Validation.** Null, nonfinite, and finite out-of-domain inputs return the
+   statuses specified in section 10.6. Validation does not modify its input.
+8. **Model identity boundary.** The record supplies constant constitutive
+   parameters for one effective pseudo-gas but does not identify chemistry,
+   composition, calibration, provenance, or uncertainty. Initial fill gas and
+   combustion-product gas remain distinct populations.
+9. **No runtime union foundation.** Concrete native scalar families remain the
+   public computational boundary.
+10. **Scope boundary.** This checkpoint selects no universal EOS and adds no
+    runtime backend dispatch, virial implementation, gas-mass evaluator,
+    thermochemistry, combustion-product generation, grain model, burn law,
+    energy integration, pressure evolution, solver, result, or safety judgment.
+
+## 31. Decisions deferred to later checkpoints
 
 The following choices remain deliberately deferred:
 
@@ -1447,7 +1580,7 @@ The following choices remain deliberately deferred:
    are constrained here, but their concrete representation belongs to the CLI
    contract.
 
-## 31. Acceptance criteria for IB0.1
+## 32. Acceptance criteria for IB0.1
 
 IB0.1 is complete when:
 
@@ -1477,8 +1610,11 @@ volumes from one source of truth, and rejects mathematically impossible volume
 relationships without claiming a safe or validated firing solution. IB0.3f adds
 explicit initial free-gas absolute-pressure and temperature boundary conditions
 without inventing a missing gas model or deriving one quantity from the other.
+IB0.3g adds the constant calorically perfect Noble-Abel gas-model parameters and
+their domains while leaving gas-mass closure and pressure evaluation for later
+composition checkpoints.
 
-## 32. Acceptance criteria for IB0.2b
+## 33. Acceptance criteria for IB0.2b
 
 IB0.2b is complete when:
 
@@ -1494,7 +1630,7 @@ IB0.2b is complete when:
 - no solver, physical result, warning, termination, applicability, or safety
   API is introduced.
 
-## 33. Acceptance criteria for IB0.2c
+## 34. Acceptance criteria for IB0.2c
 
 IB0.2c is complete when:
 
@@ -1517,7 +1653,7 @@ IB0.2c is complete when:
   introduced.
 
 
-## 34. Acceptance criteria for IB0.3a
+## 35. Acceptance criteria for IB0.3a
 
 IB0.3a is complete when:
 
@@ -1529,7 +1665,7 @@ IB0.3a is complete when:
   verification pass; and
 - no ballistic problem, solver, or physical result is introduced.
 
-## 35. Acceptance criteria for IB0.3b
+## 36. Acceptance criteria for IB0.3b
 
 IB0.3b is complete when:
 
@@ -1549,7 +1685,7 @@ IB0.3b is complete when:
   introduced.
 
 
-## 36. Acceptance criteria for IB0.3c
+## 37. Acceptance criteria for IB0.3c
 
 IB0.3c is complete when:
 
@@ -1567,7 +1703,7 @@ IB0.3c is complete when:
 - no composed problem, initial-state record, solver, physical prediction, or
   safety judgment is introduced.
 
-## 37. Acceptance criteria for IB0.3d
+## 38. Acceptance criteria for IB0.3d
 
 IB0.3d is complete when:
 
@@ -1589,7 +1725,7 @@ IB0.3d is complete when:
 - no composed problem, free-gas-volume result, burn law, thermochemistry, grain
   model, solver, physical prediction, or safety judgment is introduced.
 
-## 38. Acceptance criteria for IB0.3e
+## 39. Acceptance criteria for IB0.3e
 
 IB0.3e is complete when:
 
@@ -1614,7 +1750,7 @@ IB0.3e is complete when:
   integration state, solver, pressure prediction, velocity prediction, or
   safety judgment is introduced.
 
-## 39. Acceptance criteria for IB0.3f
+## 40. Acceptance criteria for IB0.3f
 
 IB0.3f is complete when:
 
@@ -1636,4 +1772,35 @@ IB0.3f is complete when:
   UndefinedBehaviorSanitizer verification pass; and
 - no gas composition, gas quantity, equation of state, thermochemistry, energy
   balance, burn law, solver, pressure evolution, velocity prediction, result
+  record, or safety judgment is introduced.
+
+## 41. Acceptance criteria for IB0.3g
+
+IB0.3g is complete when:
+
+- all three Noble-Abel gas-model records expose native scalar
+  `specific_gas_constant_j_per_kg_k`,
+  `constant_volume_specific_heat_j_per_kg_k`, and `covolume_m3_per_kg` fields
+  with the meanings in section 10.6;
+- the public umbrella-header chain exposes the explicitly named Noble-Abel
+  backend declarations to C23 and C++11-or-newer consumers;
+- each concrete validator reports null, nonfinite, and finite out-of-domain
+  inputs with the required status;
+- finite positive `R` and `c_v` are required, zero covolume is accepted as the
+  explicit ideal-gas limit, and negative covolume is rejected;
+- validation leaves the caller-owned record unchanged and allocates no memory;
+- tests cover every field and scalar family, including NaN, both infinities,
+  zero, negative values where invalid, positive subnormal values, finite maxima,
+  and the zero-covolume ideal-gas limit;
+- the contract defines the Noble-Abel mechanical equation, constant-`c_v`
+  caloric closure, derived `c_p` and `gamma`, and future initial-gas-mass
+  relation without storing redundant inputs;
+- the contract identifies Noble-Abel as one reduced backend, distinguishes
+  initial fill gas from combustion-product gas, leaves room for virial and
+  thermochemical backends, and separates numerical error from prediction
+  uncertainty;
+- strict GCC, strict Clang, independent-consumer, AddressSanitizer, and
+  UndefinedBehaviorSanitizer verification pass; and
+- no gas-mass evaluator, thermochemistry, combustion-product generation, grain
+  model, burn law, energy integration, pressure evolution, solver, result
   record, or safety judgment is introduced.
