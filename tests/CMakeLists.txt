@@ -214,6 +214,30 @@ add_test(
     COMMAND bbtc_test_ib_noble_abel_gas_model
 )
 
+add_executable(
+    bbtc_test_ib_first_order_virial_gas_model
+    test_ib_first_order_virial_gas_model.c
+)
+
+target_link_libraries(
+    bbtc_test_ib_first_order_virial_gas_model
+    PRIVATE
+        bbtc::bbtc
+)
+
+set_target_properties(
+    bbtc_test_ib_first_order_virial_gas_model
+    PROPERTIES
+        C_EXTENSIONS OFF
+        C_STANDARD 23
+        C_STANDARD_REQUIRED ON
+)
+
+add_test(
+    NAME bbtc.ib_first_order_virial_gas_model
+    COMMAND bbtc_test_ib_first_order_virial_gas_model
+)
+
 set(
     BBTC_CONSUMER_FIXTURE_SOURCE_DIR
     "${CMAKE_CURRENT_SOURCE_DIR}/consumer"

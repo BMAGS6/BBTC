@@ -29,6 +29,7 @@ add_library(
     include/bbtc/bbtc.h
     include/bbtc/diagnostics.h
     include/bbtc/internal_ballistics.h
+    include/bbtc/internal_ballistics/first_order_virial_gas_model.h
     include/bbtc/internal_ballistics/noble_abel_gas_model.h
     include/bbtc/internal_ballistics/geometry.h
     include/bbtc/internal_ballistics/initial_gas_state.h
@@ -38,6 +39,7 @@ add_library(
     include/bbtc/precision.h
     include/bbtc/status.h
     src/diagnostics.c
+    src/internal/first_order_virial_gas_model.c
     src/internal/noble_abel_gas_model.c
     src/internal/geometry.c
     src/internal/initial_gas_state.c

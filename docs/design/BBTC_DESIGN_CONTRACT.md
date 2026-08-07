@@ -1,10 +1,10 @@
 # BBTC Reconstruction Design Contract
 
-**Contract version:** 0.1.10
+**Contract version:** 0.1.11
 
-**Project phase:** IB0.3g
+**Project phase:** IB0.3h
 
-**Applies to:** `rewrite/ib0_3g_noble_abel_gas_model_contract_v1`
+**Applies to:** `rewrite/ib0_3h_first_order_virial_gas_model_contract_v1`
 
 **Status:** Accepted
 
@@ -1010,6 +1010,199 @@ Numerical convergence error and real-world model/input uncertainty MUST remain
 separately reported concepts.
 
 
+
+### 10.7 Temperature-dependent first-order density-virial backend
+
+IB0.3h defines three native scalar families for a first-order density-virial
+gas-model backend:
+
+```c
+bbtc_ib_first_order_virial_gas_model_float_t
+bbtc_ib_first_order_virial_gas_model_double_t
+bbtc_ib_first_order_virial_gas_model_long_double_t
+```
+
+The future mechanical equation of state is:
+
+```text
+p = rho * R * T * (1 + B(T) * rho)
+```
+
+where:
+
+- `p` is absolute pressure, in pascals;
+- `rho` is gas density, in kilograms per cubic meter;
+- `R` is the mass-specific gas constant, in joules per kilogram-kelvin;
+- `T` is absolute temperature, in kelvins; and
+- `B(T)` is the mass-specific second density virial coefficient, in cubic
+  meters per kilogram.
+
+The ideal-gas limit is the identically zero law `B(T) == 0`. The sign of an
+individual coefficient or of `B(T)` is not restricted by record validation.
+A future state evaluator MUST separately require a mechanically admissible
+compressibility factor:
+
+```text
+1 + B(T) * rho > 0
+```
+
+Passing record validation therefore does not prove that every possible state is
+admissible.
+
+#### 10.7.1 Bounded Chebyshev temperature law
+
+Each scalar family owns a temperature-law record and borrows a caller-owned
+coefficient array:
+
+```c
+bbtc_ib_first_order_virial_temperature_law_float_t
+bbtc_ib_first_order_virial_temperature_law_double_t
+bbtc_ib_first_order_virial_temperature_law_long_double_t
+```
+
+For `N == coefficient_count`, the represented law is:
+
+```text
+B(T) = sum(c[k] * T_k(x), k = 0 .. N - 1)
+```
+
+No half-weight convention is applied to `c[0]`. `T_k` is the Chebyshev
+polynomial of the first kind. Temperature is mapped from the closed represented
+interval to the canonical Chebyshev interval by:
+
+```text
+x = 2 * (T - T_min) / (T_max - T_min) - 1
+```
+
+Thus `T_min` maps to `-1`, `T_max` maps to `+1`, and the midpoint maps to zero.
+Every stored coefficient has units of cubic meters per kilogram. A degree-zero
+law is valid. A one-element zero law is the explicit ideal-gas limit.
+
+The coefficient pointer is borrowed, not owned. BBTC does not allocate, copy,
+modify, resize, retain beyond the call, or free coefficient storage. The caller
+MUST keep the array readable and immutable for the duration of validation or
+evaluation. A null pointer is invalid even when `coefficient_count` is zero.
+
+The temperature-law validator requires:
+
+- a nonnull law pointer;
+- a nonnull coefficient pointer;
+- finite temperature bounds;
+- `T_min > 0`;
+- `T_max > T_min`;
+- `coefficient_count > 0`; and
+- every coefficient finite.
+
+Coefficient signs are unrestricted.
+
+#### 10.7.2 Analytic derivatives
+
+The temperature-law evaluator returns:
+
+```text
+B(T)
+dB/dT
+d^2B/dT^2
+```
+
+in a precision-qualified output record. Derivatives are analytic derivatives of
+the represented series, not finite-difference estimates.
+
+The implementation uses a backward Clenshaw recurrence. For `N` coefficients:
+
+```text
+b_N = b_(N+1) = 0
+b_k = 2*x*b_(k+1) - b_(k+2) + c_k, k = N-1 .. 1
+
+B(x) = x*b_1 - b_2 + c_0
+```
+
+Differentiating the auxiliary recurrence gives:
+
+```text
+b'_k =
+    2*b_(k+1) + 2*x*b'_(k+1) - b'_(k+2)
+
+b''_k =
+    4*b'_(k+1) + 2*x*b''_(k+1) - b''_(k+2)
+
+dB/dx = b_1 + x*b'_1 - b'_2
+d^2B/dx^2 = 2*b'_1 + x*b''_1 - b''_2
+```
+
+This evaluates the series and both derivatives in one backward pass with
+constant storage. Because the temperature mapping is affine:
+
+```text
+dx/dT = 2 / (T_max - T_min)
+d^2x/dT^2 = 0
+
+dB/dT = dB/dx * dx/dT
+d^2B/dT^2 = d^2B/dx^2 * (dx/dT)^2
+```
+
+Evaluation performs no allocation and no conversion through another scalar
+family. The output is cleared before any failure that can be reported after a
+nonnull output pointer is received. A nonfinite temperature returns
+`BBTC_STATUS_NONFINITE_INPUT`; a finite temperature outside the closed interval
+returns `BBTC_STATUS_OUTSIDE_DOMAIN`; and nonfinite recurrence or derivative
+output returns `BBTC_STATUS_NUMERICAL_FAILURE`.
+
+#### 10.7.3 Caloric compatibility boundary
+
+Each gas-model record stores a positive dilute-gas reference
+constant-volume specific heat `c_v,0`. This is not silently treated as the
+complete finite-density heat capacity when `B` depends on temperature.
+
+For the mechanical EOS in this section, thermodynamic compatibility gives the
+future specific internal-energy form:
+
+```text
+e(rho, T) = e_0(T) - rho * R * T^2 * B'(T)
+```
+
+If the dilute-gas reference is calorically perfect,
+
+```text
+e_0(T) = c_v,0 * T + constant
+```
+
+then the future finite-density constant-volume heat capacity is:
+
+```text
+c_v(rho, T) =
+    c_v,0
+    - rho * R * (2*T*B'(T) + T^2*B''(T))
+```
+
+IB0.3h records this compatibility source of truth and provides the required
+coefficient derivatives. It does not yet expose pressure, internal-energy,
+heat-capacity, enthalpy, entropy, sound-speed, or state-inversion evaluators.
+
+#### 10.7.4 Calibration-domain metadata
+
+Each model record stores a closed calibrated density interval. The minimum
+density is finite and nonnegative. The maximum density is finite and strictly
+greater than the minimum. The temperature-law interval is the model's
+represented temperature interval.
+
+These intervals are applicability metadata, not clipping instructions. A future
+evaluator MAY calculate outside a calibration interval only when its API
+explicitly permits extrapolation and reports the appropriate warning and
+applicability flags. Validation alone does not establish provenance,
+experimental agreement, predictive uncertainty, or safety.
+
+The backend describes an effective pseudo-gas. It does not identify chemical
+species, equilibrium composition, condensed products, combustion-product yield,
+flame temperature, or parameter-fitting data. Initial trapped fill gas and
+propellant combustion products remain distinct gas populations.
+
+IB0.3h does not claim that this parameterization is universally more accurate
+than Noble-Abel. It provides a more expressive reduced backend whose accuracy
+must be established for a documented gas population and calibration domain.
+Noble-Abel remains a supported baseline and comparison backend.
+
+
 ## 11. Propellant representation
 
 "Ball," "flake," "extruded," "single-base," and similar labels are not complete
@@ -1568,6 +1761,43 @@ The following decisions define the first explicit gas constitutive model:
     thermochemistry, combustion-product generation, grain model, burn law,
     energy integration, pressure evolution, solver, result, or safety judgment.
 
+
+### 30.1 Decisions resolved in IB0.3h
+
+The following decisions define the temperature-dependent first-order virial
+parameter and coefficient-law boundary:
+
+1. **Density form.** The model uses the mass-density form
+   `p = rho*R*T*(1 + B(T)*rho)`. `B(T)` therefore has units of cubic meters per
+   kilogram.
+2. **Temperature dependence.** `B` is represented as a function of absolute
+   temperature rather than as one permanently constant scalar.
+3. **Series representation.** A bounded first-kind Chebyshev series over an
+   explicit closed temperature interval is the foundational public
+   representation. The series uses `sum(c[k]*T_k(x))` with no half-weighted
+   zeroth term.
+4. **Borrowed storage.** Coefficient arrays remain caller-owned and immutable.
+   BBTC performs no allocation or hidden copy.
+5. **Derivatives.** The public evaluator returns `B(T)`, `B'(T)`, and `B''(T)`
+   analytically in the selected native scalar family.
+6. **Ideal-gas limit.** An identically zero coefficient law is valid and
+   explicitly represents the ideal-gas limit.
+7. **Coefficient signs.** Coefficient and evaluated-law signs are unrestricted
+   by record validation. State admissibility is deferred to constitutive
+   evaluation.
+8. **Caloric source of truth.** The stored heat capacity is the dilute-gas
+   reference `c_v,0`; future finite-density energy and heat capacity must
+   include the documented `B'(T)` and `B''(T)` compatibility terms.
+9. **Calibration metadata.** Every model supplies represented temperature and
+   calibrated density intervals. These are applicability metadata, not
+   guarantees or clipping rules.
+10. **Backend coexistence.** The virial backend supplements rather than replaces
+    Noble-Abel. Neither reduced backend is declared universally correct.
+11. **Scope boundary.** This checkpoint adds no pressure evaluator, state
+    inversion, gas-mass closure, chemistry, combustion, burn law, ODE solver,
+    firing prediction, trajectory, or safety judgment.
+
+
 ## 31. Decisions deferred to later checkpoints
 
 The following choices remain deliberately deferred:
@@ -1804,3 +2034,33 @@ IB0.3g is complete when:
 - no gas-mass evaluator, thermochemistry, combustion-product generation, grain
   model, burn law, energy integration, pressure evolution, solver, result
   record, or safety judgment is introduced.
+
+## 42. Acceptance criteria for IB0.3h
+
+IB0.3h is complete when:
+
+- native `float`, `double`, and `long double` temperature-law, evaluated-term,
+  and gas-model records are public through the umbrella-header chain;
+- every public field has documented SI units, physical meaning, ownership, and
+  applicability semantics;
+- the Chebyshev coefficient convention and temperature normalization are
+  unambiguous and include no hidden half-weight rule;
+- validators reject null pointers, nonfinite data, empty coefficient arrays,
+  nonpositive temperature minima, unordered temperature intervals, nonpositive
+  gas constants or dilute-gas heat capacities, negative minimum densities, and
+  unordered density intervals;
+- positive, zero, and negative finite virial coefficients are accepted;
+- degree-zero constant and identically zero ideal-gas laws are accepted;
+- evaluators return analytic `B(T)`, `B'(T)`, and `B''(T)` in native precision,
+  accept both closed interval endpoints, reject out-of-range temperature, clear
+  outputs on failure, allocate no storage, and report nonfinite recurrence
+  output as numerical failure;
+- tests cover all scalar families, constant and quadratic reference laws,
+  ideal-gas behavior, interval endpoints, failure statuses, output clearing,
+  C++ header interoperability, and independent CMake consumption;
+- the contract records the future thermodynamically compatible internal-energy
+  and heat-capacity relations without exposing those evaluators prematurely;
+- strict GCC, strict Clang, AddressSanitizer, UndefinedBehaviorSanitizer, C++,
+  and independent-consumer gates pass; and
+- no pressure evolution, state inversion, chemistry, combustion, solver,
+  trajectory, physical firing result, or safety judgment is introduced.

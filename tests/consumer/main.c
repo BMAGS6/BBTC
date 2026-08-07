@@ -205,6 +205,62 @@ check_noble_abel_gas_model_contract(void)
 
 
 /**
+ * @brief Verifies first-order virial validation and evaluation through the
+ *        independent consumer target.
+ *
+ * @return `EXIT_SUCCESS` when the public virial contract works; otherwise
+ *         `EXIT_FAILURE`.
+ */
+static int
+check_first_order_virial_gas_model_contract(void)
+{
+    const double coefficients[] =
+    {
+        0.0
+    };
+
+    const bbtc_ib_first_order_virial_gas_model_double_t model =
+    {
+        .specific_gas_constant_j_per_kg_k = 287.0,
+        .ideal_gas_constant_volume_specific_heat_j_per_kg_k = 718.0,
+        .minimum_calibrated_density_kg_per_m3 = 0.0,
+        .maximum_calibrated_density_kg_per_m3 = 500.0,
+        .second_density_virial_coefficient_law =
+        {
+            .minimum_temperature_k = 250.0,
+            .maximum_temperature_k = 4000.0,
+            .second_density_virial_chebyshev_coefficients_m3_per_kg =
+                coefficients,
+            .coefficient_count = 1U
+        }
+    };
+
+    bbtc_ib_first_order_virial_temperature_terms_double_t terms = {0};
+
+    if (bbtc_ib_first_order_virial_gas_model_validate_double(&model)
+        != BBTC_STATUS_SUCCESS)
+    {
+        return EXIT_FAILURE;
+    }
+
+    if (bbtc_ib_first_order_virial_temperature_law_evaluate_double(
+            &model.second_density_virial_coefficient_law,
+            1000.0,
+            &terms
+        ) != BBTC_STATUS_SUCCESS)
+    {
+        return EXIT_FAILURE;
+    }
+
+    return terms.second_density_virial_coefficient_m3_per_kg == 0.0
+            && terms.first_temperature_derivative_m3_per_kg_k == 0.0
+            && terms.second_temperature_derivative_m3_per_kg_k2 == 0.0
+        ? EXIT_SUCCESS
+        : EXIT_FAILURE;
+}
+
+
+/**
  * @brief Exercises public BBTC headers and linked diagnostic symbols.
  *
  * @return `EXIT_SUCCESS` when the external consumer contract works; otherwise
@@ -238,6 +294,9 @@ int main(void)
         return EXIT_FAILURE;
 
     if (check_noble_abel_gas_model_contract() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
+
+    if (check_first_order_virial_gas_model_contract() != EXIT_SUCCESS)
         return EXIT_FAILURE;
 
     if (check_string(bbtc_ib_termination_string(BBTC_IB_TERMINATION_MUZZLE_EXIT),

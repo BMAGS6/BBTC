@@ -6,6 +6,7 @@
 #ifndef BBTC_INTERNAL_BALLISTICS_H
 #define BBTC_INTERNAL_BALLISTICS_H
 
+#include <bbtc/internal_ballistics/first_order_virial_gas_model.h>
 #include <bbtc/internal_ballistics/noble_abel_gas_model.h>
 #include <bbtc/internal_ballistics/geometry.h>
 #include <bbtc/internal_ballistics/initial_gas_state.h>

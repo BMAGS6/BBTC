@@ -7,7 +7,7 @@ Cubes of Honor.
 
 ## Current status
 
-The rewrite is in **IB0.3g**. This checkpoint contains:
+The rewrite is in **IB0.3h**. This checkpoint contains:
 
 - a strict C23 CMake/Ninja library target;
 - the namespaced CMake alias `bbtc::bbtc`;
@@ -30,6 +30,10 @@ The rewrite is in **IB0.3g**. This checkpoint contains:
   records with validation;
 - native precision-qualified calorically perfect Noble-Abel gas-model backend
   records with explicit ideal-gas-limit semantics and validation;
+- native precision-qualified temperature-dependent first-order density-virial
+  gas-model records, bounded Chebyshev coefficient laws backed by borrowed
+  caller-owned arrays, analytic first and second temperature derivatives, and
+  validation;
 - fixed `uint64_t` warning and model-applicability flag contracts;
 - immutable, nonlocalized strings for statuses, termination reasons, and
   individual diagnostic flags;
@@ -41,9 +45,12 @@ The rewrite is in **IB0.3g**. This checkpoint contains:
 There is still no ballistic solver, complete problem record, result record,
 result-field validity mask, command-line application, or validated firing
 solution in this checkpoint. The loading-state and initial-gas-state records
-establish initial geometry and boundary conditions, while the Noble-Abel backend record
-defines one explicit reduced constitutive model and its constant parameters. This checkpoint does not derive gas mass, evaluate pressure, integrate
-energy, compute velocity, or produce another firing prediction.
+establish initial geometry and boundary conditions. Noble-Abel supplies the
+first reduced constitutive backend, while the first-order virial backend adds a
+bounded temperature-dependent second-density-virial law and its analytic first
+and second derivatives. This checkpoint does not derive gas mass, evaluate
+pressure or internal energy, integrate projectile motion, or produce a firing
+prediction.
 
 The accepted reconstruction rules live in
 [`docs/design/BBTC_DESIGN_CONTRACT.md`](docs/design/BBTC_DESIGN_CONTRACT.md).
@@ -150,6 +157,33 @@ predictive uncertainty. Initial trapped fill gas and propellant combustion
 products are distinct gas populations; callers must not silently use one
 population's parameters for the other. Future first-order virial and
 higher-fidelity thermochemical reference backends remain permitted.
+
+`bbtc_ib_first_order_virial_temperature_law_float_t`,
+`bbtc_ib_first_order_virial_temperature_law_double_t`, and
+`bbtc_ib_first_order_virial_temperature_law_long_double_t` borrow caller-owned
+Chebyshev coefficient arrays for a mass-specific second density virial
+coefficient `B(T)`. Their validators require finite ordered positive
+temperature bounds, at least one finite coefficient, and a nonnull coefficient
+pointer. Coefficient signs are unrestricted, and an identically zero law is the
+explicit ideal-gas limit.
+
+The matching evaluators return `B(T)`, `dB/dT`, and `d^2B/dT^2` analytically in
+native precision over the closed represented temperature interval. The
+first-order virial gas-model records additionally carry a positive
+mixture-specific gas constant, a positive dilute-gas reference constant-volume
+specific heat, and an ordered nonnegative calibrated density interval.
+
+A future constitutive evaluator will use
+`p = rho * R * T * (1 + B(T) * rho)` and will separately enforce
+`1 + B(T) * rho > 0`. Temperature-dependent `B(T)` also contributes to internal
+energy and finite-density heat capacity through its first and second
+temperature derivatives. IB0.3h documents those thermodynamic compatibility
+relations but deliberately adds no pressure or energy evaluator yet.
+
+Noble-Abel and first-order virial coexist as reduced backends. Neither model is
+declared universally accurate; parameters require documented gas-population
+identity, provenance, calibration conditions, and uncertainty before physical
+accuracy claims are made.
 
 `bbtc_ib_termination_e` independently describes why a future
 internal-ballistics simulation stopped. `bbtc_warning_flags_t` and

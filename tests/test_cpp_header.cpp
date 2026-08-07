@@ -1,5 +1,6 @@
 #include <bbtc/bbtc.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <type_traits>
@@ -272,6 +273,51 @@ static_assert(
 );
 
 
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_first_order_virial_temperature_law_float_t{}
+                .minimum_temperature_k
+        ),
+        float
+    >::value,
+    "float virial temperature law must use native float"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_first_order_virial_temperature_law_double_t{}
+                .coefficient_count
+        ),
+        std::size_t
+    >::value,
+    "virial coefficient count must use size_t"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_first_order_virial_temperature_terms_long_double_t{}
+                .second_temperature_derivative_m3_per_kg_k2
+        ),
+        long double
+    >::value,
+    "long-double virial derivative terms must use native long double"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_first_order_virial_gas_model_double_t{}
+                .specific_gas_constant_j_per_kg_k
+        ),
+        double
+    >::value,
+    "double virial gas model must use native double"
+);
+
+
 int main()
 {
     if (
@@ -385,6 +431,42 @@ int main()
 
     if (bbtc_ib_noble_abel_gas_model_validate_double(&gas_model)
         != BBTC_STATUS_SUCCESS)
+    {
+        return 1;
+    }
+
+
+    const double virial_coefficients[] =
+    {
+        0.0
+    };
+
+    const bbtc_ib_first_order_virial_gas_model_double_t virial_model =
+    {
+        287.0,
+        718.0,
+        0.0,
+        500.0,
+        {
+            250.0,
+            4000.0,
+            virial_coefficients,
+            1U
+        }
+    };
+
+    bbtc_ib_first_order_virial_temperature_terms_double_t virial_terms = {};
+
+    if (bbtc_ib_first_order_virial_gas_model_validate_double(&virial_model)
+            != BBTC_STATUS_SUCCESS
+        || bbtc_ib_first_order_virial_temperature_law_evaluate_double(
+            &virial_model.second_density_virial_coefficient_law,
+            1000.0,
+            &virial_terms
+        ) != BBTC_STATUS_SUCCESS
+        || virial_terms.second_density_virial_coefficient_m3_per_kg != 0.0
+        || virial_terms.first_temperature_derivative_m3_per_kg_k != 0.0
+        || virial_terms.second_temperature_derivative_m3_per_kg_k2 != 0.0)
     {
         return 1;
     }
