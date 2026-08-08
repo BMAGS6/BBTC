@@ -29,6 +29,7 @@ add_library(
     include/bbtc/bbtc.h
     include/bbtc/diagnostics.h
     include/bbtc/internal_ballistics.h
+    include/bbtc/internal_ballistics/caloric_reference.h
     include/bbtc/internal_ballistics/first_order_virial_gas_model.h
     include/bbtc/internal_ballistics/noble_abel_gas_model.h
     include/bbtc/internal_ballistics/geometry.h
@@ -36,9 +37,11 @@ add_library(
     include/bbtc/internal_ballistics/loading_state.h
     include/bbtc/internal_ballistics/projectile.h
     include/bbtc/internal_ballistics/propellant_charge.h
+    include/bbtc/internal_ballistics/reduced_gas_thermodynamics.h
     include/bbtc/precision.h
     include/bbtc/status.h
     src/diagnostics.c
+    src/internal/caloric_reference.c
     src/internal/first_order_virial_gas_model.c
     src/internal/noble_abel_gas_model.c
     src/internal/geometry.c
@@ -46,6 +49,7 @@ add_library(
     src/internal/loading_state.c
     src/internal/projectile.c
     src/internal/propellant_charge.c
+    src/internal/reduced_gas_thermodynamics.c
     src/precision.c
     src/status.c
 )

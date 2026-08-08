@@ -1,14 +1,14 @@
 # BBTC Reconstruction Design Contract
 
-**Contract version:** 0.1.11
+**Contract version:** 0.1.12
 
-**Project phase:** IB0.3h
+**Project phase:** IB0.3i
 
-**Applies to:** `rewrite/ib0_3h_first_order_virial_gas_model_contract_v1`
+**Applies to:** `rewrite/ib0_3i_reduced_gas_thermodynamic_evaluation_v1`
 
 **Status:** Accepted
 
-**Date:** 2026-08-04
+**Date:** 2026-08-08
 
 ## 1. Purpose
 
@@ -934,16 +934,17 @@ scalar family:
 - `covolume_m3_per_kg` is the Noble-Abel specific covolume `b`, in cubic meters
   per kilogram.
 
-The future mechanical equation of state is:
+The mechanical equation of state is:
 
 ```text
 p * (V - m * b) = m * R * T
 ```
 
 where `p` is absolute pressure, `V` is total free-gas geometric volume, `m` is
-gas mass, and `T` is absolute temperature. Every future evaluation MUST require
-the available translational volume `V - m * b` to be finite and strictly
-positive.
+gas mass, and `T` is absolute temperature. Any mass/volume form of the model
+MUST require the available translational volume `V - m * b` to be finite and
+strictly positive. The IB0.3i density-form evaluator enforces the equivalent
+state condition `1 - b * rho > 0`.
 
 The caloric closure treats `c_v` as constant over the model's documented
 applicability domain. Under this calorically perfect closure, constant-pressure
@@ -1022,7 +1023,7 @@ bbtc_ib_first_order_virial_gas_model_double_t
 bbtc_ib_first_order_virial_gas_model_long_double_t
 ```
 
-The future mechanical equation of state is:
+The mechanical equation of state is:
 
 ```text
 p = rho * R * T * (1 + B(T) * rho)
@@ -1039,15 +1040,17 @@ where:
 
 The ideal-gas limit is the identically zero law `B(T) == 0`. The sign of an
 individual coefficient or of `B(T)` is not restricted by record validation.
-A future state evaluator MUST separately require a mechanically admissible
-compressibility factor:
+The IB0.3i state evaluator separately requires both a positive represented
+compressibility factor and positive local isothermal mechanical stiffness:
 
 ```text
 1 + B(T) * rho > 0
+1 + 2 * B(T) * rho > 0
 ```
 
-Passing record validation therefore does not prove that every possible state is
-admissible.
+The second condition is equivalent to
+`(partial p / partial rho)_T > 0` for positive `R` and `T`. Passing record
+validation therefore does not prove that every possible state is admissible.
 
 #### 10.7.1 Bounded Chebyshev temperature law
 
@@ -1150,24 +1153,31 @@ output returns `BBTC_STATUS_NUMERICAL_FAILURE`.
 
 #### 10.7.3 Caloric compatibility boundary
 
-Each gas-model record stores a positive dilute-gas reference
-constant-volume specific heat `c_v,0`. This is not silently treated as the
-complete finite-density heat capacity when `B` depends on temperature.
+Each gas-model record stores a positive dilute-gas reference constant-volume
+specific heat `c_v,0`. This is not silently treated as the complete
+finite-density heat capacity when `B` depends on temperature.
 
 For the mechanical EOS in this section, thermodynamic compatibility gives the
-future specific internal-energy form:
+specific internal-energy form:
 
 ```text
 e(rho, T) = e_0(T) - rho * R * T^2 * B'(T)
 ```
 
-If the dilute-gas reference is calorically perfect,
+IB0.3i represents the dilute caloric branch by an explicit caller-selected
+reference datum:
 
 ```text
-e_0(T) = c_v,0 * T + constant
+e_0(T) = e_ref + c_v,0 * (T - T_ref)
 ```
 
-then the future finite-density constant-volume heat capacity is:
+where `T_ref` is finite and strictly positive and `e_ref` is any finite specific
+internal-energy datum. BBTC supplies no hidden reference temperature or
+zero-energy convention. This reduced-gas caloric datum does not by itself
+define a chemical standard state, species composition, heat of formation, or
+reaction energy.
+
+The resulting finite-density constant-volume specific heat is:
 
 ```text
 c_v(rho, T) =
@@ -1175,9 +1185,12 @@ c_v(rho, T) =
     - rho * R * (2*T*B'(T) + T^2*B''(T))
 ```
 
-IB0.3h records this compatibility source of truth and provides the required
-coefficient derivatives. It does not yet expose pressure, internal-energy,
-heat-capacity, enthalpy, entropy, sound-speed, or state-inversion evaluators.
+IB0.3i evaluates pressure, specific internal energy, finite-density
+constant-volume specific heat, `(partial p / partial rho)_T`, and
+`(partial p / partial T)_rho`. It still does not expose enthalpy, entropy,
+sound speed, state inversion, gas-mass closure, combustion thermochemistry, or
+a ballistic integration step.
+
 
 #### 10.7.4 Calibration-domain metadata
 
@@ -1186,11 +1199,18 @@ density is finite and nonnegative. The maximum density is finite and strictly
 greater than the minimum. The temperature-law interval is the model's
 represented temperature interval.
 
-These intervals are applicability metadata, not clipping instructions. A future
-evaluator MAY calculate outside a calibration interval only when its API
-explicitly permits extrapolation and reports the appropriate warning and
-applicability flags. Validation alone does not establish provenance,
-experimental agreement, predictive uncertainty, or safety.
+These intervals are applicability metadata, not clipping instructions. IB0.3i
+treats the calibrated density interval as a soft scientific-applicability
+boundary: a mathematically and thermodynamically admissible state outside that
+density interval may still return `BBTC_STATUS_SUCCESS`, but the result MUST set
+`BBTC_APPLICABILITY_OUTSIDE_CALIBRATION_DOMAIN`. This is not silent clipping and
+does not claim validated extrapolative accuracy.
+
+The represented Chebyshev temperature interval is different: it is a hard
+evaluation domain for the current backend because BBTC does not extrapolate
+`B(T)` beyond the supplied coefficient-law interval. Validation alone does not
+establish provenance, experimental agreement, predictive uncertainty, or
+safety.
 
 The backend describes an effective pseudo-gas. It does not identify chemical
 species, equilibrium composition, condensed products, combustion-product yield,
@@ -1201,6 +1221,106 @@ IB0.3h does not claim that this parameterization is universally more accurate
 than Noble-Abel. It provides a more expressive reduced backend whose accuracy
 must be established for a documented gas population and calibration domain.
 Noble-Abel remains a supported baseline and comparison backend.
+
+
+### 10.8 Reduced-gas caloric reference and thermodynamic evaluation
+
+IB0.3i defines three explicit dilute-branch caloric-reference records:
+
+```c
+bbtc_ib_caloric_reference_float_t
+bbtc_ib_caloric_reference_double_t
+bbtc_ib_caloric_reference_long_double_t
+```
+
+Each record contains:
+
+- `reference_temperature_k`, a finite strictly positive absolute temperature;
+  and
+- `reference_specific_internal_energy_j_per_kg`, a finite specific
+  internal-energy datum with no sign restriction.
+
+The reference is external to the concrete gas-model record so one constitutive
+parameter set is not silently coupled to one arbitrary energy zero. A caller
+MAY choose 298.15 K when its data convention requires that temperature, but
+BBTC MUST NOT silently supply 298.15 K or describe it as a universal
+standard-state temperature.
+
+IB0.3i also defines one common thermodynamic-result record per scalar family:
+
+```c
+bbtc_ib_reduced_gas_thermodynamic_result_float_t
+bbtc_ib_reduced_gas_thermodynamic_result_double_t
+bbtc_ib_reduced_gas_thermodynamic_result_long_double_t
+```
+
+Each result contains:
+
+- absolute pressure;
+- specific internal energy relative to the supplied caloric datum;
+- state constant-volume specific heat;
+- `(partial p / partial rho)_T`;
+- `(partial p / partial T)_rho`; and
+- `bbtc_applicability_flags_t`.
+
+The output record is cleared before any failure that occurs after a nonnull
+output pointer is accepted. `rho == 0` is a valid mathematical boundary state;
+negative density and nonpositive absolute temperature are outside the domain.
+Finite-input arithmetic that cannot produce finite outputs returns
+`BBTC_STATUS_NUMERICAL_FAILURE`.
+
+The Noble-Abel evaluator uses:
+
+```text
+p = rho * R * T / (1 - b * rho)
+
+e = e_ref + c_v * (T - T_ref)
+
+c_v,state = c_v
+
+(partial p / partial rho)_T =
+    R * T / (1 - b * rho)^2
+
+(partial p / partial T)_rho =
+    rho * R / (1 - b * rho)
+```
+
+and requires `1 - b * rho > 0`.
+
+The first-order virial evaluator uses the already-defined analytic `B(T)`,
+`B'(T)`, and `B''(T)` temperature-law evaluation and does not duplicate the
+Chebyshev recurrence:
+
+```text
+p = rho * R * T * (1 + B * rho)
+
+e =
+    e_ref
+    + c_v,0 * (T - T_ref)
+    - rho * R * T^2 * B'
+
+c_v,state =
+    c_v,0
+    - rho * R * (2*T*B' + T^2*B'')
+
+(partial p / partial rho)_T =
+    R * T * (1 + 2*B*rho)
+
+(partial p / partial T)_rho =
+    rho * R * (1 + B*rho + rho*T*B')
+```
+
+It requires positive `1 + B*rho`, positive
+`(partial p / partial rho)_T`, and positive finite `c_v,state`.
+Density outside the documented calibration interval sets
+`BBTC_APPLICABILITY_OUTSIDE_CALIBRATION_DOMAIN` but does not, by itself, change
+a successful API status into a hard failure. A temperature outside the
+represented coefficient-law interval remains `BBTC_STATUS_OUTSIDE_DOMAIN`.
+
+These constitutive evaluators do not derive gas mass, infer composition,
+represent propellant combustion, supply formation energies, integrate the
+projectile, establish predictive uncertainty, or make any ammunition/firearm
+safety judgment.
 
 
 ## 11. Propellant representation

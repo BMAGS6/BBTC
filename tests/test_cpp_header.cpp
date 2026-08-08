@@ -318,6 +318,85 @@ static_assert(
 );
 
 
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_caloric_reference_float_t{}
+                .reference_temperature_k
+        ),
+        float
+    >::value,
+    "float caloric reference must use native float"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_caloric_reference_double_t{}
+                .reference_specific_internal_energy_j_per_kg
+        ),
+        double
+    >::value,
+    "double caloric reference must use native double"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_caloric_reference_long_double_t{}
+                .reference_temperature_k
+        ),
+        long double
+    >::value,
+    "long-double caloric reference must use native long double"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_reduced_gas_thermodynamic_result_float_t{}
+                .pressure_pa
+        ),
+        float
+    >::value,
+    "float reduced-gas result must use native float"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_reduced_gas_thermodynamic_result_double_t{}
+                .specific_internal_energy_j_per_kg
+        ),
+        double
+    >::value,
+    "double reduced-gas result must use native double"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_reduced_gas_thermodynamic_result_long_double_t{}
+                .constant_volume_specific_heat_j_per_kg_k
+        ),
+        long double
+    >::value,
+    "long-double reduced-gas result must use native long double"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_reduced_gas_thermodynamic_result_double_t{}
+                .applicability_flags
+        ),
+        bbtc_applicability_flags_t
+    >::value,
+    "reduced-gas applicability metadata must use the public flag-mask type"
+);
+
+
 int main()
 {
     if (
@@ -360,10 +439,8 @@ int main()
     }
 
 
-    const bbtc_ib_projectile_double_t projectile =
-    {
-        0.01134
-    };
+    bbtc_ib_projectile_double_t projectile = {};
+    projectile.mass_kg = 0.01134;
 
     if (bbtc_ib_projectile_validate_double(&projectile) != BBTC_STATUS_SUCCESS)
     {
@@ -371,33 +448,23 @@ int main()
     }
 
 
-    const bbtc_ib_propellant_charge_double_t charge =
-    {
-        0.0030,
-        1600.0
-    };
+    bbtc_ib_propellant_charge_double_t charge = {};
+    charge.charge_mass_kg = 0.0030;
+    charge.condensed_phase_density_kg_per_m3 = 1600.0;
 
     if (bbtc_ib_propellant_charge_validate_double(&charge) != BBTC_STATUS_SUCCESS)
     {
         return 1;
     }
 
-    const bbtc_ib_loading_state_double_t loading_state =
-    {
-        {
-            8.0,
-            1.0,
-            1.0,
-            1.0
-        },
-        {
-            1.0
-        },
-        {
-            6.0,
-            2.0
-        }
-    };
+    bbtc_ib_loading_state_double_t loading_state = {};
+    loading_state.geometry.initial_behind_projectile_volume_m3 = 8.0;
+    loading_state.geometry.bore_cross_sectional_area_m2 = 1.0;
+    loading_state.geometry.projectile_effective_base_area_m2 = 1.0;
+    loading_state.geometry.projectile_travel_to_muzzle_m = 1.0;
+    loading_state.projectile.mass_kg = 1.0;
+    loading_state.propellant_charge.charge_mass_kg = 6.0;
+    loading_state.propellant_charge.condensed_phase_density_kg_per_m3 = 2.0;
     bbtc_ib_loading_state_volumes_double_t loading_volumes = {};
 
     if (bbtc_ib_loading_state_evaluate_double(&loading_state, &loading_volumes)
@@ -409,11 +476,9 @@ int main()
     }
 
 
-    const bbtc_ib_initial_gas_state_double_t initial_gas_state =
-    {
-        101325.0,
-        293.15
-    };
+    bbtc_ib_initial_gas_state_double_t initial_gas_state = {};
+    initial_gas_state.absolute_pressure_pa = 101325.0;
+    initial_gas_state.temperature_k = 293.15;
 
     if (bbtc_ib_initial_gas_state_validate_double(&initial_gas_state)
         != BBTC_STATUS_SUCCESS)
@@ -422,12 +487,10 @@ int main()
     }
 
 
-    const bbtc_ib_noble_abel_gas_model_double_t gas_model =
-    {
-        287.0,
-        718.0,
-        0.001
-    };
+    bbtc_ib_noble_abel_gas_model_double_t gas_model = {};
+    gas_model.specific_gas_constant_j_per_kg_k = 287.0;
+    gas_model.constant_volume_specific_heat_j_per_kg_k = 718.0;
+    gas_model.covolume_m3_per_kg = 0.001;
 
     if (bbtc_ib_noble_abel_gas_model_validate_double(&gas_model)
         != BBTC_STATUS_SUCCESS)
@@ -441,19 +504,19 @@ int main()
         0.0
     };
 
-    const bbtc_ib_first_order_virial_gas_model_double_t virial_model =
-    {
-        287.0,
-        718.0,
-        0.0,
-        500.0,
-        {
-            250.0,
-            4000.0,
-            virial_coefficients,
-            1U
-        }
-    };
+    bbtc_ib_first_order_virial_gas_model_double_t virial_model = {};
+    virial_model.specific_gas_constant_j_per_kg_k = 287.0;
+    virial_model.ideal_gas_constant_volume_specific_heat_j_per_kg_k = 718.0;
+    virial_model.minimum_calibrated_density_kg_per_m3 = 0.0;
+    virial_model.maximum_calibrated_density_kg_per_m3 = 500.0;
+    virial_model.second_density_virial_coefficient_law.minimum_temperature_k =
+        250.0;
+    virial_model.second_density_virial_coefficient_law.maximum_temperature_k =
+        4000.0;
+    virial_model.second_density_virial_coefficient_law
+        .second_density_virial_chebyshev_coefficients_m3_per_kg =
+            virial_coefficients;
+    virial_model.second_density_virial_coefficient_law.coefficient_count = 1U;
 
     bbtc_ib_first_order_virial_temperature_terms_double_t virial_terms = {};
 
@@ -467,6 +530,93 @@ int main()
         || virial_terms.second_density_virial_coefficient_m3_per_kg != 0.0
         || virial_terms.first_temperature_derivative_m3_per_kg_k != 0.0
         || virial_terms.second_temperature_derivative_m3_per_kg_k2 != 0.0)
+    {
+        return 1;
+    }
+
+
+
+    bbtc_ib_caloric_reference_double_t caloric_reference = {};
+    caloric_reference.reference_temperature_k = 300.0;
+    caloric_reference.reference_specific_internal_energy_j_per_kg = 1000.0;
+
+    bbtc_ib_noble_abel_gas_model_double_t thermodynamic_noble_abel_model = {};
+    thermodynamic_noble_abel_model.specific_gas_constant_j_per_kg_k = 100.0;
+    thermodynamic_noble_abel_model.constant_volume_specific_heat_j_per_kg_k =
+        500.0;
+    thermodynamic_noble_abel_model.covolume_m3_per_kg = 0.0;
+
+    const double thermodynamic_virial_coefficients[] =
+    {
+        0.0
+    };
+
+    bbtc_ib_first_order_virial_gas_model_double_t thermodynamic_virial_model =
+        {};
+    thermodynamic_virial_model.specific_gas_constant_j_per_kg_k = 100.0;
+    thermodynamic_virial_model
+        .ideal_gas_constant_volume_specific_heat_j_per_kg_k = 500.0;
+    thermodynamic_virial_model.minimum_calibrated_density_kg_per_m3 = 0.0;
+    thermodynamic_virial_model.maximum_calibrated_density_kg_per_m3 = 5.0;
+    thermodynamic_virial_model.second_density_virial_coefficient_law
+        .minimum_temperature_k = 200.0;
+    thermodynamic_virial_model.second_density_virial_coefficient_law
+        .maximum_temperature_k = 400.0;
+    thermodynamic_virial_model.second_density_virial_coefficient_law
+        .second_density_virial_chebyshev_coefficients_m3_per_kg =
+            thermodynamic_virial_coefficients;
+    thermodynamic_virial_model.second_density_virial_coefficient_law
+        .coefficient_count = 1U;
+
+    bbtc_ib_reduced_gas_thermodynamic_result_double_t noble_abel_result = {};
+    bbtc_ib_reduced_gas_thermodynamic_result_double_t virial_result = {};
+
+    if (bbtc_ib_caloric_reference_validate_double(&caloric_reference)
+            != BBTC_STATUS_SUCCESS
+        || bbtc_ib_noble_abel_thermodynamics_evaluate_double(
+            &thermodynamic_noble_abel_model,
+            2.0,
+            300.0,
+            &caloric_reference,
+            &noble_abel_result
+        ) != BBTC_STATUS_SUCCESS
+        || bbtc_ib_first_order_virial_thermodynamics_evaluate_double(
+            &thermodynamic_virial_model,
+            2.0,
+            300.0,
+            &caloric_reference,
+            &virial_result
+        ) != BBTC_STATUS_SUCCESS)
+    {
+        return 1;
+    }
+
+    if (noble_abel_result.applicability_flags
+            != BBTC_APPLICABILITY_NONE_REPORTED
+        || virial_result.applicability_flags
+            != BBTC_APPLICABILITY_NONE_REPORTED
+        || noble_abel_result.pressure_pa != 60000.0
+        || noble_abel_result.specific_internal_energy_j_per_kg != 1000.0
+        || noble_abel_result.constant_volume_specific_heat_j_per_kg_k != 500.0
+        || noble_abel_result
+            .pressure_density_derivative_at_constant_temperature_pa_m3_per_kg
+            != 30000.0
+        || noble_abel_result
+            .pressure_temperature_derivative_at_constant_density_pa_per_k
+            != 200.0
+        || virial_result.pressure_pa != noble_abel_result.pressure_pa
+        || virial_result.specific_internal_energy_j_per_kg
+            != noble_abel_result.specific_internal_energy_j_per_kg
+        || virial_result.constant_volume_specific_heat_j_per_kg_k
+            != noble_abel_result.constant_volume_specific_heat_j_per_kg_k
+        || virial_result
+            .pressure_density_derivative_at_constant_temperature_pa_m3_per_kg
+            != noble_abel_result
+                .pressure_density_derivative_at_constant_temperature_pa_m3_per_kg
+        || virial_result
+            .pressure_temperature_derivative_at_constant_density_pa_per_k
+            != noble_abel_result
+                .pressure_temperature_derivative_at_constant_density_pa_per_k)
     {
         return 1;
     }

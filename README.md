@@ -7,7 +7,7 @@ Cubes of Honor.
 
 ## Current status
 
-The rewrite is in **IB0.3h**. This checkpoint contains:
+The rewrite is in **IB0.3i**. This checkpoint contains:
 
 - a strict C23 CMake/Ninja library target;
 - the namespaced CMake alias `bbtc::bbtc`;
@@ -34,6 +34,18 @@ The rewrite is in **IB0.3h**. This checkpoint contains:
   gas-model records, bounded Chebyshev coefficient laws backed by borrowed
   caller-owned arrays, analytic first and second temperature derivatives, and
   validation;
+- explicit native precision-qualified dilute-branch caloric-reference records
+  with no hidden reference-temperature or zero-energy default;
+- common native precision-qualified reduced-gas thermodynamic result records;
+- concrete Noble-Abel and first-order-virial thermodynamic evaluators for
+  pressure, specific internal energy, state constant-volume specific heat,
+  `(partial p / partial rho)_T`, and `(partial p / partial T)_rho`;
+- virial state-domain checks for positive compressibility factor, positive
+  isothermal pressure-density derivative, and positive finite-density
+  constant-volume specific heat;
+- successful virial evaluation outside the documented calibrated density
+  interval with `BBTC_APPLICABILITY_OUTSIDE_CALIBRATION_DOMAIN` rather than a
+  fabricated hard computational failure;
 - fixed `uint64_t` warning and model-applicability flag contracts;
 - immutable, nonlocalized strings for statuses, termination reasons, and
   individual diagnostic flags;
@@ -42,15 +54,14 @@ The rewrite is in **IB0.3h**. This checkpoint contains:
 - GitHub Actions coverage for strict GCC, strict Clang, AddressSanitizer, and
   UndefinedBehaviorSanitizer builds.
 
-There is still no ballistic solver, complete problem record, result record,
-result-field validity mask, command-line application, or validated firing
-solution in this checkpoint. The loading-state and initial-gas-state records
-establish initial geometry and boundary conditions. Noble-Abel supplies the
-first reduced constitutive backend, while the first-order virial backend adds a
-bounded temperature-dependent second-density-virial law and its analytic first
-and second derivatives. This checkpoint does not derive gas mass, evaluate
-pressure or internal energy, integrate projectile motion, or produce a firing
-prediction.
+There is still no ballistic solver, complete problem record, simulation
+result record, result-field validity mask, command-line application, or
+validated firing solution in this checkpoint. The loading-state and
+initial-gas-state records establish initial geometry and boundary conditions.
+Noble-Abel and first-order virial now both have concrete reduced-gas
+thermodynamic state evaluators, but this checkpoint still does not derive gas
+mass from initial pressure/volume data, model combustion or propellant burning,
+integrate projectile motion, or produce a firing prediction.
 
 The accepted reconstruction rules live in
 [`docs/design/BBTC_DESIGN_CONTRACT.md`](docs/design/BBTC_DESIGN_CONTRACT.md).
@@ -173,12 +184,31 @@ first-order virial gas-model records additionally carry a positive
 mixture-specific gas constant, a positive dilute-gas reference constant-volume
 specific heat, and an ordered nonnegative calibrated density interval.
 
-A future constitutive evaluator will use
-`p = rho * R * T * (1 + B(T) * rho)` and will separately enforce
-`1 + B(T) * rho > 0`. Temperature-dependent `B(T)` also contributes to internal
-energy and finite-density heat capacity through its first and second
-temperature derivatives. IB0.3h documents those thermodynamic compatibility
-relations but deliberately adds no pressure or energy evaluator yet.
+The first-order virial constitutive evaluator uses
+`p = rho * R * T * (1 + B(T) * rho)`, requires both
+`1 + B(T) * rho > 0` and
+`(partial p / partial rho)_T > 0`, and rejects a nonpositive finite-density
+constant-volume specific heat. Temperature-dependent `B(T)` contributes to
+specific internal energy and finite-density heat capacity through its first and
+second temperature derivatives.
+
+`bbtc_ib_caloric_reference_float_t`,
+`bbtc_ib_caloric_reference_double_t`, and
+`bbtc_ib_caloric_reference_long_double_t` define the caller-selected dilute-gas
+specific-internal-energy datum. BBTC supplies no silent 298.15 K default and
+does not treat this reduced-gas datum as a chemical standard state or formation
+energy.
+
+`bbtc_ib_reduced_gas_thermodynamic_result_float_t`,
+`bbtc_ib_reduced_gas_thermodynamic_result_double_t`, and
+`bbtc_ib_reduced_gas_thermodynamic_result_long_double_t` return pressure,
+specific internal energy, state constant-volume specific heat, the isothermal
+pressure-density derivative, the constant-density pressure-temperature
+derivative, and model-applicability flags. Density outside a first-order virial
+model's documented calibration interval is a soft applicability condition when
+the represented state remains mathematically and thermodynamically admissible.
+The represented Chebyshev temperature interval remains a hard evaluation
+domain because BBTC does not extrapolate the coefficient law.
 
 Noble-Abel and first-order virial coexist as reduced backends. Neither model is
 declared universally accurate; parameters require documented gas-population

@@ -6,6 +6,7 @@
 #ifndef BBTC_INTERNAL_BALLISTICS_H
 #define BBTC_INTERNAL_BALLISTICS_H
 
+#include <bbtc/internal_ballistics/caloric_reference.h>
 #include <bbtc/internal_ballistics/first_order_virial_gas_model.h>
 #include <bbtc/internal_ballistics/noble_abel_gas_model.h>
 #include <bbtc/internal_ballistics/geometry.h>
@@ -13,5 +14,6 @@
 #include <bbtc/internal_ballistics/projectile.h>
 #include <bbtc/internal_ballistics/propellant_charge.h>
 #include <bbtc/internal_ballistics/loading_state.h>
+#include <bbtc/internal_ballistics/reduced_gas_thermodynamics.h>
 
 #endif /* BBTC_INTERNAL_BALLISTICS_H */

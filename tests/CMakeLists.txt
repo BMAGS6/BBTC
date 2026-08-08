@@ -238,6 +238,30 @@ add_test(
     COMMAND bbtc_test_ib_first_order_virial_gas_model
 )
 
+add_executable(
+    bbtc_test_ib_reduced_gas_thermodynamics
+    test_ib_reduced_gas_thermodynamics.c
+)
+
+target_link_libraries(
+    bbtc_test_ib_reduced_gas_thermodynamics
+    PRIVATE
+        bbtc::bbtc
+)
+
+set_target_properties(
+    bbtc_test_ib_reduced_gas_thermodynamics
+    PROPERTIES
+        C_EXTENSIONS OFF
+        C_STANDARD 23
+        C_STANDARD_REQUIRED ON
+)
+
+add_test(
+    NAME bbtc.ib_reduced_gas_thermodynamics
+    COMMAND bbtc_test_ib_reduced_gas_thermodynamics
+)
+
 set(
     BBTC_CONSUMER_FIXTURE_SOURCE_DIR
     "${CMAKE_CURRENT_SOURCE_DIR}/consumer"
