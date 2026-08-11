@@ -7,7 +7,7 @@ Cubes of Honor.
 
 ## Current status
 
-The rewrite is in **IB0.3i**. This checkpoint contains:
+The rewrite is in **IB0.3j**. This checkpoint contains:
 
 - a strict C23 CMake/Ninja library target;
 - the namespaced CMake alias `bbtc::bbtc`;
@@ -40,6 +40,15 @@ The rewrite is in **IB0.3i**. This checkpoint contains:
 - concrete Noble-Abel and first-order-virial thermodynamic evaluators for
   pressure, specific internal energy, state constant-volume specific heat,
   `(partial p / partial rho)_T`, and `(partial p / partial T)_rho`;
+- native precision-qualified initial free-gas solution records carrying
+  applicability metadata, density, and gas mass;
+- concrete Noble-Abel and first-order-virial initial-gas solvers that close
+  density and mass from explicit initial pressure, temperature, free-gas
+  volume, and one concrete reduced mechanical equation of state;
+- targeted A+ numerical hardening for initial-gas closure, including
+  exponent-safe evaluation of `p / (R*T)`, cancellation-safe virial root
+  selection, and algebraically equivalent forms that avoid unnecessary
+  intermediate overflow without promising arbitrary-range arithmetic;
 - virial state-domain checks for positive compressibility factor, positive
   isothermal pressure-density derivative, and positive finite-density
   constant-volume specific heat;
@@ -59,9 +68,12 @@ result record, result-field validity mask, command-line application, or
 validated firing solution in this checkpoint. The loading-state and
 initial-gas-state records establish initial geometry and boundary conditions.
 Noble-Abel and first-order virial now both have concrete reduced-gas
-thermodynamic state evaluators, but this checkpoint still does not derive gas
-mass from initial pressure/volume data, model combustion or propellant burning,
-integrate projectile motion, or produce a firing prediction.
+thermodynamic state evaluators and concrete initial free-gas mass/density
+closure. This checkpoint can therefore close the pre-combustion reduced-gas
+state from explicit initial pressure, temperature, free-gas volume, and gas
+model parameters. It still does not model combustion or propellant burning,
+generate combustion-product gas, integrate projectile motion, or produce a
+firing prediction.
 
 The accepted reconstruction rules live in
 [`docs/design/BBTC_DESIGN_CONTRACT.md`](docs/design/BBTC_DESIGN_CONTRACT.md).
@@ -152,6 +164,38 @@ absolute pressure and temperature boundary conditions in native scalar
 families. Their validators reject null, nonfinite, zero, and negative inputs.
 Pressure and temperature are not derived from each other without an additional
 gas model and state information.
+
+
+`bbtc_ib_initial_gas_solution_float_t`,
+`bbtc_ib_initial_gas_solution_double_t`, and
+`bbtc_ib_initial_gas_solution_long_double_t` carry the closed initial free-gas
+density, initial free-gas mass, and model-applicability metadata. The
+Noble-Abel and first-order-virial `bbtc_ib_*_initial_gas_solve_*()` functions
+consume one concrete gas model, an explicit initial gas state, and the scalar
+initial free-gas volume. They do not consume a caloric-reference record because
+mass/density closure is a mechanical equation-of-state inversion rather than
+an internal-energy datum problem.
+
+For Noble-Abel, closure is based on `rho = q / (1 + b*q)` with
+`q = p / (R*T)` and the exact `b == 0` ideal-gas limit. For the first-order
+virial backend, BBTC solves `B*rho^2 + rho - q = 0` on the unique branch that is
+continuous with the ideal-gas limit and has positive local isothermal
+mechanical stiffness. For negative `B`, that stable branch requires
+`B*q > -1/4`; equality is the zero-stiffness boundary and is rejected.
+
+The closure layer applies targeted native-precision scaling and stable
+algebraic forms to avoid obvious intermediate range failures, but it is not an
+arbitrary-range arithmetic package. A required reduced density `q`, closed
+density, or final gas mass that cannot be represented as a finite strictly
+positive value in the selected scalar family produces a numerical failure.
+Virial density outside the documented calibrated interval remains a soft
+applicability condition; temperature outside the represented coefficient-law
+interval remains a hard domain failure.
+
+The returned gas mass describes only the initial free/trapped gas population
+occupying the supplied initial free-gas volume. It does not include condensed
+propellant or future combustion-product gas, and callers must use parameters
+that actually characterize the initial gas population.
 
 `bbtc_ib_noble_abel_gas_model_float_t`,
 `bbtc_ib_noble_abel_gas_model_double_t`, and

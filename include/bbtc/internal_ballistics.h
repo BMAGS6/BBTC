@@ -11,6 +11,7 @@
 #include <bbtc/internal_ballistics/noble_abel_gas_model.h>
 #include <bbtc/internal_ballistics/geometry.h>
 #include <bbtc/internal_ballistics/initial_gas_state.h>
+#include <bbtc/internal_ballistics/initial_gas_closure.h>
 #include <bbtc/internal_ballistics/projectile.h>
 #include <bbtc/internal_ballistics/propellant_charge.h>
 #include <bbtc/internal_ballistics/loading_state.h>

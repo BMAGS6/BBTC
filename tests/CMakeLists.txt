@@ -262,6 +262,30 @@ add_test(
     COMMAND bbtc_test_ib_reduced_gas_thermodynamics
 )
 
+add_executable(
+    bbtc_test_ib_initial_gas_closure
+    test_ib_initial_gas_closure.c
+)
+
+target_link_libraries(
+    bbtc_test_ib_initial_gas_closure
+    PRIVATE
+        bbtc::bbtc
+)
+
+set_target_properties(
+    bbtc_test_ib_initial_gas_closure
+    PROPERTIES
+        C_EXTENSIONS OFF
+        C_STANDARD 23
+        C_STANDARD_REQUIRED ON
+)
+
+add_test(
+    NAME bbtc.ib_initial_gas_closure
+    COMMAND bbtc_test_ib_initial_gas_closure
+)
+
 set(
     BBTC_CONSUMER_FIXTURE_SOURCE_DIR
     "${CMAKE_CURRENT_SOURCE_DIR}/consumer"

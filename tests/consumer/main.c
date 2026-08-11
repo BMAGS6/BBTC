@@ -261,6 +261,100 @@ check_first_order_virial_gas_model_contract(void)
 
 
 
+
+/**
+ * @brief Verifies initial free-gas closure through the independent consumer.
+ *
+ * @details
+ * Both concrete reduced-gas backends are reduced to the same exact ideal-gas
+ * state. This deliberately tests public-header visibility, static-library
+ * linkage (including the transitive math-library dependency), solution-record
+ * semantics, applicability metadata, and the new IB0.3j entry points. Detailed
+ * nonideal and numerical-edge behavior remains in the dedicated closure test.
+ *
+ * @return `EXIT_SUCCESS` when both public closure APIs recover the exact
+ *         expected density and gas mass; otherwise `EXIT_FAILURE`.
+ */
+static int
+check_initial_gas_closure_contract(void)
+{
+    const double virial_coefficients[] =
+    {
+        0.0
+    };
+
+    const bbtc_ib_initial_gas_state_double_t initial_gas_state =
+    {
+        .absolute_pressure_pa = 600.0,
+        .temperature_k = 3.0
+    };
+
+    const bbtc_ib_noble_abel_gas_model_double_t noble_abel_model =
+    {
+        .specific_gas_constant_j_per_kg_k = 100.0,
+        .constant_volume_specific_heat_j_per_kg_k = 500.0,
+        .covolume_m3_per_kg = 0.0
+    };
+
+    const bbtc_ib_first_order_virial_gas_model_double_t virial_model =
+    {
+        .specific_gas_constant_j_per_kg_k = 100.0,
+        .ideal_gas_constant_volume_specific_heat_j_per_kg_k = 500.0,
+        .minimum_calibrated_density_kg_per_m3 = 0.0,
+        .maximum_calibrated_density_kg_per_m3 = 5.0,
+        .second_density_virial_coefficient_law =
+        {
+            .minimum_temperature_k = 1.0,
+            .maximum_temperature_k = 5.0,
+            .second_density_virial_chebyshev_coefficients_m3_per_kg =
+                virial_coefficients,
+            .coefficient_count = 1U
+        }
+    };
+
+    bbtc_ib_initial_gas_solution_double_t noble_abel_solution = {0};
+    bbtc_ib_initial_gas_solution_double_t virial_solution = {0};
+
+    if (bbtc_ib_noble_abel_initial_gas_solve_double(
+            &noble_abel_model,
+            &initial_gas_state,
+            0.25,
+            &noble_abel_solution
+        ) != BBTC_STATUS_SUCCESS)
+    {
+        return EXIT_FAILURE;
+    }
+
+    if (bbtc_ib_first_order_virial_initial_gas_solve_double(
+            &virial_model,
+            &initial_gas_state,
+            0.25,
+            &virial_solution
+        ) != BBTC_STATUS_SUCCESS)
+    {
+        return EXIT_FAILURE;
+    }
+
+    if (noble_abel_solution.applicability_flags
+            != BBTC_APPLICABILITY_NONE_REPORTED
+        || virial_solution.applicability_flags
+            != BBTC_APPLICABILITY_NONE_REPORTED)
+    {
+        return EXIT_FAILURE;
+    }
+
+    if (noble_abel_solution.density_kg_per_m3 != 2.0
+        || noble_abel_solution.gas_mass_kg != 0.5
+        || virial_solution.density_kg_per_m3 != 2.0
+        || virial_solution.gas_mass_kg != 0.5)
+    {
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+
 /**
  * @brief Verifies the reduced-gas thermodynamic evaluators through the
  *        independent CMake consumer.
@@ -416,6 +510,9 @@ int main(void)
         return EXIT_FAILURE;
 
     if (check_first_order_virial_gas_model_contract() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
+
+    if (check_initial_gas_closure_contract() != EXIT_SUCCESS)
         return EXIT_FAILURE;
 
     if (check_reduced_gas_thermodynamics_contract() != EXIT_SUCCESS)

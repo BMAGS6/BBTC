@@ -1,14 +1,14 @@
 # BBTC Reconstruction Design Contract
 
-**Contract version:** 0.1.12
+**Contract version:** 0.1.13
 
-**Project phase:** IB0.3i
+**Project phase:** IB0.3j
 
-**Applies to:** `rewrite/ib0_3i_reduced_gas_thermodynamic_evaluation_v1`
+**Applies to:** `rewrite/ib0_3j_initial_gas_closure_v1`
 
 **Status:** Accepted
 
-**Date:** 2026-08-08
+**Date:** 2026-08-10
 
 ## 1. Purpose
 
@@ -1187,9 +1187,11 @@ c_v(rho, T) =
 
 IB0.3i evaluates pressure, specific internal energy, finite-density
 constant-volume specific heat, `(partial p / partial rho)_T`, and
-`(partial p / partial T)_rho`. It still does not expose enthalpy, entropy,
-sound speed, state inversion, gas-mass closure, combustion thermochemistry, or
-a ballistic integration step.
+`(partial p / partial T)_rho`. That constitutive evaluator still does not expose
+enthalpy, entropy, sound speed, state inversion, combustion thermochemistry, or
+a ballistic integration step. IB0.3j adds the separate initial free-gas
+mass/density closure defined in Section 10.9 rather than folding that inversion
+into the forward thermodynamic evaluator.
 
 
 #### 10.7.4 Calibration-domain metadata
@@ -1321,6 +1323,206 @@ These constitutive evaluators do not derive gas mass, infer composition,
 represent propellant combustion, supply formation energies, integrate the
 projectile, establish predictive uncertainty, or make any ammunition/firearm
 safety judgment.
+
+
+### 10.9 Initial free-gas mass/density closure
+
+IB0.3j defines one initial free-gas solution record per scalar family:
+
+```c
+bbtc_ib_initial_gas_solution_float_t
+bbtc_ib_initial_gas_solution_double_t
+bbtc_ib_initial_gas_solution_long_double_t
+```
+
+Each record contains:
+
+- `bbtc_applicability_flags_t applicability_flags`;
+- density in kilograms per cubic meter; and
+- initial free-gas mass in kilograms.
+
+The record describes only the initial free/trapped gas population occupying
+the supplied initial free-gas volume. It MUST NOT be interpreted as including
+condensed propellant, future propellant-combustion products, projectile mass,
+case mass, or firearm mass.
+
+IB0.3j exposes concrete precision-qualified closure functions:
+
+```c
+bbtc_ib_noble_abel_initial_gas_solve_float(...)
+bbtc_ib_noble_abel_initial_gas_solve_double(...)
+bbtc_ib_noble_abel_initial_gas_solve_long_double(...)
+
+bbtc_ib_first_order_virial_initial_gas_solve_float(...)
+bbtc_ib_first_order_virial_initial_gas_solve_double(...)
+bbtc_ib_first_order_virial_initial_gas_solve_long_double(...)
+```
+
+Each closure call consumes:
+
+- one concrete reduced gas-model record;
+- one matching precision-qualified initial gas-state record carrying explicit
+  absolute pressure `p` and temperature `T`;
+- a finite strictly positive initial free-gas volume `V`; and
+- a caller-owned output solution record.
+
+The closure layer MUST accept the free-gas volume as the scalar derived
+quantity rather than requiring the entire loading-state record. The closure
+layer MUST NOT require a caloric-reference record because gas mass/density
+closure is a mechanical equation-of-state inversion and does not depend on the
+arbitrary specific-internal-energy datum.
+
+For both reduced gas backends, define:
+
+```text
+q = p / (R * T)
+```
+
+where `R` is the model's mass-specific gas constant. Successful closure
+requires `q`, the derived density, and the final gas mass to be representable as
+finite strictly positive values in the selected native scalar family.
+
+#### 10.9.1 A+ numerical policy
+
+IB0.3j uses a targeted numerical-hardening policy rather than either naive
+direct arithmetic or a general arbitrary-range arithmetic system.
+
+The implementation MUST:
+
+- use numerically stable algebraic forms where an equivalent expression avoids
+  cancellation or an unnecessary intermediate range failure;
+- evaluate `p / (R*T)` without requiring the direct product `R*T` to be
+  representable when the final `q` is representable in the selected scalar
+  family;
+- retain native `float`, `double`, and `long double` arithmetic and matching
+  native math functions for the three scalar families; and
+- report `BBTC_STATUS_NUMERICAL_FAILURE` when a required finite result cannot
+  be represented reliably in the selected scalar family.
+
+The implementation is not required to recover every mathematically
+representable final answer from every pathological combination of finite input
+operands near the scalar type's extreme exponent limits. IB0.3j therefore does
+not establish arbitrary-range arithmetic as part of the public contract.
+
+#### 10.9.2 Noble-Abel closure
+
+For Noble-Abel:
+
+```text
+p = rho * R * T / (1 - b * rho)
+```
+
+with specific covolume `b`. Solving for density gives:
+
+```text
+rho = p / (R*T + p*b)
+    = q / (1 + b*q)
+```
+
+and:
+
+```text
+m = rho * V
+```
+
+`b == 0` is the exact ideal-gas limit `rho == q`.
+
+The implementation MAY select algebraically equivalent reciprocal forms to
+avoid unnecessary overflow in `b*q`. A successful result MUST preserve the
+strict Noble-Abel excluded-volume interior:
+
+```text
+1 - b * rho > 0
+```
+
+If native-precision rounding places the derived state on or beyond that
+singular boundary, the call MUST fail rather than report the boundary state as
+valid.
+
+#### 10.9.3 First-order virial closure
+
+For the first-order density-virial backend:
+
+```text
+p = rho * R * T * (1 + B(T) * rho)
+```
+
+so closure requires solving:
+
+```text
+B(T) * rho^2 + rho - q = 0
+```
+
+BBTC MUST select the unique root that:
+
+- is continuous with the ideal-gas limit `B(T) -> 0`; and
+- has positive local isothermal mechanical stiffness.
+
+The cancellation-prone expression
+
+```text
+(-1 + sqrt(1 + 4*B*q)) / (2*B)
+```
+
+MUST NOT be the primary closure formula near the ideal-gas limit.
+
+For `B(T) == 0`, closure is exactly:
+
+```text
+rho = q
+```
+
+For `B(T) < 0`, the accepted stable branch requires:
+
+```text
+B(T) * q > -1/4
+```
+
+Equality corresponds to a zero isothermal pressure-density derivative and is a
+hard `BBTC_STATUS_OUTSIDE_DOMAIN` boundary. The alternate algebraic root on
+the negative-stiffness branch MUST NOT be exposed to callers.
+
+For `B(T) > 0`, the implementation SHOULD avoid forming an otherwise
+overflowing `B(T)*q` when the stable density remains representable. The current
+reference implementation evaluates the required square-root product through
+scaled native arithmetic and uses a stable positive-root form.
+
+After closure, the derived virial density MUST remain on the positive local
+isothermal-stiffness branch. Loss of that invariant from native arithmetic is a
+numerical failure rather than a second caller-selectable root.
+
+#### 10.9.4 Domain, applicability, and failure semantics
+
+The first-order virial coefficient law MUST still be evaluated only over its
+closed represented temperature interval. Temperature outside that interval is
+`BBTC_STATUS_OUTSIDE_DOMAIN`; BBTC MUST NOT extrapolate the Chebyshev law
+silently.
+
+A successfully derived virial density outside the model's closed calibrated
+density interval MUST return `BBTC_STATUS_SUCCESS` with
+`BBTC_APPLICABILITY_OUTSIDE_CALIBRATION_DOMAIN`. Exact calibrated-density
+boundaries are inside the calibration interval and MUST NOT set that flag.
+
+A nonnull solution record MUST be cleared before any subsequent validation or
+numerical operation that can fail. Null output pointers return
+`BBTC_STATUS_INVALID_ARGUMENT`. Nonfinite scalar inputs return the existing
+nonfinite-input status through the appropriate validation layer. A zero or
+negative initial free-gas volume is outside the closure domain.
+
+The closure layer MUST NOT:
+
+- infer the initial gas species or composition;
+- substitute combustion-product pseudo-gas parameters for the initial gas
+  population;
+- derive a caloric energy reference;
+- represent ignition or propellant burning;
+- generate combustion-product mass;
+- integrate projectile motion; or
+- make an ammunition/firearm safety judgment.
+
+Callers are responsible for supplying gas-model parameters that actually
+describe the initial free-gas population. Initial trapped fill gas and future
+propellant combustion products remain distinct modeled populations.
 
 
 ## 11. Propellant representation

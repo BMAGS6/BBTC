@@ -397,6 +397,52 @@ static_assert(
 );
 
 
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_initial_gas_solution_float_t{}
+                .density_kg_per_m3
+        ),
+        float
+    >::value,
+    "float initial-gas solution must use native float density"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_initial_gas_solution_double_t{}
+                .gas_mass_kg
+        ),
+        double
+    >::value,
+    "double initial-gas solution must use native double mass"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_initial_gas_solution_long_double_t{}
+                .density_kg_per_m3
+        ),
+        long double
+    >::value,
+    "long-double initial-gas solution must use native long-double density"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_initial_gas_solution_double_t{}
+                .applicability_flags
+        ),
+        bbtc_applicability_flags_t
+    >::value,
+    "initial-gas solution applicability metadata must use the public flag-mask type"
+);
+
+
 int main()
 {
     if (
@@ -534,6 +580,75 @@ int main()
         return 1;
     }
 
+
+
+
+    /*
+     * Exercise the IB0.3j closure API from C++ using value initialization plus
+     * named member assignment. This intentionally avoids positional aggregate
+     * initialization so C++ interoperability does not accidentally freeze
+     * public record field order as an ABI assumption.
+     */
+    bbtc_ib_initial_gas_state_double_t closure_initial_gas_state = {};
+    closure_initial_gas_state.absolute_pressure_pa = 600.0;
+    closure_initial_gas_state.temperature_k = 3.0;
+
+    bbtc_ib_noble_abel_gas_model_double_t closure_noble_abel_model = {};
+    closure_noble_abel_model.specific_gas_constant_j_per_kg_k = 100.0;
+    closure_noble_abel_model.constant_volume_specific_heat_j_per_kg_k = 500.0;
+    closure_noble_abel_model.covolume_m3_per_kg = 0.0;
+
+    const double closure_virial_coefficients[] =
+    {
+        0.0
+    };
+
+    bbtc_ib_first_order_virial_gas_model_double_t closure_virial_model = {};
+    closure_virial_model.specific_gas_constant_j_per_kg_k = 100.0;
+    closure_virial_model.ideal_gas_constant_volume_specific_heat_j_per_kg_k =
+        500.0;
+    closure_virial_model.minimum_calibrated_density_kg_per_m3 = 0.0;
+    closure_virial_model.maximum_calibrated_density_kg_per_m3 = 5.0;
+    closure_virial_model.second_density_virial_coefficient_law
+        .minimum_temperature_k = 1.0;
+    closure_virial_model.second_density_virial_coefficient_law
+        .maximum_temperature_k = 5.0;
+    closure_virial_model.second_density_virial_coefficient_law
+        .second_density_virial_chebyshev_coefficients_m3_per_kg =
+            closure_virial_coefficients;
+    closure_virial_model.second_density_virial_coefficient_law
+        .coefficient_count = 1U;
+
+    bbtc_ib_initial_gas_solution_double_t closure_noble_abel_solution = {};
+    bbtc_ib_initial_gas_solution_double_t closure_virial_solution = {};
+
+    if (bbtc_ib_noble_abel_initial_gas_solve_double(
+            &closure_noble_abel_model,
+            &closure_initial_gas_state,
+            0.25,
+            &closure_noble_abel_solution
+        ) != BBTC_STATUS_SUCCESS
+        || bbtc_ib_first_order_virial_initial_gas_solve_double(
+            &closure_virial_model,
+            &closure_initial_gas_state,
+            0.25,
+            &closure_virial_solution
+        ) != BBTC_STATUS_SUCCESS)
+    {
+        return 1;
+    }
+
+    if (closure_noble_abel_solution.applicability_flags
+            != BBTC_APPLICABILITY_NONE_REPORTED
+        || closure_virial_solution.applicability_flags
+            != BBTC_APPLICABILITY_NONE_REPORTED
+        || closure_noble_abel_solution.density_kg_per_m3 != 2.0
+        || closure_noble_abel_solution.gas_mass_kg != 0.5
+        || closure_virial_solution.density_kg_per_m3 != 2.0
+        || closure_virial_solution.gas_mass_kg != 0.5)
+    {
+        return 1;
+    }
 
 
     bbtc_ib_caloric_reference_double_t caloric_reference = {};
