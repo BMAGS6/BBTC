@@ -472,6 +472,56 @@ check_reduced_gas_thermodynamics_contract(void)
     return EXIT_SUCCESS;
 }
 
+/**
+ * @brief Verifies reduced propellant thermochemistry through the independent consumer.
+ *
+ * @details
+ * This public-boundary fixture deliberately uses binary-exact values so the
+ * test checks API visibility, linkage, native-double records, source semantics,
+ * and field meaning without introducing tolerance noise. Detailed edge and
+ * representability behavior remains in the dedicated IB0.4a unit test.
+ *
+ * @return `EXIT_SUCCESS` when the public thermochemical-source API produces
+ *         the expected split masses and reaction-energy release; otherwise
+ *         `EXIT_FAILURE`.
+ */
+static int
+check_propellant_thermochemistry_contract(void)
+{
+    const bbtc_ib_propellant_thermochemistry_double_t thermochemistry =
+    {
+        .gas_product_mass_fraction = 0.75,
+        .specific_reaction_internal_energy_release_j_per_kg = 4.0
+    };
+
+    bbtc_ib_propellant_thermochemical_source_double_t source = {0};
+
+    if (bbtc_ib_propellant_thermochemistry_validate_double(&thermochemistry)
+        != BBTC_STATUS_SUCCESS)
+    {
+        return EXIT_FAILURE;
+    }
+
+    if (bbtc_ib_propellant_thermochemical_source_evaluate_double(
+            &thermochemistry,
+            2.0,
+            &source
+        ) != BBTC_STATUS_SUCCESS)
+    {
+        return EXIT_FAILURE;
+    }
+
+    if (source.gas_product_mass_kg != 1.5
+        || source.condensed_product_mass_kg != 0.5
+        || source.reaction_internal_energy_release_j != 8.0)
+    {
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+
 
 /**
  * @brief Exercises public BBTC headers and linked diagnostic symbols.
@@ -481,6 +531,11 @@ check_reduced_gas_thermodynamics_contract(void)
  */
 int main(void)
 {
+
+    if (check_propellant_thermochemistry_contract() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
+
+
     if (check_string(bbtc_status_string(BBTC_STATUS_SUCCESS),
                      "success")
         != EXIT_SUCCESS)

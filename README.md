@@ -7,7 +7,7 @@ Cubes of Honor.
 
 ## Current status
 
-The rewrite is in **IB0.3j**. This checkpoint contains:
+The rewrite is in **IB0.4a**. This checkpoint contains:
 
 - a strict C23 CMake/Ninja library target;
 - the namespaced CMake alias `bbtc::bbtc`;
@@ -24,6 +24,15 @@ The rewrite is in **IB0.3j**. This checkpoint contains:
 - native precision-qualified projectile-mass records and validation;
 - native precision-qualified propellant-charge mass and condensed-phase-density
   records with validation;
+- native precision-qualified reduced propellant-thermochemistry records carrying
+  gaseous-product mass fraction and effective specific reaction internal-energy
+  release;
+- native precision-qualified thermochemical-source result records carrying
+  generated gaseous-product mass, generated condensed-product mass, and released
+  reaction internal energy;
+- concrete propellant thermochemical-source evaluators that map explicit reacted
+  propellant mass into those extensive source terms without embedding grain,
+  ignition, burn-rate, gas-EOS, mixture, pressure, or temperature models;
 - composed precision-qualified loading states with cross-record volume
   validation and derived initial-volume outputs;
 - native precision-qualified initial gas absolute-pressure and temperature
@@ -71,9 +80,12 @@ Noble-Abel and first-order virial now both have concrete reduced-gas
 thermodynamic state evaluators and concrete initial free-gas mass/density
 closure. This checkpoint can therefore close the pre-combustion reduced-gas
 state from explicit initial pressure, temperature, free-gas volume, and gas
-model parameters. It still does not model combustion or propellant burning,
-generate combustion-product gas, integrate projectile motion, or produce a
-firing prediction.
+model parameters. Given an explicitly supplied reacted propellant mass, IB0.4a
+can additionally partition that reacted mass into modeled gaseous and condensed
+products and report the associated effective reaction internal-energy release.
+It still does not determine how much propellant reacts, model grain regression
+or ignition, evolve a mixed chamber-gas state, integrate projectile motion, or
+produce a firing prediction.
 
 The accepted reconstruction rules live in
 [`docs/design/BBTC_DESIGN_CONTRACT.md`](docs/design/BBTC_DESIGN_CONTRACT.md).
@@ -150,6 +162,41 @@ and negative mass without inventing a default projectile.
 condensed propellant material density in native scalar families. Their
 validators reject null, nonfinite, zero, and negative inputs without treating
 bulk loading density or a commercial powder name as sufficient physical data.
+
+`bbtc_ib_propellant_thermochemistry_float_t`,
+`bbtc_ib_propellant_thermochemistry_double_t`, and
+`bbtc_ib_propellant_thermochemistry_long_double_t` carry two reduced
+thermochemical parameters: gaseous-product mass fraction `y_g` and positive
+effective specific reaction internal-energy release `q_r`. Validation requires
+`0 < y_g <= 1` and `q_r > 0`, with finite values in the selected native scalar
+family. The energy parameter is a reduced-model source coefficient; it is not
+automatically a standard enthalpy of combustion, flame temperature, propellant
+force/impetus, gas specific internal energy, or caloric-reference datum.
+
+The matching `bbtc_ib_propellant_thermochemical_source_*_t` records carry
+generated gaseous-product mass, generated condensed-product mass, and released
+reaction internal energy. For explicitly supplied reacted propellant mass
+`m_r`, the concrete evaluators implement:
+
+```text
+m_g = y_g * m_r
+m_c = (1 - y_g) * m_r
+Q_r = q_r * m_r
+```
+
+Reacted mass must be finite and nonnegative. Exactly zero reacted mass is a
+valid identity state and returns a completely zero source record. Positive
+reacted mass requires every physically required output to remain representable
+and finite; loss of a required positive product mass or reaction-energy release
+to native overflow or underflow is a numerical failure rather than a clamped
+result. Exact `y_g == 1` is the supported all-gas limit and therefore produces
+exactly zero condensed-product mass.
+
+This layer does not infer gas species, determine reacted mass, evaluate burn
+rate, track grain geometry, model ignition, assign a gas equation of state,
+mix initial trapped gas with combustion products, calculate pressure or
+temperature, or make an ammunition/firearm safety judgment. Initial trapped gas
+and generated combustion products remain distinct modeled populations.
 
 `bbtc_ib_loading_state_float_t`, `bbtc_ib_loading_state_double_t`, and
 `bbtc_ib_loading_state_long_double_t` compose matching geometry, projectile,

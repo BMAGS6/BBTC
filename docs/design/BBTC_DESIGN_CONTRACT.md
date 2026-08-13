@@ -1,10 +1,10 @@
 # BBTC Reconstruction Design Contract
 
-**Contract version:** 0.1.13
+**Contract version:** 0.1.14
 
-**Project phase:** IB0.3j
+**Project phase:** IB0.4a
 
-**Applies to:** `rewrite/ib0_3j_initial_gas_closure_v1`
+**Applies to:** `rewrite/ib0_4a_propellant_thermochemical_source_contract_v1`
 
 **Status:** Accepted
 
@@ -1546,6 +1546,147 @@ BBTC separates:
 The solver consumes numerical physical parameters. A shape or chemical-family
 enumeration MAY select a documented equation, but it MUST NOT conjure missing
 thermochemical or burn-rate values.
+
+### 11.1 Reduced propellant thermochemical source
+
+IB0.4a defines one reduced propellant-thermochemistry record per scalar family:
+
+```c
+bbtc_ib_propellant_thermochemistry_float_t
+bbtc_ib_propellant_thermochemistry_double_t
+bbtc_ib_propellant_thermochemistry_long_double_t
+```
+
+Each record contains:
+
+- gaseous-product mass fraction `y_g`; and
+- effective specific reaction internal-energy release `q_r`, in joules per
+  kilogram of reacted propellant.
+
+The model validator MUST require finite values satisfying:
+
+```text
+0 < y_g <= 1
+q_r > 0
+```
+
+`q_r` is the positive effective decrease in modeled chemical internal energy
+made available to a later internal-ballistics energy balance per kilogram of
+reacted propellant. It MUST NOT be interpreted automatically as a standard
+enthalpy of combustion, flame temperature, propellant force/impetus, gas
+specific internal energy, or a caloric-reference datum. IB0.4a defines no hidden
+reference temperature, reference pressure, standard-atmosphere state, species
+composition, gas equation of state, or calibration data for this coefficient.
+
+IB0.4a also defines one extensive thermochemical-source result record per
+scalar family:
+
+```c
+bbtc_ib_propellant_thermochemical_source_float_t
+bbtc_ib_propellant_thermochemical_source_double_t
+bbtc_ib_propellant_thermochemical_source_long_double_t
+```
+
+Each result contains:
+
+- generated gaseous-product mass `m_g`, in kilograms;
+- generated condensed-product mass `m_c`, in kilograms; and
+- released reaction internal energy `Q_r`, in joules.
+
+The source evaluator consumes one matching thermochemistry record, one explicit
+reacted propellant mass `m_r`, and one caller-owned output record. It MUST NOT
+consume the complete propellant-charge record, grain geometry, pressure,
+temperature, ignition state, burn-rate law, gas model, or loading-state record.
+
+The reduced source equations are:
+
+```text
+m_g = y_g * m_r
+m_c = (1 - y_g) * m_r
+Q_r = q_r * m_r
+```
+
+These equations partition only the explicitly supplied reacted propellant mass.
+They MUST NOT be interpreted as including unreacted propellant, initial trapped
+gas, projectile mass, case mass, or any other material population.
+
+The reacted propellant mass MUST be finite and nonnegative. Exactly zero reacted
+mass is a valid identity state and MUST return `BBTC_STATUS_SUCCESS` with an
+all-zero source record. Negative finite reacted mass is outside the source
+domain.
+
+For positive reacted mass:
+
+- generated gaseous-product mass MUST be finite and strictly positive;
+- released reaction internal energy MUST be finite and strictly positive;
+- when `y_g < 1`, generated condensed-product mass MUST be finite and strictly
+  positive; and
+- exact `y_g == 1` is the all-gas limit and MUST produce exactly zero
+  condensed-product mass.
+
+If a mathematically required positive source term overflows, underflows to zero,
+or otherwise becomes nonfinite in the selected native scalar family, the
+evaluator MUST return `BBTC_STATUS_NUMERICAL_FAILURE`. The implementation MUST
+NOT clamp a failed quantity to a representable boundary.
+
+The source evaluator MUST validate in this order once its output pointer is
+known to be nonnull:
+
+1. clear the output record;
+2. validate the thermochemistry record;
+3. validate reacted-mass finiteness;
+4. validate the reacted-mass domain;
+5. handle the zero-reacted-mass identity;
+6. evaluate the three extensive source terms;
+7. validate representability and source invariants; and
+8. commit the successful result.
+
+This ordering makes failure output deterministic and preserves model-validation
+precedence over reacted-mass validation. A null output pointer returns
+`BBTC_STATUS_INVALID_ARGUMENT` and cannot be cleared.
+
+Mass conservation is an algebraic model requirement:
+
+```text
+m_g + m_c = m_r
+```
+
+but the public contract MUST NOT require the two separately rounded native
+floating-point result fields to sum bit-for-bit to the original input. Tests and
+future conservation diagnostics SHOULD instead use an appropriate
+precision-aware residual.
+
+The thermochemical source layer MUST remain separate from the gas constitutive
+model. In particular, thermochemistry records MUST NOT embed Noble-Abel,
+first-order virial, or future mixture-EOS parameters merely because generated
+gaseous product will later require a gas model.
+
+IB0.4a does not assign public applicability flags to thermochemical-source
+results because the evaluator receives no pressure, temperature, provenance, or
+calibration-domain state against which such flags could be evaluated. A future
+temperature-dependent or provenance-bearing thermochemistry model MAY add
+explicit applicability metadata without changing the meaning of this
+constant-coefficient source contract.
+
+IB0.4a MUST NOT:
+
+- infer chemical species or equilibrium composition;
+- determine how much propellant has reacted;
+- model grain regression or burn-surface evolution;
+- evaluate a pressure-dependent burn law;
+- model ignition progression;
+- infer or silently reuse initial-fill-gas EOS parameters for combustion
+  products;
+- define reduced-gas mixture rules;
+- calculate chamber pressure or temperature;
+- integrate the coupled internal-ballistics state;
+- move the projectile; or
+- make an ammunition/firearm safety judgment.
+
+Generated combustion-product gas and the initial trapped/free-gas population
+therefore remain distinct modeled populations. A later mixture contract must
+define how those populations share a chamber state; IB0.4a does not silently
+collapse them into one pseudo-gas.
 
 The initial pressure-dependent linear burn law is expressed in normalized form:
 

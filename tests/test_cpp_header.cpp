@@ -443,8 +443,98 @@ static_assert(
 );
 
 
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_propellant_thermochemistry_float_t{}
+                .gas_product_mass_fraction
+        ),
+        float
+    >::value,
+    "float propellant thermochemistry must use native float"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_propellant_thermochemistry_double_t{}
+                .specific_reaction_internal_energy_release_j_per_kg
+        ),
+        double
+    >::value,
+    "double propellant thermochemistry must use native double"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_propellant_thermochemistry_long_double_t{}
+                .gas_product_mass_fraction
+        ),
+        long double
+    >::value,
+    "long-double propellant thermochemistry must use native long double"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_propellant_thermochemical_source_float_t{}
+                .gas_product_mass_kg
+        ),
+        float
+    >::value,
+    "float propellant thermochemical source must use native float"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_propellant_thermochemical_source_double_t{}
+                .condensed_product_mass_kg
+        ),
+        double
+    >::value,
+    "double propellant thermochemical source must use native double"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_propellant_thermochemical_source_long_double_t{}
+                .reaction_internal_energy_release_j
+        ),
+        long double
+    >::value,
+    "long-double propellant thermochemical source must use native long double"
+);
+
+
 int main()
 {
+
+    bbtc_ib_propellant_thermochemistry_double_t thermochemistry = {};
+    thermochemistry.gas_product_mass_fraction = 0.75;
+    thermochemistry.specific_reaction_internal_energy_release_j_per_kg = 4.0;
+
+    bbtc_ib_propellant_thermochemical_source_double_t thermochemical_source = {};
+
+    if (bbtc_ib_propellant_thermochemistry_validate_double(&thermochemistry)
+            != BBTC_STATUS_SUCCESS
+        || bbtc_ib_propellant_thermochemical_source_evaluate_double(
+            &thermochemistry,
+            2.0,
+            &thermochemical_source
+        ) != BBTC_STATUS_SUCCESS
+        || thermochemical_source.gas_product_mass_kg != 1.5
+        || thermochemical_source.condensed_product_mass_kg != 0.5
+        || thermochemical_source.reaction_internal_energy_release_j != 8.0)
+    {
+        return 1;
+    }
+
+
     if (
         std::strcmp(
             bbtc_status_string(BBTC_STATUS_SUCCESS),

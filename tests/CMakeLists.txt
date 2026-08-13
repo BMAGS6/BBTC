@@ -143,6 +143,30 @@ add_test(
 )
 
 add_executable(
+    bbtc_test_ib_propellant_thermochemistry
+    test_ib_propellant_thermochemistry.c
+)
+
+target_link_libraries(
+    bbtc_test_ib_propellant_thermochemistry
+    PRIVATE
+        bbtc::bbtc
+)
+
+set_target_properties(
+    bbtc_test_ib_propellant_thermochemistry
+    PROPERTIES
+        C_EXTENSIONS OFF
+        C_STANDARD 23
+        C_STANDARD_REQUIRED ON
+)
+
+add_test(
+    NAME bbtc.ib_propellant_thermochemistry
+    COMMAND bbtc_test_ib_propellant_thermochemistry
+)
+
+add_executable(
     bbtc_test_ib_loading_state
     test_ib_loading_state.c
 )
