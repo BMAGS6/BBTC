@@ -1,14 +1,14 @@
 # BBTC Reconstruction Design Contract
 
-**Contract version:** 0.1.14
+**Contract version:** 0.1.15
 
-**Project phase:** IB0.4a
+**Project phase:** IB0.4b
 
-**Applies to:** `rewrite/ib0_4a_propellant_thermochemical_source_contract_v1`
+**Applies to:** `rewrite/ib0_4b_propellant_grain_regression_geometry_contract_v1`
 
 **Status:** Accepted
 
-**Date:** 2026-08-10
+**Date:** 2026-08-13
 
 ## 1. Purpose
 
@@ -1547,6 +1547,14 @@ The solver consumes numerical physical parameters. A shape or chemical-family
 enumeration MAY select a documented equation, but it MUST NOT conjure missing
 thermochemical or burn-rate values.
 
+The propellant architecture targets conventional gun and small-arms propellants,
+including black powder, brown powder, Cordite-family materials, and single-,
+double-, or triple-base smokeless propellants when appropriate independently
+sourced model parameters exist. Grain geometry and chemical/formulation identity
+remain orthogonal: a geometric backend MUST NOT imply a chemistry, and a named
+propellant family MUST NOT imply a particular grain geometry. Rocket and missile
+solid-propellant propulsion is outside BBTC's intended physical scope.
+
 ### 11.1 Reduced propellant thermochemical source
 
 IB0.4a defines one reduced propellant-thermochemistry record per scalar family:
@@ -1687,6 +1695,168 @@ Generated combustion-product gas and the initial trapped/free-gas population
 therefore remain distinct modeled populations. A later mixture contract must
 define how those populations share a chamber state; IB0.4a does not silently
 collapse them into one pseudo-gas.
+
+### 11.2 Canonical propellant grain regression geometry
+
+IB0.4b defines chemically agnostic individual-grain geometry backends for four
+canonical analytical families:
+
+- spherical/ball grains;
+- solid finite cylinders, including rod, cord, and strand approximations;
+- rectangular prisms, including flake, strip, and simple prismatic
+  approximations; and
+- single-perforated finite cylinders, including simple tubular grains.
+
+Each geometry family has native `float`, `double`, and `long double` record
+families and concrete precision-qualified validators/evaluators. The public API
+MUST NOT use a geometry enumeration, tagged union, runtime function-pointer
+dispatch layer, or chemical-family identifier to hide the concrete geometry
+being evaluated in IB0.4b.
+
+IB0.4b evaluates one canonical grain at an explicitly supplied uniform normal
+surface-regression distance `s`, in meters. Regression distance is a geometric
+coordinate, not time, reacted mass, burn fraction, or burn rate. IB0.4b does not
+define `ds/dt`.
+
+The common native-precision grain-state result contains:
+
+```text
+remaining_volume_m3
+burning_surface_area_m2
+remaining_regression_to_burnout_m
+consumed_volume_fraction
+```
+
+`remaining_regression_to_burnout_m` is the additional uniform normal regression
+distance required to reach the geometry's first burnout condition. It is not a
+generic physical web thickness; a physical dimension can be consumed by two
+opposing burning surfaces while the remaining regression coordinate advances by
+only half that dimension.
+
+All geometrically exposed surfaces in the four IB0.4b analytical backends are
+burning surfaces. Surface inhibition, deterrent-layer kinetics, spatially
+nonuniform ignition, erosive burning, grain fracture, grain collision/migration,
+and coating diffusion are outside this checkpoint.
+
+For a spherical grain with initial radius `r0`:
+
+```text
+r(s) = r0 - s
+s_max = r0
+V(s) = (4/3) * pi * r(s)^3
+A_b(s) = 4 * pi * r(s)^2
+```
+
+For a solid finite cylindrical grain with initial radius `r0` and length `L0`:
+
+```text
+r(s) = r0 - s
+L(s) = L0 - 2*s
+s_max = min(r0, L0/2)
+V(s) = pi * r(s)^2 * L(s)
+A_b(s) = 2*pi*r(s)*L(s) + 2*pi*r(s)^2
+```
+
+For a rectangular-prismatic grain with initial dimensions `L0`, `W0`, and
+`H0`:
+
+```text
+L(s) = L0 - 2*s
+W(s) = W0 - 2*s
+H(s) = H0 - 2*s
+s_max = 0.5 * min(L0, W0, H0)
+V(s) = L(s) * W(s) * H(s)
+A_b(s) = 2 * (L(s)*W(s) + L(s)*H(s) + W(s)*H(s))
+```
+
+For a single-perforated finite cylinder with initial outer radius `R0`, initial
+inner radius `r0`, and initial length `L0`:
+
+```text
+R(s) = R0 - s
+r(s) = r0 + s
+L(s) = L0 - 2*s
+s_max = min((R0 - r0)/2, L0/2)
+V(s) = pi * (R(s)^2 - r(s)^2) * L(s)
+A_b(s) = 2*pi*(R(s) + r(s))*L(s)
+         + 2*pi*(R(s)^2 - r(s)^2)
+```
+
+The evaluator-domain policy is common to all four backends:
+
+```text
+s < 0       -> BBTC_STATUS_OUTSIDE_DOMAIN
+s == 0      -> valid initial grain state
+0 < s < max -> valid active grain state
+s == s_max  -> valid exact-burnout state
+s > s_max   -> BBTC_STATUS_OUTSIDE_DOMAIN
+```
+
+Exact burnout MUST return zero remaining volume, zero burning-surface area,
+zero remaining regression to burnout, and consumed-volume fraction exactly one.
+The implementation MUST NOT clamp geometric overshoot to burnout.
+
+Once a nonnull output pointer has been established, the evaluator MUST clear the
+result before model or regression validation so later failure leaves a
+deterministic zero record. Geometry validation precedes regression-scalar
+validation. Nonfinite geometry or regression inputs use the established
+nonfinite-input status; finite nonpositive required initial dimensions and
+negative/overshooting regression use the appropriate finite-domain status.
+
+A mathematically required positive derived geometry quantity that cannot remain
+positive and finite in the selected scalar family is a numerical failure. In
+particular, underflow of a positive half-length, half-thickness, or half-web
+used to define `s_max` MUST NOT be mistaken for an exact-burnout state.
+Likewise, required positive interior volume or burning area that overflows,
+underflows to zero, or becomes nonfinite is `BBTC_STATUS_NUMERICAL_FAILURE`.
+The evaluator MUST NOT clamp a failed quantity to a representable boundary.
+
+The consumed-volume fraction is a dimensionless geometric diagnostic. The
+implementation SHOULD prefer algebraically stable forms that avoid unnecessary
+subtraction of nearly equal initial and remaining volumes when regression is
+small. Successful active states require a finite fraction in the closed interval
+`[0, 1]`, with exact initial state zero and exact burnout one.
+
+IB0.4b deliberately models one canonical grain and does not multiply by grain
+count, infer a size distribution, consume charge mass or condensed-phase
+density, or calculate reacted-mass rate. Multi-perforated grains with topology
+changes, irregular/corned-grain empirical form functions, inhibited-surface
+masks, and grain-population distributions are reserved for later explicit
+extensions.
+
+IB0.4b MUST NOT:
+
+- identify chemical formulation or propellant product;
+- compute pressure- or temperature-dependent regression rate;
+- consume initial propellant temperature;
+- determine reacted propellant mass or reacted-mass rate;
+- call the IB0.4a thermochemical source evaluator;
+- generate gas or reaction energy;
+- model ignition progression;
+- evolve chamber pressure or temperature;
+- integrate projectile motion; or
+- make an ammunition/firearm safety judgment.
+
+
+### 11.3 Initial propellant condition and provenance direction
+
+Initial propellant condition is distinct from the initial trapped/free-gas
+state. A subsequent checkpoint SHOULD introduce explicit initial propellant
+temperature as a first-class SI quantity before temperature-sensitive burn
+kinetics are frozen. The solver MUST NOT silently assume that propellant
+temperature equals ambient-air, chamber, case, or initial-fill-gas temperature.
+
+Additional environmental or condition descriptors MAY be represented when a
+model can consume them physically. Initial free-gas absolute pressure and
+temperature already belong to the initial gas-state contract. Relative humidity
+belongs to a future gas-composition/moisture model rather than an inert scalar
+field; age, lot, storage history, stabilizer condition, moisture/volatile
+content, and similar provenance data MUST NOT act as undocumented correction
+factors. Such metadata may identify or qualify calibrated parameter sets, and a
+future explicit degradation or moisture model may consume it, but the mere
+presence of metadata MUST NOT change numerical predictions by magic.
+
+### 11.4 Pressure-dependent burn-law direction
 
 The initial pressure-dependent linear burn law is expressed in normalized form:
 

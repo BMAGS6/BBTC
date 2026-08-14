@@ -143,6 +143,30 @@ add_test(
 )
 
 add_executable(
+    bbtc_test_ib_propellant_grain_geometry
+    test_ib_propellant_grain_geometry.c
+)
+
+target_link_libraries(
+    bbtc_test_ib_propellant_grain_geometry
+    PRIVATE
+        bbtc::bbtc
+)
+
+set_target_properties(
+    bbtc_test_ib_propellant_grain_geometry
+    PROPERTIES
+        C_EXTENSIONS OFF
+        C_STANDARD 23
+        C_STANDARD_REQUIRED ON
+)
+
+add_test(
+    NAME bbtc.ib_propellant_grain_geometry
+    COMMAND bbtc_test_ib_propellant_grain_geometry
+)
+
+add_executable(
     bbtc_test_ib_propellant_thermochemistry
     test_ib_propellant_thermochemistry.c
 )

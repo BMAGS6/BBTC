@@ -7,7 +7,7 @@ Cubes of Honor.
 
 ## Current status
 
-The rewrite is in **IB0.4a**. This checkpoint contains:
+The rewrite is in **IB0.4b**. This checkpoint contains:
 
 - a strict C23 CMake/Ninja library target;
 - the namespaced CMake alias `bbtc::bbtc`;
@@ -24,6 +24,14 @@ The rewrite is in **IB0.4a**. This checkpoint contains:
 - native precision-qualified projectile-mass records and validation;
 - native precision-qualified propellant-charge mass and condensed-phase-density
   records with validation;
+- native precision-qualified canonical propellant-grain geometry records for
+  spherical, solid finite-cylindrical/cord, rectangular-prismatic/flake, and
+  single-perforated finite-cylindrical/tube grains;
+- native precision-qualified propellant-grain regression-state records carrying
+  remaining solid volume, exposed burning area, remaining regression distance
+  to burnout, and consumed-volume fraction;
+- concrete grain-regression evaluators using explicit uniform normal regression,
+  exact-burnout semantics, and rejection of geometric overshoot;
 - native precision-qualified reduced propellant-thermochemistry records carrying
   gaseous-product mass fraction and effective specific reaction internal-energy
   release;
@@ -83,9 +91,11 @@ state from explicit initial pressure, temperature, free-gas volume, and gas
 model parameters. Given an explicitly supplied reacted propellant mass, IB0.4a
 can additionally partition that reacted mass into modeled gaseous and condensed
 products and report the associated effective reaction internal-energy release.
-It still does not determine how much propellant reacts, model grain regression
-or ignition, evolve a mixed chamber-gas state, integrate projectile motion, or
-produce a firing prediction.
+IB0.4b now also evaluates canonical individual-grain geometry as an explicitly
+supplied normal regression distance advances, exposing remaining solid volume,
+burning surface area, remaining regression distance to burnout, and consumed
+volume fraction. It still does not determine regression rate, reacted-mass rate,
+ignition, mixed chamber-gas evolution, projectile motion, or a firing prediction.
 
 The accepted reconstruction rules live in
 [`docs/design/BBTC_DESIGN_CONTRACT.md`](docs/design/BBTC_DESIGN_CONTRACT.md).

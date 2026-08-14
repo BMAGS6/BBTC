@@ -473,6 +473,57 @@ check_reduced_gas_thermodynamics_contract(void)
 }
 
 /**
+ * @brief Verifies canonical propellant-grain regression through the consumer.
+ *
+ * @details
+ * The binary-exact rectangular-prism case verifies public umbrella-header
+ * visibility, static-library linkage, geometry validation, common grain-state
+ * semantics, and the native-double evaluator without tolerance noise. Detailed
+ * geometry families and boundary behavior remain in the dedicated IB0.4b test.
+ *
+ * @return `EXIT_SUCCESS` when the public grain-regression API produces the
+ *         exact expected state; otherwise `EXIT_FAILURE`.
+ */
+static int
+check_propellant_grain_geometry_contract(void)
+{
+    const bbtc_ib_rectangular_prismatic_grain_geometry_double_t geometry =
+    {
+        .initial_length_m    = 4.0,
+        .initial_width_m     = 4.0,
+        .initial_thickness_m = 4.0
+    };
+
+    bbtc_ib_propellant_grain_state_double_t state = {0};
+
+    if (bbtc_ib_rectangular_prismatic_grain_geometry_validate_double(&geometry)
+        != BBTC_STATUS_SUCCESS)
+    {
+        return EXIT_FAILURE;
+    }
+
+    if (bbtc_ib_rectangular_prismatic_grain_evaluate_double(
+            &geometry,
+            1.0,
+            &state
+        ) != BBTC_STATUS_SUCCESS)
+    {
+        return EXIT_FAILURE;
+    }
+
+    if (state.remaining_volume_m3 != 8.0
+        || state.burning_surface_area_m2 != 24.0
+        || state.remaining_regression_to_burnout_m != 1.0
+        || state.consumed_volume_fraction != 0.875)
+    {
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+
+/**
  * @brief Verifies reduced propellant thermochemistry through the independent consumer.
  *
  * @details
@@ -531,6 +582,9 @@ check_propellant_thermochemistry_contract(void)
  */
 int main(void)
 {
+
+    if (check_propellant_grain_geometry_contract() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
 
     if (check_propellant_thermochemistry_contract() != EXIT_SUCCESS)
         return EXIT_FAILURE;

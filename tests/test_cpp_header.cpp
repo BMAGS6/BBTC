@@ -511,8 +511,109 @@ static_assert(
 );
 
 
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_propellant_grain_state_float_t{}
+                .remaining_volume_m3
+        ),
+        float
+    >::value,
+    "float propellant-grain state must use native float"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_propellant_grain_state_double_t{}
+                .burning_surface_area_m2
+        ),
+        double
+    >::value,
+    "double propellant-grain state must use native double"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_propellant_grain_state_long_double_t{}
+                .remaining_regression_to_burnout_m
+        ),
+        long double
+    >::value,
+    "long-double propellant-grain state must use native long double"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_spherical_grain_geometry_float_t{}
+                .initial_radius_m
+        ),
+        float
+    >::value,
+    "float spherical grain must use native float"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_solid_cylindrical_grain_geometry_double_t{}
+                .initial_length_m
+        ),
+        double
+    >::value,
+    "double solid cylindrical grain must use native double"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_rectangular_prismatic_grain_geometry_long_double_t{}
+                .initial_thickness_m
+        ),
+        long double
+    >::value,
+    "long-double rectangular grain must use native long double"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_single_perforated_cylindrical_grain_geometry_double_t{}
+                .initial_inner_radius_m
+        ),
+        double
+    >::value,
+    "double single-perforated grain must use native double"
+);
+
+
 int main()
 {
+
+
+    bbtc_ib_rectangular_prismatic_grain_geometry_double_t grain_geometry = {};
+    grain_geometry.initial_length_m = 4.0;
+    grain_geometry.initial_width_m = 4.0;
+    grain_geometry.initial_thickness_m = 4.0;
+
+    bbtc_ib_propellant_grain_state_double_t grain_state = {};
+
+    if (bbtc_ib_rectangular_prismatic_grain_geometry_validate_double(&grain_geometry)
+            != BBTC_STATUS_SUCCESS
+        || bbtc_ib_rectangular_prismatic_grain_evaluate_double(
+            &grain_geometry,
+            1.0,
+            &grain_state
+        ) != BBTC_STATUS_SUCCESS
+        || grain_state.remaining_volume_m3 != 8.0
+        || grain_state.burning_surface_area_m2 != 24.0
+        || grain_state.remaining_regression_to_burnout_m != 1.0
+        || grain_state.consumed_volume_fraction != 0.875)
+    {
+        return 1;
+    }
 
     bbtc_ib_propellant_thermochemistry_double_t thermochemistry = {};
     thermochemistry.gas_product_mass_fraction = 0.75;
