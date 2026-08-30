@@ -87,10 +87,12 @@ bbtc_ib_caloric_reference_long_double_t;
  * @brief Validates one native-`float` reduced-gas caloric reference.
  *
  * @details
- * A null pointer returns `BBTC_STATUS_INVALID_ARGUMENT`. A NaN or infinity in
+ * A null pointer returns `BBTC_STATUS_INVALID_ARGUMENT`. A NaN in either field
+ * returns `BBTC_STATUS_NAN_INPUT`. Otherwise, positive or negative infinity in
  * either field returns `BBTC_STATUS_NONFINITE_INPUT`. The reference temperature
  * must be strictly positive. The reference specific internal energy has no sign
- * restriction because it defines an arbitrary additive datum.
+ * restriction because it defines an arbitrary additive datum. When both fields
+ * are nonfinite, NaN takes precedence over infinity within this record.
  *
  * Validation does not require the datum temperature to lie inside any
  * particular gas-model calibration interval. Model-specific state evaluators

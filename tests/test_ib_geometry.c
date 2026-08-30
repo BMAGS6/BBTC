@@ -77,7 +77,7 @@ static_assert(
         );                                                          \
         REQUIRE_MUTATION_STATUS(                                    \
             type, validator, original, field, nan_value,            \
-            BBTC_STATUS_NONFINITE_INPUT                             \
+            BBTC_STATUS_NAN_INPUT                                   \
         );                                                          \
         REQUIRE_MUTATION_STATUS(                                    \
             type, validator, original, field, positive_infinity,    \
@@ -330,6 +330,36 @@ test_long_double_geometry(void)
     return EXIT_SUCCESS;
 }
 
+static int
+test_nonfinite_precedence(void)
+{
+    bbtc_ib_geometry_double_t candidate =
+    {
+        .initial_behind_projectile_volume_m3 = INFINITY,
+        .bore_cross_sectional_area_m2        = 1.0,
+        .projectile_effective_base_area_m2   = 1.0,
+        .projectile_travel_to_muzzle_m       = NAN
+    };
+
+    REQUIRE_STATUS(
+        "double early infinity plus late NaN",
+        bbtc_ib_geometry_validate_double(&candidate),
+        BBTC_STATUS_NAN_INPUT
+    );
+
+    candidate.initial_behind_projectile_volume_m3 = NAN;
+    candidate.projectile_travel_to_muzzle_m       = INFINITY;
+
+    REQUIRE_STATUS(
+        "double early NaN plus late infinity",
+        bbtc_ib_geometry_validate_double(&candidate),
+        BBTC_STATUS_NAN_INPUT
+    );
+
+    return EXIT_SUCCESS;
+}
+
+
 int
 main(void)
 {
@@ -339,5 +369,8 @@ main(void)
     if (test_double_geometry() != EXIT_SUCCESS)
         return EXIT_FAILURE;
 
-    return test_long_double_geometry();
+    if (test_long_double_geometry() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
+
+    return test_nonfinite_precedence();
 }

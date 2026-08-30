@@ -1,7 +1,7 @@
 #include "bbtc/precision.h"
 
-#include <float.h>
 #include <stddef.h>
+#include <float.h>
 
 const char*
 bbtc_precision_string(const bbtc_precision_e precision)

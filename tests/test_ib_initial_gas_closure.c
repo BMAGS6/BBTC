@@ -297,7 +297,13 @@ test_domains_flags_and_clearing(void)
 
     solution.density_kg_per_m3 = 123.0;
     solution.gas_mass_kg = 456.0;
-    if (bbtc_ib_first_order_virial_initial_gas_solve_double(&model, &flag_state, NAN, &solution) != BBTC_STATUS_NONFINITE_INPUT ||
+    if (bbtc_ib_first_order_virial_initial_gas_solve_double(&model, &flag_state, NAN, &solution) != BBTC_STATUS_NAN_INPUT ||
+        !solution_is_clear_double(&solution))
+        return 1;
+
+    solution.density_kg_per_m3 = 123.0;
+    solution.gas_mass_kg = 456.0;
+    if (bbtc_ib_first_order_virial_initial_gas_solve_double(&model, &flag_state, INFINITY, &solution) != BBTC_STATUS_NONFINITE_INPUT ||
         !solution_is_clear_double(&solution))
         return 1;
 

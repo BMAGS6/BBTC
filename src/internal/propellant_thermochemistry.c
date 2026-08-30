@@ -15,8 +15,14 @@ bbtc_ib_propellant_thermochemistry_validate_float(
     if (thermochemistry == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(thermochemistry->gas_product_mass_fraction) ||
-        !isfinite(thermochemistry->specific_reaction_internal_energy_release_j_per_kg))
+    if (isnan(thermochemistry->gas_product_mass_fraction) ||
+        isnan(thermochemistry->specific_reaction_internal_energy_release_j_per_kg))
+    {
+        return BBTC_STATUS_NAN_INPUT;
+    }
+
+    if (isinf(thermochemistry->gas_product_mass_fraction) ||
+        isinf(thermochemistry->specific_reaction_internal_energy_release_j_per_kg))
     {
         return BBTC_STATUS_NONFINITE_INPUT;
     }
@@ -40,8 +46,14 @@ bbtc_ib_propellant_thermochemistry_validate_double(
     if (thermochemistry == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(thermochemistry->gas_product_mass_fraction) ||
-        !isfinite(thermochemistry->specific_reaction_internal_energy_release_j_per_kg))
+    if (isnan(thermochemistry->gas_product_mass_fraction) ||
+        isnan(thermochemistry->specific_reaction_internal_energy_release_j_per_kg))
+    {
+        return BBTC_STATUS_NAN_INPUT;
+    }
+
+    if (isinf(thermochemistry->gas_product_mass_fraction) ||
+        isinf(thermochemistry->specific_reaction_internal_energy_release_j_per_kg))
     {
         return BBTC_STATUS_NONFINITE_INPUT;
     }
@@ -65,8 +77,14 @@ bbtc_ib_propellant_thermochemistry_validate_long_double(
     if (thermochemistry == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(thermochemistry->gas_product_mass_fraction) ||
-        !isfinite(thermochemistry->specific_reaction_internal_energy_release_j_per_kg))
+    if (isnan(thermochemistry->gas_product_mass_fraction) ||
+        isnan(thermochemistry->specific_reaction_internal_energy_release_j_per_kg))
+    {
+        return BBTC_STATUS_NAN_INPUT;
+    }
+
+    if (isinf(thermochemistry->gas_product_mass_fraction) ||
+        isinf(thermochemistry->specific_reaction_internal_energy_release_j_per_kg))
     {
         return BBTC_STATUS_NONFINITE_INPUT;
     }
@@ -104,7 +122,10 @@ bbtc_ib_propellant_thermochemical_source_evaluate_float(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(reacted_propellant_mass_kg))
+    if (isnan(reacted_propellant_mass_kg))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(reacted_propellant_mass_kg))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (reacted_propellant_mass_kg < 0.0f)
@@ -174,7 +195,10 @@ bbtc_ib_propellant_thermochemical_source_evaluate_double(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(reacted_propellant_mass_kg))
+    if (isnan(reacted_propellant_mass_kg))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(reacted_propellant_mass_kg))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (reacted_propellant_mass_kg < 0.0)
@@ -244,7 +268,10 @@ bbtc_ib_propellant_thermochemical_source_evaluate_long_double(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(reacted_propellant_mass_kg))
+    if (isnan(reacted_propellant_mass_kg))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(reacted_propellant_mass_kg))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (reacted_propellant_mass_kg < 0.0L)

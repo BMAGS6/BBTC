@@ -158,11 +158,13 @@ bbtc_ib_propellant_thermochemical_source_long_double_t;
 /**
  * @brief Validates one native-float reduced propellant-thermochemistry record.
  *
- * A null pointer returns `BBTC_STATUS_INVALID_ARGUMENT`. Nonfinite fields return
- * `BBTC_STATUS_NONFINITE_INPUT`. The gaseous-product mass fraction must satisfy
- * `0 < y_g <= 1`, and the specific reaction internal-energy release must be
- * strictly positive. Finite values outside those domains return
- * `BBTC_STATUS_OUTSIDE_DOMAIN`.
+ * A null pointer returns `BBTC_STATUS_INVALID_ARGUMENT`. A NaN in either field
+ * returns `BBTC_STATUS_NAN_INPUT`. Otherwise, positive or negative infinity
+ * returns `BBTC_STATUS_NONFINITE_INPUT`. The gaseous-product mass fraction must
+ * satisfy `0 < y_g <= 1`, and the specific reaction internal-energy release
+ * must be strictly positive. Finite values outside those domains return
+ * `BBTC_STATUS_OUTSIDE_DOMAIN`. When both fields are nonfinite, NaN takes
+ * precedence over infinity within this record.
  *
  * @param thermochemistry Caller-owned thermochemistry record to validate.
  *

@@ -79,11 +79,13 @@ bbtc_ib_propellant_charge_long_double_t;
 /**
  * @brief Validates one native-float propellant-charge record.
  *
- * A null pointer returns `BBTC_STATUS_INVALID_ARGUMENT`. A NaN or infinity in
+ * A null pointer returns `BBTC_STATUS_INVALID_ARGUMENT`. A NaN in either field
+ * returns `BBTC_STATUS_NAN_INPUT`. Otherwise, positive or negative infinity in
  * either field returns `BBTC_STATUS_NONFINITE_INPUT`. Both fields must otherwise
  * be greater than zero; zero or a negative value returns
- * `BBTC_STATUS_OUTSIDE_DOMAIN`. The function does not modify the caller-owned
- * record.
+ * `BBTC_STATUS_OUTSIDE_DOMAIN`. When multiple fields are nonfinite at once, NaN
+ * takes precedence over infinity within this record. The function does not
+ * modify the caller-owned record.
  *
  * @param charge Propellant-charge record to validate.
  *

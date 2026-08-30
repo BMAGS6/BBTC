@@ -108,7 +108,7 @@ test_float_propellant_charge(void)
 
     if (require_status("float charge mass NaN",
                        bbtc_ib_propellant_charge_validate_float(&candidate),
-                       BBTC_STATUS_NONFINITE_INPUT) != EXIT_SUCCESS)
+                       BBTC_STATUS_NAN_INPUT) != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;
     }
@@ -178,7 +178,7 @@ test_float_propellant_charge(void)
 
     if (require_status("float density NaN",
                        bbtc_ib_propellant_charge_validate_float(&candidate),
-                       BBTC_STATUS_NONFINITE_INPUT) != EXIT_SUCCESS)
+                       BBTC_STATUS_NAN_INPUT) != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;
     }
@@ -282,7 +282,7 @@ test_double_propellant_charge(void)
 
     if (require_status("double charge mass NaN",
                        bbtc_ib_propellant_charge_validate_double(&candidate),
-                       BBTC_STATUS_NONFINITE_INPUT) != EXIT_SUCCESS)
+                       BBTC_STATUS_NAN_INPUT) != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;
     }
@@ -359,7 +359,7 @@ test_double_propellant_charge(void)
 
     if (require_status("double density NaN",
                        bbtc_ib_propellant_charge_validate_double(&candidate),
-                       BBTC_STATUS_NONFINITE_INPUT) != EXIT_SUCCESS)
+                       BBTC_STATUS_NAN_INPUT) != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;
     }
@@ -467,7 +467,7 @@ test_long_double_propellant_charge(void)
 
     if (require_status("long double charge mass NaN",
                        bbtc_ib_propellant_charge_validate_long_double(&candidate),
-                       BBTC_STATUS_NONFINITE_INPUT) != EXIT_SUCCESS)
+                       BBTC_STATUS_NAN_INPUT) != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;
     }
@@ -544,7 +544,7 @@ test_long_double_propellant_charge(void)
 
     if (require_status("long double density NaN",
                        bbtc_ib_propellant_charge_validate_long_double(&candidate),
-                       BBTC_STATUS_NONFINITE_INPUT) != EXIT_SUCCESS)
+                       BBTC_STATUS_NAN_INPUT) != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;
     }
@@ -592,6 +592,35 @@ test_long_double_propellant_charge(void)
 }
 
 
+static int
+test_nonfinite_precedence(void)
+{
+    bbtc_ib_propellant_charge_double_t candidate =
+    {
+        .charge_mass_kg                    = INFINITY,
+        .condensed_phase_density_kg_per_m3 = NAN
+    };
+
+    if (require_status(
+            "double infinite charge mass plus NaN density",
+            bbtc_ib_propellant_charge_validate_double(&candidate),
+            BBTC_STATUS_NAN_INPUT
+        ) != EXIT_SUCCESS)
+    {
+        return EXIT_FAILURE;
+    }
+
+    candidate.charge_mass_kg                    = NAN;
+    candidate.condensed_phase_density_kg_per_m3 = INFINITY;
+
+    return require_status(
+        "double NaN charge mass plus infinite density",
+        bbtc_ib_propellant_charge_validate_double(&candidate),
+        BBTC_STATUS_NAN_INPUT
+    );
+}
+
+
 int main(void)
 {
     if (test_float_propellant_charge() != EXIT_SUCCESS)
@@ -600,5 +629,8 @@ int main(void)
     if (test_double_propellant_charge() != EXIT_SUCCESS)
         return EXIT_FAILURE;
 
-    return test_long_double_propellant_charge();
+    if (test_long_double_propellant_charge() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
+
+    return test_nonfinite_precedence();
 }

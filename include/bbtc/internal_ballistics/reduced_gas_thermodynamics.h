@@ -151,6 +151,12 @@ bbtc_ib_reduced_gas_thermodynamic_result_long_double_t;
  * strictly positive. The Noble-Abel mechanical domain requires
  * `1 - b * rho > 0`.
  *
+ * Within the direct density/temperature validation layer, a NaN in either
+ * scalar returns `BBTC_STATUS_NAN_INPUT`; otherwise positive or negative
+ * infinity in either scalar returns `BBTC_STATUS_NONFINITE_INPUT`. NaN takes
+ * precedence over infinity within this two-scalar layer. Earlier model and
+ * caloric-reference validation retains its established precedence.
+ *
  * The output is cleared before any validation that can fail. Arithmetic that
  * becomes nonfinite from otherwise finite inputs returns
  * `BBTC_STATUS_NUMERICAL_FAILURE`.
@@ -162,7 +168,7 @@ bbtc_ib_reduced_gas_thermodynamic_result_long_double_t;
  * @param result Output thermodynamic state and applicability metadata.
  *
  * @return `BBTC_STATUS_SUCCESS` on success; otherwise a documented argument,
- *         nonfinite-input, domain, or numerical-failure status.
+ *         NaN-input, nonfinite-input, domain, or numerical-failure status.
  */
 bbtc_status_e
 bbtc_ib_noble_abel_thermodynamics_evaluate_float(
@@ -237,6 +243,12 @@ bbtc_ib_noble_abel_thermodynamics_evaluate_long_double(
  * a mathematical failure. A mathematically admissible evaluation succeeds and
  * sets `BBTC_APPLICABILITY_OUTSIDE_CALIBRATION_DOMAIN`.
  *
+ * Within the direct density/temperature validation layer, a NaN in either
+ * scalar returns `BBTC_STATUS_NAN_INPUT`; otherwise positive or negative
+ * infinity in either scalar returns `BBTC_STATUS_NONFINITE_INPUT`. NaN takes
+ * precedence over infinity within this two-scalar layer. Earlier model and
+ * caloric-reference validation retains its established precedence.
+ *
  * The output is cleared before any validation that can fail. Arithmetic that
  * becomes nonfinite from otherwise finite inputs returns
  * `BBTC_STATUS_NUMERICAL_FAILURE`.
@@ -248,7 +260,7 @@ bbtc_ib_noble_abel_thermodynamics_evaluate_long_double(
  * @param result Output thermodynamic state and applicability metadata.
  *
  * @return `BBTC_STATUS_SUCCESS` on success; otherwise a documented argument,
- *         nonfinite-input, domain, or numerical-failure status.
+ *         NaN-input, nonfinite-input, domain, or numerical-failure status.
  */
 bbtc_status_e
 bbtc_ib_first_order_virial_thermodynamics_evaluate_float(

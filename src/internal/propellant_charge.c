@@ -5,8 +5,8 @@
 
 #include "bbtc/internal_ballistics/propellant_charge.h"
 
-#include <math.h>
 #include <stddef.h>
+#include <math.h>
 
 bbtc_status_e
 bbtc_ib_propellant_charge_validate_float(const bbtc_ib_propellant_charge_float_t* const charge)
@@ -14,8 +14,14 @@ bbtc_ib_propellant_charge_validate_float(const bbtc_ib_propellant_charge_float_t
     if (charge == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(charge->charge_mass_kg)                    ||
-        !isfinite(charge->condensed_phase_density_kg_per_m3))
+    if (isnan(charge->charge_mass_kg) ||
+        isnan(charge->condensed_phase_density_kg_per_m3))
+    {
+        return BBTC_STATUS_NAN_INPUT;
+    }
+
+    if (isinf(charge->charge_mass_kg) ||
+        isinf(charge->condensed_phase_density_kg_per_m3))
     {
         return BBTC_STATUS_NONFINITE_INPUT;
     }
@@ -36,8 +42,14 @@ bbtc_ib_propellant_charge_validate_double(const bbtc_ib_propellant_charge_double
     if (charge == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(charge->charge_mass_kg)                    ||
-        !isfinite(charge->condensed_phase_density_kg_per_m3))
+    if (isnan(charge->charge_mass_kg) ||
+        isnan(charge->condensed_phase_density_kg_per_m3))
+    {
+        return BBTC_STATUS_NAN_INPUT;
+    }
+
+    if (isinf(charge->charge_mass_kg) ||
+        isinf(charge->condensed_phase_density_kg_per_m3))
     {
         return BBTC_STATUS_NONFINITE_INPUT;
     }
@@ -58,8 +70,14 @@ bbtc_ib_propellant_charge_validate_long_double(const bbtc_ib_propellant_charge_l
     if (charge == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(charge->charge_mass_kg)                    ||
-        !isfinite(charge->condensed_phase_density_kg_per_m3))
+    if (isnan(charge->charge_mass_kg) ||
+        isnan(charge->condensed_phase_density_kg_per_m3))
+    {
+        return BBTC_STATUS_NAN_INPUT;
+    }
+
+    if (isinf(charge->charge_mass_kg) ||
+        isinf(charge->condensed_phase_density_kg_per_m3))
     {
         return BBTC_STATUS_NONFINITE_INPUT;
     }

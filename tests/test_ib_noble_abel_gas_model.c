@@ -185,7 +185,7 @@ test_float_gas_model(void)
 
     if (require_status("float gas constant NaN",
                        bbtc_ib_noble_abel_gas_model_validate_float(&candidate),
-                       BBTC_STATUS_NONFINITE_INPUT) != EXIT_SUCCESS)
+                       BBTC_STATUS_NAN_INPUT) != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;
     }
@@ -255,7 +255,7 @@ test_float_gas_model(void)
 
     if (require_status("float specific heat NaN",
                        bbtc_ib_noble_abel_gas_model_validate_float(&candidate),
-                       BBTC_STATUS_NONFINITE_INPUT) != EXIT_SUCCESS)
+                       BBTC_STATUS_NAN_INPUT) != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;
     }
@@ -325,7 +325,7 @@ test_float_gas_model(void)
 
     if (require_status("float covolume NaN",
                        bbtc_ib_noble_abel_gas_model_validate_float(&candidate),
-                       BBTC_STATUS_NONFINITE_INPUT) != EXIT_SUCCESS)
+                       BBTC_STATUS_NAN_INPUT) != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;
     }
@@ -438,7 +438,7 @@ test_double_gas_model(void)
 
     if (require_status("double gas constant NaN",
                        bbtc_ib_noble_abel_gas_model_validate_double(&candidate),
-                       BBTC_STATUS_NONFINITE_INPUT) != EXIT_SUCCESS)
+                       BBTC_STATUS_NAN_INPUT) != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;
     }
@@ -508,7 +508,7 @@ test_double_gas_model(void)
 
     if (require_status("double specific heat NaN",
                        bbtc_ib_noble_abel_gas_model_validate_double(&candidate),
-                       BBTC_STATUS_NONFINITE_INPUT) != EXIT_SUCCESS)
+                       BBTC_STATUS_NAN_INPUT) != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;
     }
@@ -578,7 +578,7 @@ test_double_gas_model(void)
 
     if (require_status("double covolume NaN",
                        bbtc_ib_noble_abel_gas_model_validate_double(&candidate),
-                       BBTC_STATUS_NONFINITE_INPUT) != EXIT_SUCCESS)
+                       BBTC_STATUS_NAN_INPUT) != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;
     }
@@ -691,7 +691,7 @@ test_long_double_gas_model(void)
 
     if (require_status("long double gas constant NaN",
                        bbtc_ib_noble_abel_gas_model_validate_long_double(&candidate),
-                       BBTC_STATUS_NONFINITE_INPUT) != EXIT_SUCCESS)
+                       BBTC_STATUS_NAN_INPUT) != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;
     }
@@ -761,7 +761,7 @@ test_long_double_gas_model(void)
 
     if (require_status("long double specific heat NaN",
                        bbtc_ib_noble_abel_gas_model_validate_long_double(&candidate),
-                       BBTC_STATUS_NONFINITE_INPUT) != EXIT_SUCCESS)
+                       BBTC_STATUS_NAN_INPUT) != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;
     }
@@ -831,7 +831,7 @@ test_long_double_gas_model(void)
 
     if (require_status("long double covolume NaN",
                        bbtc_ib_noble_abel_gas_model_validate_long_double(&candidate),
-                       BBTC_STATUS_NONFINITE_INPUT) != EXIT_SUCCESS)
+                       BBTC_STATUS_NAN_INPUT) != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;
     }
@@ -875,6 +875,36 @@ test_long_double_gas_model(void)
 }
 
 
+static int
+test_nonfinite_precedence(void)
+{
+    bbtc_ib_noble_abel_gas_model_double_t candidate =
+    {
+        .specific_gas_constant_j_per_kg_k         = INFINITY,
+        .constant_volume_specific_heat_j_per_kg_k = 718.0,
+        .covolume_m3_per_kg                       = NAN
+    };
+
+    if (require_status(
+            "double early infinity plus late NaN",
+            bbtc_ib_noble_abel_gas_model_validate_double(&candidate),
+            BBTC_STATUS_NAN_INPUT
+        ) != EXIT_SUCCESS)
+    {
+        return EXIT_FAILURE;
+    }
+
+    candidate.specific_gas_constant_j_per_kg_k = NAN;
+    candidate.covolume_m3_per_kg               = INFINITY;
+
+    return require_status(
+        "double early NaN plus late infinity",
+        bbtc_ib_noble_abel_gas_model_validate_double(&candidate),
+        BBTC_STATUS_NAN_INPUT
+    );
+}
+
+
 /**
  * @brief Runs the Noble-Abel gas-model validation tests.
  *
@@ -889,5 +919,8 @@ int main(void)
     if (test_double_gas_model() != EXIT_SUCCESS)
         return EXIT_FAILURE;
 
-    return test_long_double_gas_model();
+    if (test_long_double_gas_model() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
+
+    return test_nonfinite_precedence();
 }

@@ -1,3 +1,6 @@
+/**
+ * @file status.c
+ */
 #include "bbtc/status.h"
 
 const char*
@@ -34,6 +37,9 @@ bbtc_status_string(const bbtc_status_e status)
 
         case BBTC_STATUS_INTERNAL_INVARIANT_FAILURE:
             return "internal invariant failure";
+
+        case BBTC_STATUS_NAN_INPUT:
+            return "not-a-number input";
 
         default:
             return "unknown BBTC status";

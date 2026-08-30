@@ -14,8 +14,14 @@ bbtc_ib_caloric_reference_validate_float(const bbtc_ib_caloric_reference_float_t
     if (reference == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(reference->reference_temperature_k)                      ||
-        !isfinite(reference->reference_specific_internal_energy_j_per_kg))
+    if (isnan(reference->reference_temperature_k) ||
+        isnan(reference->reference_specific_internal_energy_j_per_kg))
+    {
+        return BBTC_STATUS_NAN_INPUT;
+    }
+
+    if (isinf(reference->reference_temperature_k) ||
+        isinf(reference->reference_specific_internal_energy_j_per_kg))
     {
         return BBTC_STATUS_NONFINITE_INPUT;
     }
@@ -33,8 +39,14 @@ bbtc_ib_caloric_reference_validate_double(const bbtc_ib_caloric_reference_double
     if (reference == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(reference->reference_temperature_k)                      ||
-        !isfinite(reference->reference_specific_internal_energy_j_per_kg))
+    if (isnan(reference->reference_temperature_k) ||
+        isnan(reference->reference_specific_internal_energy_j_per_kg))
+    {
+        return BBTC_STATUS_NAN_INPUT;
+    }
+
+    if (isinf(reference->reference_temperature_k) ||
+        isinf(reference->reference_specific_internal_energy_j_per_kg))
     {
         return BBTC_STATUS_NONFINITE_INPUT;
     }
@@ -54,8 +66,14 @@ bbtc_ib_caloric_reference_validate_long_double(
     if (reference == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(reference->reference_temperature_k)                      ||
-        !isfinite(reference->reference_specific_internal_energy_j_per_kg))
+    if (isnan(reference->reference_temperature_k) ||
+        isnan(reference->reference_specific_internal_energy_j_per_kg))
+    {
+        return BBTC_STATUS_NAN_INPUT;
+    }
+
+    if (isinf(reference->reference_temperature_k) ||
+        isinf(reference->reference_specific_internal_energy_j_per_kg))
     {
         return BBTC_STATUS_NONFINITE_INPUT;
     }

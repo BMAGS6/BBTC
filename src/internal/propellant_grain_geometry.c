@@ -105,7 +105,10 @@ bbtc_status_e bbtc_ib_spherical_grain_geometry_validate_float(
     if (geometry == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(geometry->initial_radius_m))
+    if (isnan(geometry->initial_radius_m))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(geometry->initial_radius_m))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (geometry->initial_radius_m <= 0.0f)
@@ -121,7 +124,10 @@ bbtc_status_e bbtc_ib_spherical_grain_geometry_validate_double(
     if (geometry == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(geometry->initial_radius_m))
+    if (isnan(geometry->initial_radius_m))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(geometry->initial_radius_m))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (geometry->initial_radius_m <= 0.0)
@@ -137,7 +143,10 @@ bbtc_status_e bbtc_ib_spherical_grain_geometry_validate_long_double(
     if (geometry == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(geometry->initial_radius_m))
+    if (isnan(geometry->initial_radius_m))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(geometry->initial_radius_m))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (geometry->initial_radius_m <= 0.0L)
@@ -153,14 +162,23 @@ bbtc_status_e bbtc_ib_solid_cylindrical_grain_geometry_validate_float(
     if (geometry == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(geometry->initial_radius_m) ||
-        !isfinite(geometry->initial_length_m))
+    if (isnan(geometry->initial_radius_m) ||
+        isnan(geometry->initial_length_m))
+    {
+        return BBTC_STATUS_NAN_INPUT;
+    }
+
+    if (isinf(geometry->initial_radius_m) ||
+        isinf(geometry->initial_length_m))
     {
         return BBTC_STATUS_NONFINITE_INPUT;
     }
 
-    if (geometry->initial_radius_m <= 0.0f || geometry->initial_length_m <= 0.0f)
+    if (geometry->initial_radius_m <= 0.0f ||
+        geometry->initial_length_m <= 0.0f)
+    {
         return BBTC_STATUS_OUTSIDE_DOMAIN;
+    }
 
     return BBTC_STATUS_SUCCESS;
 }
@@ -172,14 +190,23 @@ bbtc_status_e bbtc_ib_solid_cylindrical_grain_geometry_validate_double(
     if (geometry == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(geometry->initial_radius_m) ||
-        !isfinite(geometry->initial_length_m))
+    if (isnan(geometry->initial_radius_m) ||
+        isnan(geometry->initial_length_m))
+    {
+        return BBTC_STATUS_NAN_INPUT;
+    }
+
+    if (isinf(geometry->initial_radius_m) ||
+        isinf(geometry->initial_length_m))
     {
         return BBTC_STATUS_NONFINITE_INPUT;
     }
 
-    if (geometry->initial_radius_m <= 0.0 || geometry->initial_length_m <= 0.0)
+    if (geometry->initial_radius_m <= 0.0 ||
+        geometry->initial_length_m <= 0.0)
+    {
         return BBTC_STATUS_OUTSIDE_DOMAIN;
+    }
 
     return BBTC_STATUS_SUCCESS;
 }
@@ -191,14 +218,23 @@ bbtc_status_e bbtc_ib_solid_cylindrical_grain_geometry_validate_long_double(
     if (geometry == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(geometry->initial_radius_m) ||
-        !isfinite(geometry->initial_length_m))
+    if (isnan(geometry->initial_radius_m) ||
+        isnan(geometry->initial_length_m))
+    {
+        return BBTC_STATUS_NAN_INPUT;
+    }
+
+    if (isinf(geometry->initial_radius_m) ||
+        isinf(geometry->initial_length_m))
     {
         return BBTC_STATUS_NONFINITE_INPUT;
     }
 
-    if (geometry->initial_radius_m <= 0.0L || geometry->initial_length_m <= 0.0L)
+    if (geometry->initial_radius_m <= 0.0L ||
+        geometry->initial_length_m <= 0.0L)
+    {
         return BBTC_STATUS_OUTSIDE_DOMAIN;
+    }
 
     return BBTC_STATUS_SUCCESS;
 }
@@ -210,14 +246,22 @@ bbtc_status_e bbtc_ib_rectangular_prismatic_grain_geometry_validate_float(
     if (geometry == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(geometry->initial_length_m) ||
-        !isfinite(geometry->initial_width_m) ||
-        !isfinite(geometry->initial_thickness_m))
+    if (isnan(geometry->initial_length_m) ||
+        isnan(geometry->initial_width_m) ||
+        isnan(geometry->initial_thickness_m))
+    {
+        return BBTC_STATUS_NAN_INPUT;
+    }
+
+    if (isinf(geometry->initial_length_m) ||
+        isinf(geometry->initial_width_m) ||
+        isinf(geometry->initial_thickness_m))
     {
         return BBTC_STATUS_NONFINITE_INPUT;
     }
 
-    if (geometry->initial_length_m <= 0.0f || geometry->initial_width_m <= 0.0f ||
+    if (geometry->initial_length_m <= 0.0f ||
+        geometry->initial_width_m <= 0.0f ||
         geometry->initial_thickness_m <= 0.0f)
     {
         return BBTC_STATUS_OUTSIDE_DOMAIN;
@@ -233,14 +277,22 @@ bbtc_status_e bbtc_ib_rectangular_prismatic_grain_geometry_validate_double(
     if (geometry == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(geometry->initial_length_m) ||
-        !isfinite(geometry->initial_width_m) ||
-        !isfinite(geometry->initial_thickness_m))
+    if (isnan(geometry->initial_length_m) ||
+        isnan(geometry->initial_width_m) ||
+        isnan(geometry->initial_thickness_m))
+    {
+        return BBTC_STATUS_NAN_INPUT;
+    }
+
+    if (isinf(geometry->initial_length_m) ||
+        isinf(geometry->initial_width_m) ||
+        isinf(geometry->initial_thickness_m))
     {
         return BBTC_STATUS_NONFINITE_INPUT;
     }
 
-    if (geometry->initial_length_m <= 0.0 || geometry->initial_width_m <= 0.0 ||
+    if (geometry->initial_length_m <= 0.0 ||
+        geometry->initial_width_m <= 0.0 ||
         geometry->initial_thickness_m <= 0.0)
     {
         return BBTC_STATUS_OUTSIDE_DOMAIN;
@@ -256,14 +308,22 @@ bbtc_status_e bbtc_ib_rectangular_prismatic_grain_geometry_validate_long_double(
     if (geometry == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(geometry->initial_length_m) ||
-        !isfinite(geometry->initial_width_m) ||
-        !isfinite(geometry->initial_thickness_m))
+    if (isnan(geometry->initial_length_m) ||
+        isnan(geometry->initial_width_m) ||
+        isnan(geometry->initial_thickness_m))
+    {
+        return BBTC_STATUS_NAN_INPUT;
+    }
+
+    if (isinf(geometry->initial_length_m) ||
+        isinf(geometry->initial_width_m) ||
+        isinf(geometry->initial_thickness_m))
     {
         return BBTC_STATUS_NONFINITE_INPUT;
     }
 
-    if (geometry->initial_length_m <= 0.0L || geometry->initial_width_m <= 0.0L ||
+    if (geometry->initial_length_m <= 0.0L ||
+        geometry->initial_width_m <= 0.0L ||
         geometry->initial_thickness_m <= 0.0L)
     {
         return BBTC_STATUS_OUTSIDE_DOMAIN;
@@ -279,9 +339,16 @@ bbtc_status_e bbtc_ib_single_perforated_cylindrical_grain_geometry_validate_floa
     if (geometry == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(geometry->initial_outer_radius_m) ||
-        !isfinite(geometry->initial_inner_radius_m) ||
-        !isfinite(geometry->initial_length_m))
+    if (isnan(geometry->initial_outer_radius_m) ||
+        isnan(geometry->initial_inner_radius_m) ||
+        isnan(geometry->initial_length_m))
+    {
+        return BBTC_STATUS_NAN_INPUT;
+    }
+
+    if (isinf(geometry->initial_outer_radius_m) ||
+        isinf(geometry->initial_inner_radius_m) ||
+        isinf(geometry->initial_length_m))
     {
         return BBTC_STATUS_NONFINITE_INPUT;
     }
@@ -293,8 +360,11 @@ bbtc_status_e bbtc_ib_single_perforated_cylindrical_grain_geometry_validate_floa
         return BBTC_STATUS_OUTSIDE_DOMAIN;
     }
 
-    if (geometry->initial_outer_radius_m <= geometry->initial_inner_radius_m)
+    if (geometry->initial_outer_radius_m <=
+        geometry->initial_inner_radius_m)
+    {
         return BBTC_STATUS_INCONSISTENT_CONFIGURATION;
+    }
 
     return BBTC_STATUS_SUCCESS;
 }
@@ -306,9 +376,16 @@ bbtc_status_e bbtc_ib_single_perforated_cylindrical_grain_geometry_validate_doub
     if (geometry == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(geometry->initial_outer_radius_m) ||
-        !isfinite(geometry->initial_inner_radius_m) ||
-        !isfinite(geometry->initial_length_m))
+    if (isnan(geometry->initial_outer_radius_m) ||
+        isnan(geometry->initial_inner_radius_m) ||
+        isnan(geometry->initial_length_m))
+    {
+        return BBTC_STATUS_NAN_INPUT;
+    }
+
+    if (isinf(geometry->initial_outer_radius_m) ||
+        isinf(geometry->initial_inner_radius_m) ||
+        isinf(geometry->initial_length_m))
     {
         return BBTC_STATUS_NONFINITE_INPUT;
     }
@@ -320,8 +397,11 @@ bbtc_status_e bbtc_ib_single_perforated_cylindrical_grain_geometry_validate_doub
         return BBTC_STATUS_OUTSIDE_DOMAIN;
     }
 
-    if (geometry->initial_outer_radius_m <= geometry->initial_inner_radius_m)
+    if (geometry->initial_outer_radius_m <=
+        geometry->initial_inner_radius_m)
+    {
         return BBTC_STATUS_INCONSISTENT_CONFIGURATION;
+    }
 
     return BBTC_STATUS_SUCCESS;
 }
@@ -333,9 +413,16 @@ bbtc_status_e bbtc_ib_single_perforated_cylindrical_grain_geometry_validate_long
     if (geometry == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(geometry->initial_outer_radius_m) ||
-        !isfinite(geometry->initial_inner_radius_m) ||
-        !isfinite(geometry->initial_length_m))
+    if (isnan(geometry->initial_outer_radius_m) ||
+        isnan(geometry->initial_inner_radius_m) ||
+        isnan(geometry->initial_length_m))
+    {
+        return BBTC_STATUS_NAN_INPUT;
+    }
+
+    if (isinf(geometry->initial_outer_radius_m) ||
+        isinf(geometry->initial_inner_radius_m) ||
+        isinf(geometry->initial_length_m))
     {
         return BBTC_STATUS_NONFINITE_INPUT;
     }
@@ -347,8 +434,11 @@ bbtc_status_e bbtc_ib_single_perforated_cylindrical_grain_geometry_validate_long
         return BBTC_STATUS_OUTSIDE_DOMAIN;
     }
 
-    if (geometry->initial_outer_radius_m <= geometry->initial_inner_radius_m)
+    if (geometry->initial_outer_radius_m <=
+        geometry->initial_inner_radius_m)
+    {
         return BBTC_STATUS_INCONSISTENT_CONFIGURATION;
+    }
 
     return BBTC_STATUS_SUCCESS;
 }
@@ -377,7 +467,10 @@ bbtc_status_e bbtc_ib_spherical_grain_evaluate_float(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(regression_depth_m))
+    if (isnan(regression_depth_m))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(regression_depth_m))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (regression_depth_m < 0.0f || regression_depth_m > geometry->initial_radius_m)
@@ -439,7 +532,10 @@ bbtc_status_e bbtc_ib_spherical_grain_evaluate_double(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(regression_depth_m))
+    if (isnan(regression_depth_m))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(regression_depth_m))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (regression_depth_m < 0.0 || regression_depth_m > geometry->initial_radius_m)
@@ -501,7 +597,10 @@ bbtc_status_e bbtc_ib_spherical_grain_evaluate_long_double(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(regression_depth_m))
+    if (isnan(regression_depth_m))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(regression_depth_m))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (regression_depth_m < 0.0L || regression_depth_m > geometry->initial_radius_m)
@@ -567,7 +666,10 @@ bbtc_status_e bbtc_ib_solid_cylindrical_grain_evaluate_float(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(regression_depth_m))
+    if (isnan(regression_depth_m))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(regression_depth_m))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (regression_depth_m < 0.0f)
@@ -646,7 +748,10 @@ bbtc_status_e bbtc_ib_solid_cylindrical_grain_evaluate_double(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(regression_depth_m))
+    if (isnan(regression_depth_m))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(regression_depth_m))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (regression_depth_m < 0.0)
@@ -724,7 +829,10 @@ bbtc_status_e bbtc_ib_solid_cylindrical_grain_evaluate_long_double(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(regression_depth_m))
+    if (isnan(regression_depth_m))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(regression_depth_m))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (regression_depth_m < 0.0L)
@@ -807,7 +915,10 @@ bbtc_status_e bbtc_ib_rectangular_prismatic_grain_evaluate_float(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(regression_depth_m))
+    if (isnan(regression_depth_m))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(regression_depth_m))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (regression_depth_m < 0.0f)
@@ -898,7 +1009,10 @@ bbtc_status_e bbtc_ib_rectangular_prismatic_grain_evaluate_double(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(regression_depth_m))
+    if (isnan(regression_depth_m))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(regression_depth_m))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (regression_depth_m < 0.0)
@@ -989,7 +1103,10 @@ bbtc_status_e bbtc_ib_rectangular_prismatic_grain_evaluate_long_double(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(regression_depth_m))
+    if (isnan(regression_depth_m))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(regression_depth_m))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (regression_depth_m < 0.0L)
@@ -1083,7 +1200,10 @@ bbtc_status_e bbtc_ib_single_perforated_cylindrical_grain_evaluate_float(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(regression_depth_m))
+    if (isnan(regression_depth_m))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(regression_depth_m))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (regression_depth_m < 0.0f)
@@ -1190,7 +1310,10 @@ bbtc_status_e bbtc_ib_single_perforated_cylindrical_grain_evaluate_double(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(regression_depth_m))
+    if (isnan(regression_depth_m))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(regression_depth_m))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (regression_depth_m < 0.0)
@@ -1293,7 +1416,10 @@ bbtc_status_e bbtc_ib_single_perforated_cylindrical_grain_evaluate_long_double(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(regression_depth_m))
+    if (isnan(regression_depth_m))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(regression_depth_m))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (regression_depth_m < 0.0L)

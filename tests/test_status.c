@@ -26,6 +26,7 @@ static_assert(BBTC_STATUS_INSUFFICIENT_STORAGE == 6);
 static_assert(BBTC_STATUS_NUMERICAL_FAILURE == 7);
 static_assert(BBTC_STATUS_ITERATION_LIMIT == 8);
 static_assert(BBTC_STATUS_INTERNAL_INVARIANT_FAILURE == 9);
+static_assert(BBTC_STATUS_NAN_INPUT == 10);
 
 static_assert(
     _Generic(
@@ -98,7 +99,8 @@ main(void)
         {
             BBTC_STATUS_INTERNAL_INVARIANT_FAILURE,
             "internal invariant failure"
-        }
+        },
+        {BBTC_STATUS_NAN_INPUT, "not-a-number input"}
     };
 
     for (size_t i = 0; i < ARRAY_COUNT(known_cases); ++i)
@@ -116,7 +118,7 @@ main(void)
 
     if (
         check_status_string(
-            (bbtc_status_e)10,
+            (bbtc_status_e)11,
             "unknown BBTC status"
         ) != EXIT_SUCCESS
     )

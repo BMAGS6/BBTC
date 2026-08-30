@@ -1,14 +1,14 @@
 # BBTC Reconstruction Design Contract
 
-**Contract version:** 0.1.15
+**Contract version:** 0.1.16
 
-**Project phase:** IB0.4b
+**Project phase:** IB0.4c
 
-**Applies to:** `rewrite/ib0_4b_propellant_grain_regression_geometry_contract_v1`
+**Applies to:** `rewrite/ib0_4c_initial_propellant_condition_contract_v1`
 
 **Status:** Accepted
 
-**Date:** 2026-08-13
+**Date:** 2026-08-18
 
 ## 1. Purpose
 
@@ -441,7 +441,8 @@ categories MUST distinguish at least:
 
 - success;
 - null or invalid argument;
-- non-finite input;
+- NaN input;
+- positive or negative infinity input;
 - value outside the mathematical domain;
 - inconsistent geometry or configuration;
 - unsupported model or option;
@@ -453,10 +454,11 @@ categories MUST distinguish at least:
 Status value zero is success. A nonzero status MUST never mean "success with a
 physical warning."
 
-IB0.3a fixes the underlying representation of `bbtc_status_e` as `uint8_t`
-and retains the following stable values and nonlocalized strings. This
-pre-release revision replaces the earlier IB0.2b `uint32_t` choice without
-renumbering any value:
+IB0.3a fixes the underlying representation of `bbtc_status_e` as `uint8_t`.
+Values 0 through 9 retain their established meanings and numeric assignments.
+IB0.4c appends `BBTC_STATUS_NAN_INPUT` as value 10 without renumbering,
+aliasing, or reusing any earlier value. The current stable values and
+nonlocalized strings are:
 
 | Value | Enumerator                                |
 | ----: | ----------------------------------------- |
@@ -470,6 +472,7 @@ renumbering any value:
 |     7 | `BBTC_STATUS_NUMERICAL_FAILURE`           |
 |     8 | `BBTC_STATUS_ITERATION_LIMIT`             |
 |     9 | `BBTC_STATUS_INTERNAL_INVARIANT_FAILURE`  |
+|    10 | `BBTC_STATUS_NAN_INPUT`                   |
 
 | Value | Status string                              |
 | ----: | ------------------------------------------ |
@@ -483,6 +486,19 @@ renumbering any value:
 |     7 | `"numerical failure"`                      |
 |     8 | `"iteration or step limit reached"`        |
 |     9 | `"internal invariant failure"`             |
+|    10 | `"not-a-number input"`                     |
+
+For caller-supplied floating-point values, NaN is classified as
+`BBTC_STATUS_NAN_INPUT`, while positive or negative infinity is classified as
+`BBTC_STATUS_NONFINITE_INPUT`. Within one validation layer, NaN classification
+takes precedence over infinity when both are present. This rule does not reorder
+validation layers: required pointer or structural checks and any earlier
+component or enclosing-layer validation retain their established precedence.
+
+A nonfinite value produced by BBTC arithmetic from otherwise accepted finite
+inputs is not a NaN-input classification. It returns
+`BBTC_STATUS_NUMERICAL_FAILURE` or another already documented internal failure
+status appropriate to that operation.
 
 Existing values MUST NOT be renumbered, aliased, or reused for another meaning.
 `bbtc_status_string()` MUST return `"unknown BBTC status"` for every
@@ -706,7 +722,9 @@ A zero-initialized geometry record is deliberately invalid. BBTC provides no
 physical default geometry. Each validator returns:
 
 - `BBTC_STATUS_INVALID_ARGUMENT` for a null record pointer;
-- `BBTC_STATUS_NONFINITE_INPUT` when any field is NaN or infinite;
+- `BBTC_STATUS_NAN_INPUT` when any field is NaN;
+- `BBTC_STATUS_NONFINITE_INPUT` when no field is NaN and at least one field is
+  positive or negative infinity;
 - `BBTC_STATUS_OUTSIDE_DOMAIN` when any finite field is zero or negative; and
 - `BBTC_STATUS_SUCCESS` when all four fields are finite and positive.
 
@@ -751,7 +769,9 @@ A zero-initialized projectile record is deliberately invalid. BBTC provides no
 physical default projectile. Each validator returns:
 
 - `BBTC_STATUS_INVALID_ARGUMENT` for a null record pointer;
-- `BBTC_STATUS_NONFINITE_INPUT` when `mass_kg` is NaN or infinite;
+- `BBTC_STATUS_NAN_INPUT` when `mass_kg` is NaN;
+- `BBTC_STATUS_NONFINITE_INPUT` when `mass_kg` is positive or negative
+  infinity;
 - `BBTC_STATUS_OUTSIDE_DOMAIN` when finite `mass_kg` is zero or negative; and
 - `BBTC_STATUS_SUCCESS` when `mass_kg` is finite and positive.
 
@@ -809,7 +829,9 @@ provides no physical default charge mass or condensed-phase density. Each
 validator returns:
 
 - `BBTC_STATUS_INVALID_ARGUMENT` for a null record pointer;
-- `BBTC_STATUS_NONFINITE_INPUT` when either field is NaN or infinite;
+- `BBTC_STATUS_NAN_INPUT` when either field is NaN;
+- `BBTC_STATUS_NONFINITE_INPUT` when neither field is NaN and at least one field
+  is positive or negative infinity;
 - `BBTC_STATUS_OUTSIDE_DOMAIN` when either finite field is zero or negative; and
 - `BBTC_STATUS_SUCCESS` when both fields are finite and positive.
 
@@ -894,7 +916,9 @@ temperature as explicit caller-supplied initial boundary conditions.
 Each concrete validator returns:
 
 - `BBTC_STATUS_INVALID_ARGUMENT` for a null record pointer;
-- `BBTC_STATUS_NONFINITE_INPUT` when either field is NaN or infinite;
+- `BBTC_STATUS_NAN_INPUT` when either field is NaN;
+- `BBTC_STATUS_NONFINITE_INPUT` when neither field is NaN and at least one field
+  is positive or negative infinity;
 - `BBTC_STATUS_OUTSIDE_DOMAIN` when either finite field is zero or negative; and
 - `BBTC_STATUS_SUCCESS` when both fields are finite and positive.
 
@@ -993,7 +1017,9 @@ cross-record evaluator yet.
 Each concrete validator returns:
 
 - `BBTC_STATUS_INVALID_ARGUMENT` for a null record pointer;
-- `BBTC_STATUS_NONFINITE_INPUT` when any field is NaN or infinite;
+- `BBTC_STATUS_NAN_INPUT` when any field is NaN;
+- `BBTC_STATUS_NONFINITE_INPUT` when no field is NaN and at least one field is
+  positive or negative infinity;
 - `BBTC_STATUS_OUTSIDE_DOMAIN` when `R` or `c_v` is zero or negative, or when
   `b` is negative; and
 - `BBTC_STATUS_SUCCESS` otherwise, including the explicit `b == 0` ideal-gas
@@ -1098,6 +1124,13 @@ The temperature-law validator requires:
 
 Coefficient signs are unrestricted.
 
+Within temperature-law validation, a null law or coefficient pointer is an
+invalid argument. Across the complete law record and its borrowed coefficient
+array, any NaN bound or coefficient returns `BBTC_STATUS_NAN_INPUT`; otherwise
+any positive or negative infinity returns `BBTC_STATUS_NONFINITE_INPUT`. Thus a
+NaN encountered later in the coefficient array takes precedence over an
+infinity elsewhere in that same law-validation layer.
+
 #### 10.7.2 Analytic derivatives
 
 The temperature-law evaluator returns:
@@ -1146,10 +1179,12 @@ d^2B/dT^2 = d^2B/dx^2 * (dx/dT)^2
 
 Evaluation performs no allocation and no conversion through another scalar
 family. The output is cleared before any failure that can be reported after a
-nonnull output pointer is received. A nonfinite temperature returns
+nonnull output pointer is received. A NaN evaluation temperature returns
+`BBTC_STATUS_NAN_INPUT`; positive or negative infinity returns
 `BBTC_STATUS_NONFINITE_INPUT`; a finite temperature outside the closed interval
-returns `BBTC_STATUS_OUTSIDE_DOMAIN`; and nonfinite recurrence or derivative
-output returns `BBTC_STATUS_NUMERICAL_FAILURE`.
+returns `BBTC_STATUS_OUTSIDE_DOMAIN`; and a nonfinite recurrence or derivative
+result produced from accepted finite inputs returns
+`BBTC_STATUS_NUMERICAL_FAILURE`.
 
 #### 10.7.3 Caloric compatibility boundary
 
@@ -1268,7 +1303,12 @@ Each result contains:
 The output record is cleared before any failure that occurs after a nonnull
 output pointer is accepted. `rho == 0` is a valid mathematical boundary state;
 negative density and nonpositive absolute temperature are outside the domain.
-Finite-input arithmetic that cannot produce finite outputs returns
+Within the direct density/temperature validation layer, a NaN in either scalar
+returns `BBTC_STATUS_NAN_INPUT`; otherwise positive or negative infinity in
+either scalar returns `BBTC_STATUS_NONFINITE_INPUT`. NaN therefore takes
+precedence over infinity within that two-scalar layer. Earlier model and caloric
+reference validation retains its established precedence. Finite-input
+arithmetic that cannot produce finite outputs returns
 `BBTC_STATUS_NUMERICAL_FAILURE`.
 
 The Noble-Abel evaluator uses:
@@ -1505,9 +1545,11 @@ boundaries are inside the calibration interval and MUST NOT set that flag.
 
 A nonnull solution record MUST be cleared before any subsequent validation or
 numerical operation that can fail. Null output pointers return
-`BBTC_STATUS_INVALID_ARGUMENT`. Nonfinite scalar inputs return the existing
-nonfinite-input status through the appropriate validation layer. A zero or
-negative initial free-gas volume is outside the closure domain.
+`BBTC_STATUS_INVALID_ARGUMENT`. Model and initial-gas-state validation retain
+their established precedence. At the direct initial-free-gas-volume layer, NaN
+returns `BBTC_STATUS_NAN_INPUT`, while positive or negative infinity returns
+`BBTC_STATUS_NONFINITE_INPUT`. A zero or negative finite initial free-gas volume
+is outside the closure domain.
 
 The closure layer MUST NOT:
 
@@ -1578,6 +1620,11 @@ The model validator MUST require finite values satisfying:
 q_r > 0
 ```
 
+Within thermochemistry-record validation, any NaN field returns
+`BBTC_STATUS_NAN_INPUT`; otherwise any positive or negative infinity returns
+`BBTC_STATUS_NONFINITE_INPUT`. NaN takes precedence over infinity within that
+record.
+
 `q_r` is the positive effective decrease in modeled chemical internal energy
 made available to a later internal-ballistics energy balance per kilogram of
 reacted propellant. It MUST NOT be interpreted automatically as a standard
@@ -1618,10 +1665,12 @@ These equations partition only the explicitly supplied reacted propellant mass.
 They MUST NOT be interpreted as including unreacted propellant, initial trapped
 gas, projectile mass, case mass, or any other material population.
 
-The reacted propellant mass MUST be finite and nonnegative. Exactly zero reacted
-mass is a valid identity state and MUST return `BBTC_STATUS_SUCCESS` with an
-all-zero source record. Negative finite reacted mass is outside the source
-domain.
+Reacted-propellant-mass validation occurs after thermochemistry-record
+validation. A NaN reacted mass returns `BBTC_STATUS_NAN_INPUT`; positive or
+negative infinity returns `BBTC_STATUS_NONFINITE_INPUT`; and a negative finite
+reacted mass is outside the source domain. Exactly zero reacted mass is a valid
+identity state and MUST return `BBTC_STATUS_SUCCESS` with an all-zero source
+record.
 
 For positive reacted mass:
 
@@ -1642,8 +1691,8 @@ known to be nonnull:
 
 1. clear the output record;
 2. validate the thermochemistry record;
-3. validate reacted-mass finiteness;
-4. validate the reacted-mass domain;
+3. classify reacted-mass NaN or infinity;
+4. validate the finite reacted-mass domain;
 5. handle the zero-reacted-mass identity;
 6. evaluate the three extensive source terms;
 7. validate representability and source invariants; and
@@ -1799,9 +1848,11 @@ The implementation MUST NOT clamp geometric overshoot to burnout.
 Once a nonnull output pointer has been established, the evaluator MUST clear the
 result before model or regression validation so later failure leaves a
 deterministic zero record. Geometry validation precedes regression-scalar
-validation. Nonfinite geometry or regression inputs use the established
-nonfinite-input status; finite nonpositive required initial dimensions and
-negative/overshooting regression use the appropriate finite-domain status.
+validation. Geometry NaN or infinity is classified by the geometry validator.
+At the later regression-scalar layer, NaN returns `BBTC_STATUS_NAN_INPUT` and
+positive or negative infinity returns `BBTC_STATUS_NONFINITE_INPUT`. Finite
+nonpositive required initial dimensions and negative or overshooting regression
+use the appropriate finite-domain status.
 
 A mathematically required positive derived geometry quantity that cannot remain
 positive and finite in the selected scalar family is a numerical failure. In
@@ -1838,23 +1889,59 @@ IB0.4b MUST NOT:
 - make an ammunition/firearm safety judgment.
 
 
-### 11.3 Initial propellant condition and provenance direction
+### 11.3 Initial propellant condition
 
-Initial propellant condition is distinct from the initial trapped/free-gas
-state. A subsequent checkpoint SHOULD introduce explicit initial propellant
-temperature as a first-class SI quantity before temperature-sensitive burn
-kinetics are frozen. The solver MUST NOT silently assume that propellant
-temperature equals ambient-air, chamber, case, or initial-fill-gas temperature.
+IB0.4c defines one explicit initial condensed-propellant condition record per
+native scalar family:
 
-Additional environmental or condition descriptors MAY be represented when a
+```c
+bbtc_ib_initial_propellant_condition_float_t
+bbtc_ib_initial_propellant_condition_double_t
+bbtc_ib_initial_propellant_condition_long_double_t
+```
+
+Each record contains exactly one continuous quantity: `temperature_k`, the
+initial absolute temperature of the condensed propellant charge in kelvins.
+It is not implicitly ambient-air, cartridge-case, chamber, initial free-gas,
+or combustion-product temperature. A caller MAY supply equal numeric values
+when its modeled setup establishes thermal equilibrium, but BBTC MUST NOT
+silently alias or copy one population's temperature into another.
+
+The word "condition" is deliberate. This record establishes an initial thermal
+boundary supplied to later propellant models; it does not promise that
+propellant temperature remains constant during firing and does not define a
+thermal state-evolution equation. Future temperature-sensitive kinetics MAY
+consume the initial value directly, or a future thermal model MAY evolve from
+it. IB0.4c promises neither behavior.
+
+A zero-initialized record is deliberately invalid. Each validator returns:
+
+- `BBTC_STATUS_INVALID_ARGUMENT` for a null record pointer;
+- `BBTC_STATUS_NAN_INPUT` when `temperature_k` is NaN;
+- `BBTC_STATUS_NONFINITE_INPUT` for positive or negative infinity;
+- `BBTC_STATUS_OUTSIDE_DOMAIN` when finite `temperature_k <= 0`; and
+- `BBTC_STATUS_SUCCESS` for every finite `temperature_k > 0`.
+
+The validator imposes no arbitrary 200--400 K band and no universal finite
+upper-temperature cap. Positive finite values near the scalar family's lower
+representable range are structurally valid. Validation establishes only a
+well-formed absolute Kelvin boundary; it does not establish material survival,
+chemical stability, cook-off margin, ignition behavior, burn-rate
+applicability, calibration validity, ammunition compatibility, firearm
+strength, or firing safety.
+
+The record remains separate from propellant charge. Charge records own initial
+mass and condensed-phase density; this condition record owns the initial
+condensed-propellant thermal boundary. It adds no applicability flags,
+provenance fields, hidden corrections, age, lot, storage history, stabilizer
+condition, moisture/volatile content, burn coefficients, or state evolution.
+
+Additional environmental or provenance descriptors MAY be represented when a
 model can consume them physically. Initial free-gas absolute pressure and
-temperature already belong to the initial gas-state contract. Relative humidity
-belongs to a future gas-composition/moisture model rather than an inert scalar
-field; age, lot, storage history, stabilizer condition, moisture/volatile
-content, and similar provenance data MUST NOT act as undocumented correction
-factors. Such metadata may identify or qualify calibrated parameter sets, and a
-future explicit degradation or moisture model may consume it, but the mere
-presence of metadata MUST NOT change numerical predictions by magic.
+temperature remain owned by the initial gas-state contract. Relative humidity
+belongs to a future gas-composition/moisture model; age, lot, storage history,
+stabilizer condition, moisture/volatile content, and similar provenance data
+MUST NOT act as undocumented correction factors.
 
 ### 11.4 Pressure-dependent burn-law direction
 
@@ -2232,7 +2319,7 @@ The following decisions define the first public physical input component:
 3. **Geometry boundary.** The four fields and their exact physical meanings are
    fixed by section 10.1. The two effective areas remain distinct and need not
    be equal.
-4. **Validation.** Null, nonfinite, and finite out-of-domain inputs return the
+4. **Validation.** Null, NaN, infinity, and finite out-of-domain inputs return the
    statuses specified in section 10.1. Validation does not modify its input.
 5. **No runtime union foundation.** A tagged union may exist later as an
    adapter, but it is not the concrete solver ABI and does not replace static
@@ -2259,7 +2346,7 @@ The following decisions define the first public projectile component:
    10.2. Geometry-owned area and travel fields are not duplicated.
 4. **Initial state separation.** Initial projectile velocity is deferred to a
    future initial-state or composed-problem record.
-5. **Validation.** Null, nonfinite, and finite out-of-domain inputs return the
+5. **Validation.** Null, NaN, infinity, and finite out-of-domain inputs return the
    statuses specified in section 10.2. Validation does not modify its input.
 6. **No runtime union foundation.** A tagged union may exist later as an
    adapter, but it does not replace static precision identity or concrete
@@ -2289,7 +2376,7 @@ The following decisions define the first public propellant-charge component:
    as a redundant public input.
 5. **Composition boundary.** Cross-record free-gas-volume validation remains
    deferred until a composed problem record exists.
-6. **Validation.** Null, nonfinite, and finite out-of-domain inputs return the
+6. **Validation.** Null, NaN, infinity, and finite out-of-domain inputs return the
    statuses specified in section 10.3. Validation does not modify its input.
 7. **No runtime union foundation.** A tagged union may exist later as an
    adapter, but it does not replace static precision identity or concrete
@@ -2349,7 +2436,7 @@ The following decisions define the primitive initial gas-state boundary:
 5. **No unsupported derivation.** Pressure and temperature are not derived from
    each other until gas quantity or density, composition, volume, and an
    equation-of-state model establish a sufficient relationship.
-6. **Validation.** Null, nonfinite, and finite out-of-domain inputs return the
+6. **Validation.** Null, NaN, infinity, and finite out-of-domain inputs return the
    statuses specified in section 10.5. Validation does not modify its input.
 7. **No runtime union foundation.** Concrete native scalar families remain the
    public computational boundary.
@@ -2381,7 +2468,7 @@ The following decisions define the first explicit gas constitutive model:
    ideal-gas limit. Negative covolume is outside the model domain.
 6. **Initial-mass boundary.** The closed-form initial gas-mass relation is
    documented, but its cross-record evaluator remains deferred.
-7. **Validation.** Null, nonfinite, and finite out-of-domain inputs return the
+7. **Validation.** Null, NaN, infinity, and finite out-of-domain inputs return the
    statuses specified in section 10.6. Validation does not modify its input.
 8. **Model identity boundary.** The record supplies constant constitutive
    parameters for one effective pseudo-gas but does not identify chemistry,
@@ -2482,8 +2569,9 @@ composition checkpoints.
 IB0.2b is complete when:
 
 - the public headers compile as ISO C23 and as C++11 or newer;
-- `bbtc_status_e` has `uint8_t` representation and the exact values in
-  section 9.1;
+- `bbtc_status_e` preserves the original values 0 through 9 documented in
+  section 9.1 with the current `uint8_t` representation; later append-only
+  pre-1.0 status extensions do not renumber those values;
 - `bbtc_status_string()` returns the exact documented string for every known
   status and the documented fallback for representative unknown values;
 - status lookup requires no allocation and uses no mutable global state;
@@ -2536,7 +2624,7 @@ IB0.3b is complete when:
   10.1 using native `float`, `double`, and `long double` members;
 - the public umbrella-header chain exposes geometry to C23 and C++11-or-newer
   consumers;
-- each concrete validator reports null, nonfinite, and finite out-of-domain
+- each concrete validator reports null, NaN, infinity, and finite out-of-domain
   inputs with the required status and accepts finite positive values;
 - unequal effective bore and projectile-base areas remain valid;
 - validation leaves the caller-owned record unchanged and allocates no memory;
@@ -2556,7 +2644,7 @@ IB0.3c is complete when:
   with the physical meaning defined in section 10.2;
 - the public umbrella-header chain exposes projectile declarations to C23 and
   C++11-or-newer consumers;
-- each concrete validator reports null, nonfinite, and finite out-of-domain
+- each concrete validator reports null, NaN, infinity, and finite out-of-domain
   inputs with the required status and accepts finite positive mass;
 - validation leaves the caller-owned record unchanged and allocates no memory;
 - tests cover every scalar family, including NaN, both infinities, zero,
@@ -2575,7 +2663,7 @@ IB0.3d is complete when:
   section 10.3;
 - the public umbrella-header chain exposes propellant-charge declarations to
   C23 and C++11-or-newer consumers;
-- each concrete validator reports null, nonfinite, and finite out-of-domain
+- each concrete validator reports null, NaN, infinity, and finite out-of-domain
   inputs with the required status and accepts finite positive values;
 - validation leaves the caller-owned record unchanged and allocates no memory;
 - tests cover both fields in every scalar family, including NaN, both
@@ -2622,7 +2710,7 @@ IB0.3f is complete when:
   section 10.5;
 - the public umbrella-header chain exposes initial gas-state declarations to C23
   and C++11-or-newer consumers;
-- each concrete validator reports null, nonfinite, and finite out-of-domain
+- each concrete validator reports null, NaN, infinity, and finite out-of-domain
   inputs with the required status and accepts finite positive values;
 - validation leaves the caller-owned record unchanged and allocates no memory;
 - tests cover both fields in every scalar family, including NaN, both
@@ -2647,7 +2735,7 @@ IB0.3g is complete when:
   with the meanings in section 10.6;
 - the public umbrella-header chain exposes the explicitly named Noble-Abel
   backend declarations to C23 and C++11-or-newer consumers;
-- each concrete validator reports null, nonfinite, and finite out-of-domain
+- each concrete validator reports null, NaN, infinity, and finite out-of-domain
   inputs with the required status;
 - finite positive `R` and `c_v` are required, zero covolume is accepted as the
   explicit ideal-gas limit, and negative covolume is rejected;
@@ -2678,7 +2766,8 @@ IB0.3h is complete when:
   applicability semantics;
 - the Chebyshev coefficient convention and temperature normalization are
   unambiguous and include no hidden half-weight rule;
-- validators reject null pointers, nonfinite data, empty coefficient arrays,
+- validators reject null pointers, NaN and infinite data, empty coefficient
+  arrays,
   nonpositive temperature minima, unordered temperature intervals, nonpositive
   gas constants or dilute-gas heat capacities, negative minimum densities, and
   unordered density intervals;
@@ -2697,3 +2786,27 @@ IB0.3h is complete when:
   and independent-consumer gates pass; and
 - no pressure evolution, state inversion, chemistry, combustion, solver,
   trajectory, physical firing result, or safety judgment is introduced.
+
+## 43. Acceptance criteria for IB0.4c
+
+IB0.4c is complete when:
+
+- `BBTC_STATUS_NAN_INPUT` is appended as value 10 without renumbering values
+  0 through 9, and caller NaN/infinity classification follows section 9.1;
+- derived nonfinite arithmetic from accepted finite inputs remains a numerical
+  or internal failure rather than caller-input NaN;
+- native `float`, `double`, and `long double`
+  `bbtc_ib_initial_propellant_condition_*_t` records are public through the
+  umbrella-header chain and contain exactly one native `temperature_k` field;
+- validators report null, NaN, infinity, and finite nonpositive temperature
+  with the required statuses while accepting every finite positive Kelvin
+  value;
+- tests cover 293.15 K, another finite positive value, the positive
+  representable floor, signed zeros, a negative finite value, NaN, both
+  infinities, null pointers, immutability, type/layout probes, C++ use, and an
+  independent CMake consumer;
+- no exact `sizeof(record) == sizeof(scalar)` ABI promise is introduced;
+- propellant condition remains separate from charge, initial free gas,
+  provenance, burn kinetics, thermal evolution, chemistry, and safety; and
+- strict GCC, strict Clang, AddressSanitizer, UndefinedBehaviorSanitizer, C++,
+  independent-consumer, and full CTest gates pass.

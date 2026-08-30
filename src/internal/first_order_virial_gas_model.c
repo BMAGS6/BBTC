@@ -59,31 +59,48 @@ bbtc_ib_first_order_virial_temperature_law_validate_float(
     const bbtc_ib_first_order_virial_temperature_law_float_t* const law
 )
 {
+    int has_infinity;
+
     if (law == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
     if (law->second_density_virial_chebyshev_coefficients_m3_per_kg == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(law->minimum_temperature_k) ||
-        !isfinite(law->maximum_temperature_k))
+    if (isnan(law->minimum_temperature_k) ||
+        isnan(law->maximum_temperature_k))
     {
-        return BBTC_STATUS_NONFINITE_INPUT;
+        return BBTC_STATUS_NAN_INPUT;
     }
+
+    has_infinity =
+        isinf(law->minimum_temperature_k) ||
+        isinf(law->maximum_temperature_k);
+
+    for (size_t coefficient_index = 0u;
+         coefficient_index < law->coefficient_count;
+         ++coefficient_index)
+    {
+        const float coefficient =
+            law->second_density_virial_chebyshev_coefficients_m3_per_kg[
+                coefficient_index
+            ];
+
+        if (isnan(coefficient))
+            return BBTC_STATUS_NAN_INPUT;
+
+        if (isinf(coefficient))
+            has_infinity = 1;
+    }
+
+    if (has_infinity)
+        return BBTC_STATUS_NONFINITE_INPUT;
 
     if (law->minimum_temperature_k <= 0.0f                       ||
         law->maximum_temperature_k <= law->minimum_temperature_k ||
         law->coefficient_count     == 0u)
     {
         return BBTC_STATUS_OUTSIDE_DOMAIN;
-    }
-
-    for (size_t coefficient_index = 0u;
-         coefficient_index < law->coefficient_count;
-         ++coefficient_index)
-    {
-        if (!isfinite(law->second_density_virial_chebyshev_coefficients_m3_per_kg[ coefficient_index ]))
-            return BBTC_STATUS_NONFINITE_INPUT;
     }
 
     return BBTC_STATUS_SUCCESS;
@@ -127,7 +144,10 @@ bbtc_ib_first_order_virial_temperature_law_evaluate_float(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(temperature_k))
+    if (isnan(temperature_k))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(temperature_k))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (temperature_k < law->minimum_temperature_k ||
@@ -245,10 +265,18 @@ bbtc_ib_first_order_virial_gas_model_validate_float(
     if (model == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(model->specific_gas_constant_j_per_kg_k)                   ||
-        !isfinite(model->ideal_gas_constant_volume_specific_heat_j_per_kg_k) ||
-        !isfinite(model->minimum_calibrated_density_kg_per_m3)               ||
-        !isfinite(model->maximum_calibrated_density_kg_per_m3))
+    if (isnan(model->specific_gas_constant_j_per_kg_k)                   ||
+        isnan(model->ideal_gas_constant_volume_specific_heat_j_per_kg_k) ||
+        isnan(model->minimum_calibrated_density_kg_per_m3)               ||
+        isnan(model->maximum_calibrated_density_kg_per_m3))
+    {
+        return BBTC_STATUS_NAN_INPUT;
+    }
+
+    if (isinf(model->specific_gas_constant_j_per_kg_k)                   ||
+        isinf(model->ideal_gas_constant_volume_specific_heat_j_per_kg_k) ||
+        isinf(model->minimum_calibrated_density_kg_per_m3)               ||
+        isinf(model->maximum_calibrated_density_kg_per_m3))
     {
         return BBTC_STATUS_NONFINITE_INPUT;
     }
@@ -276,33 +304,48 @@ bbtc_ib_first_order_virial_temperature_law_validate_double(
     const bbtc_ib_first_order_virial_temperature_law_double_t* const law
 )
 {
+    int has_infinity;
+
     if (law == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
     if (law->second_density_virial_chebyshev_coefficients_m3_per_kg == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(law->minimum_temperature_k) ||
-        !isfinite(law->maximum_temperature_k))
+    if (isnan(law->minimum_temperature_k) ||
+        isnan(law->maximum_temperature_k))
     {
-        return BBTC_STATUS_NONFINITE_INPUT;
+        return BBTC_STATUS_NAN_INPUT;
     }
 
-    if (law->minimum_temperature_k <= 0.0                        ||
-        law->maximum_temperature_k <= law->minimum_temperature_k ||
-        law->coefficient_count     == 0u)
-    {
-        return BBTC_STATUS_OUTSIDE_DOMAIN;
-    }
+    has_infinity =
+        isinf(law->minimum_temperature_k) ||
+        isinf(law->maximum_temperature_k);
 
     for (size_t coefficient_index = 0u;
          coefficient_index < law->coefficient_count;
          ++coefficient_index)
     {
-        if (!isfinite(law->second_density_virial_chebyshev_coefficients_m3_per_kg[ coefficient_index ]))
-        {
-            return BBTC_STATUS_NONFINITE_INPUT;
-        }
+        const double coefficient =
+            law->second_density_virial_chebyshev_coefficients_m3_per_kg[
+                coefficient_index
+            ];
+
+        if (isnan(coefficient))
+            return BBTC_STATUS_NAN_INPUT;
+
+        if (isinf(coefficient))
+            has_infinity = 1;
+    }
+
+    if (has_infinity)
+        return BBTC_STATUS_NONFINITE_INPUT;
+
+    if (law->minimum_temperature_k <= 0.0                       ||
+        law->maximum_temperature_k <= law->minimum_temperature_k ||
+        law->coefficient_count     == 0u)
+    {
+        return BBTC_STATUS_OUTSIDE_DOMAIN;
     }
 
     return BBTC_STATUS_SUCCESS;
@@ -346,7 +389,10 @@ bbtc_ib_first_order_virial_temperature_law_evaluate_double(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(temperature_k))
+    if (isnan(temperature_k))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(temperature_k))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (temperature_k < law->minimum_temperature_k ||
@@ -466,10 +512,18 @@ bbtc_ib_first_order_virial_gas_model_validate_double(
     if (model == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(model->specific_gas_constant_j_per_kg_k)                   ||
-        !isfinite(model->ideal_gas_constant_volume_specific_heat_j_per_kg_k) ||
-        !isfinite(model->minimum_calibrated_density_kg_per_m3)               ||
-        !isfinite(model->maximum_calibrated_density_kg_per_m3))
+    if (isnan(model->specific_gas_constant_j_per_kg_k)                   ||
+        isnan(model->ideal_gas_constant_volume_specific_heat_j_per_kg_k) ||
+        isnan(model->minimum_calibrated_density_kg_per_m3)               ||
+        isnan(model->maximum_calibrated_density_kg_per_m3))
+    {
+        return BBTC_STATUS_NAN_INPUT;
+    }
+
+    if (isinf(model->specific_gas_constant_j_per_kg_k)                   ||
+        isinf(model->ideal_gas_constant_volume_specific_heat_j_per_kg_k) ||
+        isinf(model->minimum_calibrated_density_kg_per_m3)               ||
+        isinf(model->maximum_calibrated_density_kg_per_m3))
     {
         return BBTC_STATUS_NONFINITE_INPUT;
     }
@@ -497,33 +551,48 @@ bbtc_ib_first_order_virial_temperature_law_validate_long_double(
     const bbtc_ib_first_order_virial_temperature_law_long_double_t* const law
 )
 {
+    int has_infinity;
+
     if (law == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
     if (law->second_density_virial_chebyshev_coefficients_m3_per_kg == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(law->minimum_temperature_k) ||
-        !isfinite(law->maximum_temperature_k))
+    if (isnan(law->minimum_temperature_k) ||
+        isnan(law->maximum_temperature_k))
     {
-        return BBTC_STATUS_NONFINITE_INPUT;
+        return BBTC_STATUS_NAN_INPUT;
     }
+
+    has_infinity =
+        isinf(law->minimum_temperature_k) ||
+        isinf(law->maximum_temperature_k);
+
+    for (size_t coefficient_index = 0u;
+         coefficient_index < law->coefficient_count;
+         ++coefficient_index)
+    {
+        const long double coefficient =
+            law->second_density_virial_chebyshev_coefficients_m3_per_kg[
+                coefficient_index
+            ];
+
+        if (isnan(coefficient))
+            return BBTC_STATUS_NAN_INPUT;
+
+        if (isinf(coefficient))
+            has_infinity = 1;
+    }
+
+    if (has_infinity)
+        return BBTC_STATUS_NONFINITE_INPUT;
 
     if (law->minimum_temperature_k <= 0.0L                       ||
         law->maximum_temperature_k <= law->minimum_temperature_k ||
         law->coefficient_count     == 0u)
     {
         return BBTC_STATUS_OUTSIDE_DOMAIN;
-    }
-
-    for (size_t coefficient_index = 0u;
-         coefficient_index < law->coefficient_count;
-         ++coefficient_index)
-    {
-        if (!isfinite(law->second_density_virial_chebyshev_coefficients_m3_per_kg[ coefficient_index ]))
-        {
-            return BBTC_STATUS_NONFINITE_INPUT;
-        }
     }
 
     return BBTC_STATUS_SUCCESS;
@@ -567,7 +636,10 @@ bbtc_ib_first_order_virial_temperature_law_evaluate_long_double(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(temperature_k))
+    if (isnan(temperature_k))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(temperature_k))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (temperature_k < law->minimum_temperature_k ||
@@ -687,10 +759,18 @@ bbtc_ib_first_order_virial_gas_model_validate_long_double(
     if (model == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(model->specific_gas_constant_j_per_kg_k)                   ||
-        !isfinite(model->ideal_gas_constant_volume_specific_heat_j_per_kg_k) ||
-        !isfinite(model->minimum_calibrated_density_kg_per_m3)               ||
-        !isfinite(model->maximum_calibrated_density_kg_per_m3))
+    if (isnan(model->specific_gas_constant_j_per_kg_k)                   ||
+        isnan(model->ideal_gas_constant_volume_specific_heat_j_per_kg_k) ||
+        isnan(model->minimum_calibrated_density_kg_per_m3)               ||
+        isnan(model->maximum_calibrated_density_kg_per_m3))
+    {
+        return BBTC_STATUS_NAN_INPUT;
+    }
+
+    if (isinf(model->specific_gas_constant_j_per_kg_k)                   ||
+        isinf(model->ideal_gas_constant_volume_specific_heat_j_per_kg_k) ||
+        isinf(model->minimum_calibrated_density_kg_per_m3)               ||
+        isinf(model->maximum_calibrated_density_kg_per_m3))
     {
         return BBTC_STATUS_NONFINITE_INPUT;
     }

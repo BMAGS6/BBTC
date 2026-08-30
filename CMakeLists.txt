@@ -35,6 +35,7 @@ add_library(
     include/bbtc/internal_ballistics/geometry.h
     include/bbtc/internal_ballistics/initial_gas_state.h
     include/bbtc/internal_ballistics/initial_gas_closure.h
+    include/bbtc/internal_ballistics/initial_propellant_condition.h
     include/bbtc/internal_ballistics/loading_state.h
     include/bbtc/internal_ballistics/projectile.h
     include/bbtc/internal_ballistics/propellant_charge.h
@@ -50,6 +51,7 @@ add_library(
     src/internal/geometry.c
     src/internal/initial_gas_state.c
     src/internal/initial_gas_closure.c
+    src/internal/initial_propellant_condition.c
     src/internal/loading_state.c
     src/internal/projectile.c
     src/internal/propellant_charge.c

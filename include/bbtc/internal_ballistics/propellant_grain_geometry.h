@@ -276,13 +276,14 @@ bbtc_ib_propellant_grain_state_long_double_t;
 /**
  * @brief Validates a spherical native-float grain geometry.
  *
- * The initial radius must be finite and strictly positive.
+ * The initial radius must be strictly positive.
  *
  * @param geometry Caller-owned spherical grain geometry to validate.
  *
  * @return `BBTC_STATUS_SUCCESS` when valid;
  *         `BBTC_STATUS_INVALID_ARGUMENT` for a null pointer;
- *         `BBTC_STATUS_NONFINITE_INPUT` for a nonfinite radius; or
+ *         `BBTC_STATUS_NAN_INPUT` for a NaN radius;
+ *         `BBTC_STATUS_NONFINITE_INPUT` for positive or negative infinity; or
  *         `BBTC_STATUS_OUTSIDE_DOMAIN` for a finite nonpositive radius.
  */
 bbtc_status_e
@@ -322,13 +323,15 @@ bbtc_ib_spherical_grain_geometry_validate_long_double(
 /**
  * @brief Validates a solid finite cylindrical native-float grain geometry.
  *
- * The initial radius and length must both be finite and strictly positive.
+ * The initial radius and length must both be strictly positive. NaN takes
+ * precedence over infinity when multiple dimensions are nonfinite.
  *
  * @param geometry Caller-owned solid cylindrical grain geometry to validate.
  *
  * @return `BBTC_STATUS_SUCCESS` when valid;
  *         `BBTC_STATUS_INVALID_ARGUMENT` for a null pointer;
- *         `BBTC_STATUS_NONFINITE_INPUT` for any nonfinite dimension; or
+ *         `BBTC_STATUS_NAN_INPUT` for a NaN dimension;
+ *         `BBTC_STATUS_NONFINITE_INPUT` for an infinite dimension; or
  *         `BBTC_STATUS_OUTSIDE_DOMAIN` for any finite nonpositive dimension.
  */
 bbtc_status_e
@@ -368,14 +371,15 @@ bbtc_ib_solid_cylindrical_grain_geometry_validate_long_double(
 /**
  * @brief Validates a rectangular-prismatic native-float grain geometry.
  *
- * Initial length, width, and thickness must each be finite and strictly
- * positive.
+ * Initial length, width, and thickness must each be strictly positive. NaN
+ * takes precedence over infinity when multiple dimensions are nonfinite.
  *
  * @param geometry Caller-owned rectangular-prismatic geometry to validate.
  *
  * @return `BBTC_STATUS_SUCCESS` when valid;
  *         `BBTC_STATUS_INVALID_ARGUMENT` for a null pointer;
- *         `BBTC_STATUS_NONFINITE_INPUT` for any nonfinite dimension; or
+ *         `BBTC_STATUS_NAN_INPUT` for a NaN dimension;
+ *         `BBTC_STATUS_NONFINITE_INPUT` for an infinite dimension; or
  *         `BBTC_STATUS_OUTSIDE_DOMAIN` for any finite nonpositive dimension.
  */
 bbtc_status_e
@@ -414,15 +418,17 @@ bbtc_ib_rectangular_prismatic_grain_geometry_validate_long_double(
 /**
  * @brief Validates a single-perforated cylindrical native-float grain geometry.
  *
- * Initial outer radius, perforation radius, and length must each be finite and
- * strictly positive. The outer radius must also be strictly greater than the
- * perforation radius.
+ * Initial outer radius, perforation radius, and length must each be strictly
+ * positive. The outer radius must also be strictly greater than the perforation
+ * radius. NaN takes precedence over infinity when multiple dimensions are
+ * nonfinite.
  *
  * @param geometry Caller-owned single-perforated geometry to validate.
  *
  * @return `BBTC_STATUS_SUCCESS` when valid;
  *         `BBTC_STATUS_INVALID_ARGUMENT` for a null pointer;
- *         `BBTC_STATUS_NONFINITE_INPUT` for any nonfinite dimension;
+ *         `BBTC_STATUS_NAN_INPUT` for a NaN dimension;
+ *         `BBTC_STATUS_NONFINITE_INPUT` for an infinite dimension;
  *         `BBTC_STATUS_OUTSIDE_DOMAIN` for any finite nonpositive dimension; or
  *         `BBTC_STATUS_INCONSISTENT_CONFIGURATION` when the outer radius is not
  *         strictly greater than the perforation radius.

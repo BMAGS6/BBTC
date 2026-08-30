@@ -123,6 +123,15 @@ test_temperature_law_validation(void)
         return EXIT_FAILURE;
     }
 
+    law.minimum_temperature_k = NAN;
+
+    if (bbtc_ib_first_order_virial_temperature_law_validate_double(&law)
+        != BBTC_STATUS_INVALID_ARGUMENT)
+    {
+        return EXIT_FAILURE;
+    }
+
+    law.minimum_temperature_k = 300.0;
     law.second_density_virial_chebyshev_coefficients_m3_per_kg =
         valid_coefficients;
     law.coefficient_count = 0U;
@@ -153,24 +162,63 @@ test_temperature_law_validation(void)
     law.minimum_temperature_k = NAN;
 
     if (bbtc_ib_first_order_virial_temperature_law_validate_double(&law)
-        != BBTC_STATUS_NONFINITE_INPUT)
+        != BBTC_STATUS_NAN_INPUT)
     {
         return EXIT_FAILURE;
     }
 
     {
-        const double nonfinite_coefficients[] =
+        const double infinite_coefficients[] =
         {
             1.0e-3,
             INFINITY
         };
 
         law.minimum_temperature_k = 300.0;
+        law.maximum_temperature_k = 500.0;
         law.second_density_virial_chebyshev_coefficients_m3_per_kg =
-            nonfinite_coefficients;
+            infinite_coefficients;
 
         if (bbtc_ib_first_order_virial_temperature_law_validate_double(&law)
             != BBTC_STATUS_NONFINITE_INPUT)
+        {
+            return EXIT_FAILURE;
+        }
+    }
+
+    {
+        const double infinity_then_nan_coefficients[] =
+        {
+            INFINITY,
+            NAN
+        };
+
+        law.minimum_temperature_k = 300.0;
+        law.maximum_temperature_k = 500.0;
+        law.second_density_virial_chebyshev_coefficients_m3_per_kg =
+            infinity_then_nan_coefficients;
+
+        if (bbtc_ib_first_order_virial_temperature_law_validate_double(&law)
+            != BBTC_STATUS_NAN_INPUT)
+        {
+            return EXIT_FAILURE;
+        }
+    }
+
+    {
+        const double nan_coefficients[] =
+        {
+            1.0e-3,
+            NAN
+        };
+
+        law.minimum_temperature_k = INFINITY;
+        law.maximum_temperature_k = 500.0;
+        law.second_density_virial_chebyshev_coefficients_m3_per_kg =
+            nan_coefficients;
+
+        if (bbtc_ib_first_order_virial_temperature_law_validate_double(&law)
+            != BBTC_STATUS_NAN_INPUT)
         {
             return EXIT_FAILURE;
         }
@@ -550,6 +598,22 @@ test_evaluator_failures(void)
             &law,
             NAN,
             &terms
+        ) != BBTC_STATUS_NAN_INPUT)
+    {
+        return EXIT_FAILURE;
+    }
+
+    if (terms.second_density_virial_coefficient_m3_per_kg != 0.0)
+    {
+        return EXIT_FAILURE;
+    }
+
+    terms.second_density_virial_coefficient_m3_per_kg = 1.0;
+
+    if (bbtc_ib_first_order_virial_temperature_law_evaluate_double(
+            &law,
+            INFINITY,
+            &terms
         ) != BBTC_STATUS_NONFINITE_INPUT)
     {
         return EXIT_FAILURE;
@@ -723,6 +787,14 @@ test_gas_model_validation(void)
         return EXIT_FAILURE;
     }
 
+    double_model.ideal_gas_constant_volume_specific_heat_j_per_kg_k = NAN;
+
+    if (bbtc_ib_first_order_virial_gas_model_validate_double(&double_model)
+        != BBTC_STATUS_NAN_INPUT)
+    {
+        return EXIT_FAILURE;
+    }
+
     double_model.ideal_gas_constant_volume_specific_heat_j_per_kg_k = 900.0;
     double_model.minimum_calibrated_density_kg_per_m3 = -1.0;
 
@@ -741,6 +813,37 @@ test_gas_model_validation(void)
     }
 
     double_model.minimum_calibrated_density_kg_per_m3 = 0.0;
+
+    {
+        const double nested_nan_coefficients[] = {NAN};
+
+        double_model.second_density_virial_coefficient_law
+            .second_density_virial_chebyshev_coefficients_m3_per_kg =
+                nested_nan_coefficients;
+
+        if (bbtc_ib_first_order_virial_gas_model_validate_double(&double_model)
+            != BBTC_STATUS_NAN_INPUT)
+        {
+            return EXIT_FAILURE;
+        }
+
+        double_model.ideal_gas_constant_volume_specific_heat_j_per_kg_k =
+            INFINITY;
+
+        if (bbtc_ib_first_order_virial_gas_model_validate_double(&double_model)
+            != BBTC_STATUS_NONFINITE_INPUT)
+        {
+            return EXIT_FAILURE;
+        }
+
+        double_model.ideal_gas_constant_volume_specific_heat_j_per_kg_k =
+            900.0;
+    }
+
+    double_model.second_density_virial_coefficient_law
+        .second_density_virial_chebyshev_coefficients_m3_per_kg =
+            double_coefficients;
+
     double_model.second_density_virial_coefficient_law
         .second_density_virial_chebyshev_coefficients_m3_per_kg = NULL;
 

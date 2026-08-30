@@ -14,7 +14,10 @@ bbtc_ib_projectile_validate_float(const bbtc_ib_projectile_float_t* const projec
     if (projectile == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(projectile->mass_kg))
+    if (isnan(projectile->mass_kg))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(projectile->mass_kg))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (projectile->mass_kg <= 0.0f)
@@ -30,7 +33,10 @@ bbtc_ib_projectile_validate_double(const bbtc_ib_projectile_double_t* const proj
     if (projectile == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(projectile->mass_kg))
+    if (isnan(projectile->mass_kg))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(projectile->mass_kg))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (projectile->mass_kg <= 0.0)
@@ -46,7 +52,10 @@ bbtc_ib_projectile_validate_long_double(const bbtc_ib_projectile_long_double_t* 
     if (projectile == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(projectile->mass_kg))
+    if (isnan(projectile->mass_kg))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(projectile->mass_kg))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (projectile->mass_kg <= 0.0L)

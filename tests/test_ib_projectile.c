@@ -88,7 +88,7 @@ test_float_projectile(void)
     candidate.mass_kg = NAN;
     if (require_status("float NaN",
                        bbtc_ib_projectile_validate_float(&candidate),
-                       BBTC_STATUS_NONFINITE_INPUT) != EXIT_SUCCESS)
+                       BBTC_STATUS_NAN_INPUT) != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;
     }
@@ -172,7 +172,7 @@ test_double_projectile(void)
     candidate.mass_kg = NAN;
     if (require_status("double NaN",
                        bbtc_ib_projectile_validate_double(&candidate),
-                       BBTC_STATUS_NONFINITE_INPUT) != EXIT_SUCCESS)
+                       BBTC_STATUS_NAN_INPUT) != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;
     }
@@ -256,7 +256,7 @@ test_long_double_projectile(void)
     candidate.mass_kg = NAN;
     if (require_status("long double NaN",
                        bbtc_ib_projectile_validate_long_double(&candidate),
-                       BBTC_STATUS_NONFINITE_INPUT) != EXIT_SUCCESS)
+                       BBTC_STATUS_NAN_INPUT) != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;
     }

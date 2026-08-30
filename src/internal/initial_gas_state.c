@@ -5,8 +5,8 @@
 
 #include "bbtc/internal_ballistics/initial_gas_state.h"
 
-#include <math.h>
 #include <stddef.h>
+#include <math.h>
 
 bbtc_status_e
 bbtc_ib_initial_gas_state_validate_float(const bbtc_ib_initial_gas_state_float_t* const state)
@@ -14,8 +14,14 @@ bbtc_ib_initial_gas_state_validate_float(const bbtc_ib_initial_gas_state_float_t
     if (state == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(state->absolute_pressure_pa) ||
-        !isfinite(state->temperature_k))
+    if (isnan(state->absolute_pressure_pa) ||
+        isnan(state->temperature_k))
+    {
+        return BBTC_STATUS_NAN_INPUT;
+    }
+
+    if (isinf(state->absolute_pressure_pa) ||
+        isinf(state->temperature_k))
     {
         return BBTC_STATUS_NONFINITE_INPUT;
     }
@@ -36,8 +42,14 @@ bbtc_ib_initial_gas_state_validate_double(const bbtc_ib_initial_gas_state_double
     if (state == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(state->absolute_pressure_pa) ||
-        !isfinite(state->temperature_k))
+    if (isnan(state->absolute_pressure_pa) ||
+        isnan(state->temperature_k))
+    {
+        return BBTC_STATUS_NAN_INPUT;
+    }
+
+    if (isinf(state->absolute_pressure_pa) ||
+        isinf(state->temperature_k))
     {
         return BBTC_STATUS_NONFINITE_INPUT;
     }
@@ -58,8 +70,14 @@ bbtc_ib_initial_gas_state_validate_long_double(const bbtc_ib_initial_gas_state_l
     if (state == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(state->absolute_pressure_pa) ||
-        !isfinite(state->temperature_k))
+    if (isnan(state->absolute_pressure_pa) ||
+        isnan(state->temperature_k))
+    {
+        return BBTC_STATUS_NAN_INPUT;
+    }
+
+    if (isinf(state->absolute_pressure_pa) ||
+        isinf(state->temperature_k))
     {
         return BBTC_STATUS_NONFINITE_INPUT;
     }

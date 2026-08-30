@@ -241,6 +241,31 @@ static_assert(
 
 static_assert(
     std::is_same<
+        decltype(bbtc_ib_initial_propellant_condition_float_t{}.temperature_k),
+        float
+    >::value,
+    "float initial propellant condition must use native float temperature"
+);
+static_assert(
+    std::is_same<
+        decltype(bbtc_ib_initial_propellant_condition_double_t{}.temperature_k),
+        double
+    >::value,
+    "double initial propellant condition must use native double temperature"
+);
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_initial_propellant_condition_long_double_t{}.temperature_k
+        ),
+        long double
+    >::value,
+    "long-double initial propellant condition must use native long-double temperature"
+);
+
+
+static_assert(
+    std::is_same<
         decltype(
             bbtc_ib_noble_abel_gas_model_float_t{}
                 .specific_gas_constant_j_per_kg_k
@@ -719,6 +744,17 @@ int main()
 
     if (bbtc_ib_initial_gas_state_validate_double(&initial_gas_state)
         != BBTC_STATUS_SUCCESS)
+    {
+        return 1;
+    }
+
+
+    bbtc_ib_initial_propellant_condition_double_t propellant_condition = {};
+    propellant_condition.temperature_k = 293.15;
+
+    if (bbtc_ib_initial_propellant_condition_validate_double(
+            &propellant_condition
+        ) != BBTC_STATUS_SUCCESS)
     {
         return 1;
     }

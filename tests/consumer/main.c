@@ -182,6 +182,25 @@ check_initial_gas_state_contract(void)
 
 
 /**
+ * @brief Verifies the initial propellant-condition API through an independent
+ *        CMake consumer.
+ */
+static int
+check_initial_propellant_condition_contract(void)
+{
+    const bbtc_ib_initial_propellant_condition_double_t condition =
+    {
+        .temperature_k = 293.15
+    };
+
+    return bbtc_ib_initial_propellant_condition_validate_double(&condition)
+            == BBTC_STATUS_SUCCESS
+        ? EXIT_SUCCESS
+        : EXIT_FAILURE;
+}
+
+
+/**
  * @brief Verifies Noble-Abel gas-model validation through the consumer.
  *
  * @return `EXIT_SUCCESS` when the gas-model contract works; otherwise
@@ -613,6 +632,9 @@ int main(void)
         return EXIT_FAILURE;
 
     if (check_initial_gas_state_contract() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
+
+    if (check_initial_propellant_condition_contract() != EXIT_SUCCESS)
         return EXIT_FAILURE;
 
     if (check_noble_abel_gas_model_contract() != EXIT_SUCCESS)

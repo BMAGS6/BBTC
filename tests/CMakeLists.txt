@@ -239,6 +239,30 @@ add_test(
 )
 
 add_executable(
+    bbtc_test_ib_initial_propellant_condition
+    test_ib_initial_propellant_condition.c
+)
+
+target_link_libraries(
+    bbtc_test_ib_initial_propellant_condition
+    PRIVATE
+        bbtc::bbtc
+)
+
+set_target_properties(
+    bbtc_test_ib_initial_propellant_condition
+    PROPERTIES
+        C_EXTENSIONS OFF
+        C_STANDARD 23
+        C_STANDARD_REQUIRED ON
+)
+
+add_test(
+    NAME bbtc.ib_initial_propellant_condition
+    COMMAND bbtc_test_ib_initial_propellant_condition
+)
+
+add_executable(
     bbtc_test_ib_noble_abel_gas_model
     test_ib_noble_abel_gas_model.c
 )

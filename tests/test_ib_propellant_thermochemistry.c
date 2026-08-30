@@ -86,7 +86,25 @@ test_model_validation_all_precisions(void)
 
         CHECK(
             bbtc_ib_propellant_thermochemistry_validate_double(&invalid)
-                == BBTC_STATUS_NONFINITE_INPUT
+                == BBTC_STATUS_NAN_INPUT
+        );
+
+        invalid = model_d;
+        invalid.gas_product_mass_fraction = INFINITY;
+        invalid.specific_reaction_internal_energy_release_j_per_kg = NAN;
+
+        CHECK(
+            bbtc_ib_propellant_thermochemistry_validate_double(&invalid)
+                == BBTC_STATUS_NAN_INPUT
+        );
+
+        invalid = model_d;
+        invalid.gas_product_mass_fraction = NAN;
+        invalid.specific_reaction_internal_energy_release_j_per_kg = INFINITY;
+
+        CHECK(
+            bbtc_ib_propellant_thermochemistry_validate_double(&invalid)
+                == BBTC_STATUS_NAN_INPUT
         );
 
         invalid = model_d;
@@ -677,7 +695,7 @@ test_validation_ordering_and_nonfinite_inputs(void)
             &invalid_model,
             -1.0,
             &source
-        ) == BBTC_STATUS_NONFINITE_INPUT
+        ) == BBTC_STATUS_NAN_INPUT
     );
 
     CHECK(source.gas_product_mass_kg == 0.0);
@@ -689,7 +707,7 @@ test_validation_ordering_and_nonfinite_inputs(void)
             &valid_model,
             NAN,
             &source
-        ) == BBTC_STATUS_NONFINITE_INPUT
+        ) == BBTC_STATUS_NAN_INPUT
     );
 
     CHECK(

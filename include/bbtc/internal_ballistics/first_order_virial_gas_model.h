@@ -287,10 +287,13 @@ bbtc_ib_first_order_virial_gas_model_long_double_t;
  *
  * @details
  * A null law or null coefficient pointer returns
- * `BBTC_STATUS_INVALID_ARGUMENT`. Nonfinite bounds or coefficients return
- * `BBTC_STATUS_NONFINITE_INPUT`. The minimum temperature must be positive, the
- * maximum must exceed the minimum, and `coefficient_count` must be nonzero.
- * Coefficient signs are unrestricted.
+ * `BBTC_STATUS_INVALID_ARGUMENT`. A NaN bound or coefficient returns
+ * `BBTC_STATUS_NAN_INPUT`. Otherwise, positive or negative infinity in a bound
+ * or coefficient returns `BBTC_STATUS_NONFINITE_INPUT`. NaN takes precedence
+ * over infinity across the complete law, including the borrowed coefficient
+ * array. The minimum temperature must be positive, the maximum must exceed the
+ * minimum, and `coefficient_count` must be nonzero. Coefficient signs are
+ * unrestricted.
  *
  * @param law Caller-owned temperature law to validate.
  *
@@ -346,7 +349,7 @@ bbtc_ib_first_order_virial_temperature_law_validate_long_double(
  * @param terms Output coefficient and derivative terms.
  *
  * @return `BBTC_STATUS_SUCCESS` on success; otherwise a documented argument,
- *         domain, nonfinite-input, or numerical-failure status.
+ *         domain, NaN-input, nonfinite-input, or numerical-failure status.
  */
 bbtc_status_e
 bbtc_ib_first_order_virial_temperature_law_evaluate_float(
@@ -396,11 +399,16 @@ bbtc_ib_first_order_virial_temperature_law_evaluate_long_double(
  * @brief Validates one native-`float` first-order virial gas-model record.
  *
  * @details
- * A null model returns `BBTC_STATUS_INVALID_ARGUMENT`. Nonfinite scalar fields
- * or nested-law data return `BBTC_STATUS_NONFINITE_INPUT`. The gas constant and
- * dilute-gas heat capacity must be positive. The minimum calibrated density
- * must be nonnegative, and the maximum must exceed the minimum. The nested
- * temperature law must satisfy its own validation contract.
+ * A null model returns `BBTC_STATUS_INVALID_ARGUMENT`. A NaN top-level scalar
+ * field returns `BBTC_STATUS_NAN_INPUT`; otherwise, positive or negative
+ * infinity in a top-level scalar field returns `BBTC_STATUS_NONFINITE_INPUT`.
+ * The gas constant and dilute-gas heat capacity must be positive. The minimum
+ * calibrated density must be nonnegative, and the maximum must exceed the
+ * minimum.
+ *
+ * Top-level scalar and domain validation is completed before the nested
+ * temperature law is validated. Once that layer succeeds, the nested law's
+ * validation status is propagated unchanged.
  *
  * Passing validation establishes parameter-domain consistency only. It does not
  * establish parameter provenance, calibration quality, predictive accuracy, or

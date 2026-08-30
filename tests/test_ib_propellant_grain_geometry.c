@@ -406,7 +406,7 @@ static int test_validation_and_failure_order(void)
         || bbtc_ib_spherical_grain_geometry_validate_double(&zero_radius)
             != BBTC_STATUS_OUTSIDE_DOMAIN
         || bbtc_ib_spherical_grain_geometry_validate_double(&nan_radius)
-            != BBTC_STATUS_NONFINITE_INPUT
+            != BBTC_STATUS_NAN_INPUT
         || bbtc_ib_single_perforated_cylindrical_grain_geometry_validate_double(&invalid_tube)
             != BBTC_STATUS_INCONSISTENT_CONFIGURATION)
     {
@@ -417,7 +417,7 @@ static int test_validation_and_failure_order(void)
             != BBTC_STATUS_OUTSIDE_DOMAIN
         || !state_is_zero_double(&state)
         || bbtc_ib_spherical_grain_evaluate_double(&nan_radius, 0.0, &state)
-            != BBTC_STATUS_NONFINITE_INPUT
+            != BBTC_STATUS_NAN_INPUT
         || !state_is_zero_double(&state))
     {
         return EXIT_FAILURE;
@@ -438,7 +438,7 @@ static int test_validation_and_failure_order(void)
             != BBTC_STATUS_OUTSIDE_DOMAIN
         || !state_is_zero_double(&state)
         || bbtc_ib_solid_cylindrical_grain_evaluate_double(&cylinder, NAN, &state)
-            != BBTC_STATUS_NONFINITE_INPUT
+            != BBTC_STATUS_NAN_INPUT
         || !state_is_zero_double(&state)
         || bbtc_ib_rectangular_prismatic_grain_evaluate_double(&prism, INFINITY, &state)
             != BBTC_STATUS_NONFINITE_INPUT
@@ -452,6 +452,85 @@ static int test_validation_and_failure_order(void)
 
     return EXIT_SUCCESS;
 }
+
+static int test_validator_nonfinite_precedence(void)
+{
+    const bbtc_ib_spherical_grain_geometry_float_t sphere_nan_f =
+    {
+        .initial_radius_m = NAN
+    };
+
+    const bbtc_ib_spherical_grain_geometry_long_double_t sphere_nan_ld =
+    {
+        .initial_radius_m = NAN
+    };
+
+    const bbtc_ib_spherical_grain_geometry_long_double_t sphere_infinity_ld =
+    {
+        .initial_radius_m = INFINITY
+    };
+
+    bbtc_ib_solid_cylindrical_grain_geometry_double_t cylinder =
+    {
+        .initial_radius_m = INFINITY,
+        .initial_length_m = NAN
+    };
+
+    bbtc_ib_rectangular_prismatic_grain_geometry_double_t prism =
+    {
+        .initial_length_m = INFINITY,
+        .initial_width_m = 1.0,
+        .initial_thickness_m = NAN
+    };
+
+    bbtc_ib_single_perforated_cylindrical_grain_geometry_double_t tube =
+    {
+        .initial_outer_radius_m = INFINITY,
+        .initial_inner_radius_m = 1.0,
+        .initial_length_m = NAN
+    };
+
+    if (bbtc_ib_spherical_grain_geometry_validate_float(&sphere_nan_f)
+            != BBTC_STATUS_NAN_INPUT
+        || bbtc_ib_spherical_grain_geometry_validate_long_double(&sphere_nan_ld)
+            != BBTC_STATUS_NAN_INPUT
+        || bbtc_ib_spherical_grain_geometry_validate_long_double(
+               &sphere_infinity_ld
+           ) != BBTC_STATUS_NONFINITE_INPUT
+        || bbtc_ib_solid_cylindrical_grain_geometry_validate_double(&cylinder)
+            != BBTC_STATUS_NAN_INPUT
+        || bbtc_ib_rectangular_prismatic_grain_geometry_validate_double(&prism)
+            != BBTC_STATUS_NAN_INPUT
+        || bbtc_ib_single_perforated_cylindrical_grain_geometry_validate_double(
+               &tube
+           ) != BBTC_STATUS_NAN_INPUT)
+    {
+        return EXIT_FAILURE;
+    }
+
+    cylinder.initial_radius_m = NAN;
+    cylinder.initial_length_m = INFINITY;
+
+    prism.initial_length_m = NAN;
+    prism.initial_thickness_m = INFINITY;
+
+    tube.initial_outer_radius_m = NAN;
+    tube.initial_length_m = INFINITY;
+
+    if (bbtc_ib_solid_cylindrical_grain_geometry_validate_double(&cylinder)
+            != BBTC_STATUS_NAN_INPUT
+        || bbtc_ib_rectangular_prismatic_grain_geometry_validate_double(&prism)
+            != BBTC_STATUS_NAN_INPUT
+        || bbtc_ib_single_perforated_cylindrical_grain_geometry_validate_double(
+               &tube
+           ) != BBTC_STATUS_NAN_INPUT)
+    {
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
 
 static int test_native_precision_analytical_results(void)
 {
@@ -668,6 +747,9 @@ int main(void)
         return EXIT_FAILURE;
 
     if (test_validation_and_failure_order() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
+
+    if (test_validator_nonfinite_precedence() != EXIT_SUCCESS)
         return EXIT_FAILURE;
 
     if (test_native_precision_analytical_results() != EXIT_SUCCESS)

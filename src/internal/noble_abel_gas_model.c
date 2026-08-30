@@ -14,9 +14,16 @@ bbtc_ib_noble_abel_gas_model_validate_float(const bbtc_ib_noble_abel_gas_model_f
     if (model == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(model->specific_gas_constant_j_per_kg_k)         ||
-        !isfinite(model->constant_volume_specific_heat_j_per_kg_k) ||
-        !isfinite(model->covolume_m3_per_kg))
+    if (isnan(model->specific_gas_constant_j_per_kg_k) ||
+        isnan(model->constant_volume_specific_heat_j_per_kg_k) ||
+        isnan(model->covolume_m3_per_kg))
+    {
+        return BBTC_STATUS_NAN_INPUT;
+    }
+
+    if (isinf(model->specific_gas_constant_j_per_kg_k) ||
+        isinf(model->constant_volume_specific_heat_j_per_kg_k) ||
+        isinf(model->covolume_m3_per_kg))
     {
         return BBTC_STATUS_NONFINITE_INPUT;
     }
@@ -38,9 +45,16 @@ bbtc_ib_noble_abel_gas_model_validate_double(const bbtc_ib_noble_abel_gas_model_
     if (model == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(model->specific_gas_constant_j_per_kg_k)         ||
-        !isfinite(model->constant_volume_specific_heat_j_per_kg_k) ||
-        !isfinite(model->covolume_m3_per_kg))
+    if (isnan(model->specific_gas_constant_j_per_kg_k) ||
+        isnan(model->constant_volume_specific_heat_j_per_kg_k) ||
+        isnan(model->covolume_m3_per_kg))
+    {
+        return BBTC_STATUS_NAN_INPUT;
+    }
+
+    if (isinf(model->specific_gas_constant_j_per_kg_k) ||
+        isinf(model->constant_volume_specific_heat_j_per_kg_k) ||
+        isinf(model->covolume_m3_per_kg))
     {
         return BBTC_STATUS_NONFINITE_INPUT;
     }
@@ -62,9 +76,16 @@ bbtc_ib_noble_abel_gas_model_validate_long_double(const bbtc_ib_noble_abel_gas_m
     if (model == NULL)
         return BBTC_STATUS_INVALID_ARGUMENT;
 
-    if (!isfinite(model->specific_gas_constant_j_per_kg_k)         ||
-        !isfinite(model->constant_volume_specific_heat_j_per_kg_k) ||
-        !isfinite(model->covolume_m3_per_kg))
+    if (isnan(model->specific_gas_constant_j_per_kg_k) ||
+        isnan(model->constant_volume_specific_heat_j_per_kg_k) ||
+        isnan(model->covolume_m3_per_kg))
+    {
+        return BBTC_STATUS_NAN_INPUT;
+    }
+
+    if (isinf(model->specific_gas_constant_j_per_kg_k) ||
+        isinf(model->constant_volume_specific_heat_j_per_kg_k) ||
+        isinf(model->covolume_m3_per_kg))
     {
         return BBTC_STATUS_NONFINITE_INPUT;
     }

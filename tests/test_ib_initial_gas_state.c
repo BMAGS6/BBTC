@@ -108,7 +108,7 @@ test_float_initial_gas_state(void)
 
     if (require_status("float pressure NaN",
                        bbtc_ib_initial_gas_state_validate_float(&candidate),
-                       BBTC_STATUS_NONFINITE_INPUT) != EXIT_SUCCESS)
+                       BBTC_STATUS_NAN_INPUT) != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;
     }
@@ -178,7 +178,7 @@ test_float_initial_gas_state(void)
 
     if (require_status("float temperature NaN",
                        bbtc_ib_initial_gas_state_validate_float(&candidate),
-                       BBTC_STATUS_NONFINITE_INPUT) != EXIT_SUCCESS)
+                       BBTC_STATUS_NAN_INPUT) != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;
     }
@@ -279,7 +279,7 @@ test_double_initial_gas_state(void)
 
     if (require_status("double pressure NaN",
                        bbtc_ib_initial_gas_state_validate_double(&candidate),
-                       BBTC_STATUS_NONFINITE_INPUT) != EXIT_SUCCESS)
+                       BBTC_STATUS_NAN_INPUT) != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;
     }
@@ -349,7 +349,7 @@ test_double_initial_gas_state(void)
 
     if (require_status("double temperature NaN",
                        bbtc_ib_initial_gas_state_validate_double(&candidate),
-                       BBTC_STATUS_NONFINITE_INPUT) != EXIT_SUCCESS)
+                       BBTC_STATUS_NAN_INPUT) != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;
     }
@@ -450,7 +450,7 @@ test_long_double_initial_gas_state(void)
 
     if (require_status("long double pressure NaN",
                        bbtc_ib_initial_gas_state_validate_long_double(&candidate),
-                       BBTC_STATUS_NONFINITE_INPUT) != EXIT_SUCCESS)
+                       BBTC_STATUS_NAN_INPUT) != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;
     }
@@ -520,7 +520,7 @@ test_long_double_initial_gas_state(void)
 
     if (require_status("long double temperature NaN",
                        bbtc_ib_initial_gas_state_validate_long_double(&candidate),
-                       BBTC_STATUS_NONFINITE_INPUT) != EXIT_SUCCESS)
+                       BBTC_STATUS_NAN_INPUT) != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;
     }
@@ -564,6 +564,91 @@ test_long_double_initial_gas_state(void)
 }
 
 
+static int
+test_nonfinite_precedence(void)
+{
+    bbtc_ib_initial_gas_state_float_t float_state =
+    {
+        .absolute_pressure_pa = INFINITY,
+        .temperature_k        = NAN
+    };
+
+    if (require_status(
+            "float infinity pressure plus NaN temperature",
+            bbtc_ib_initial_gas_state_validate_float(&float_state),
+            BBTC_STATUS_NAN_INPUT
+        ) != EXIT_SUCCESS)
+    {
+        return EXIT_FAILURE;
+    }
+
+    float_state.absolute_pressure_pa = NAN;
+    float_state.temperature_k        = INFINITY;
+
+    if (require_status(
+            "float NaN pressure plus infinity temperature",
+            bbtc_ib_initial_gas_state_validate_float(&float_state),
+            BBTC_STATUS_NAN_INPUT
+        ) != EXIT_SUCCESS)
+    {
+        return EXIT_FAILURE;
+    }
+
+
+    bbtc_ib_initial_gas_state_double_t double_state =
+    {
+        .absolute_pressure_pa = INFINITY,
+        .temperature_k        = NAN
+    };
+
+    if (require_status(
+            "double infinity pressure plus NaN temperature",
+            bbtc_ib_initial_gas_state_validate_double(&double_state),
+            BBTC_STATUS_NAN_INPUT
+        ) != EXIT_SUCCESS)
+    {
+        return EXIT_FAILURE;
+    }
+
+    double_state.absolute_pressure_pa = NAN;
+    double_state.temperature_k        = INFINITY;
+
+    if (require_status(
+            "double NaN pressure plus infinity temperature",
+            bbtc_ib_initial_gas_state_validate_double(&double_state),
+            BBTC_STATUS_NAN_INPUT
+        ) != EXIT_SUCCESS)
+    {
+        return EXIT_FAILURE;
+    }
+
+
+    bbtc_ib_initial_gas_state_long_double_t long_double_state =
+    {
+        .absolute_pressure_pa = INFINITY,
+        .temperature_k        = NAN
+    };
+
+    if (require_status(
+            "long double infinity pressure plus NaN temperature",
+            bbtc_ib_initial_gas_state_validate_long_double(&long_double_state),
+            BBTC_STATUS_NAN_INPUT
+        ) != EXIT_SUCCESS)
+    {
+        return EXIT_FAILURE;
+    }
+
+    long_double_state.absolute_pressure_pa = NAN;
+    long_double_state.temperature_k        = INFINITY;
+
+    return require_status(
+        "long double NaN pressure plus infinity temperature",
+        bbtc_ib_initial_gas_state_validate_long_double(&long_double_state),
+        BBTC_STATUS_NAN_INPUT
+    );
+}
+
+
 int main(void)
 {
     if (test_float_initial_gas_state() != EXIT_SUCCESS)
@@ -572,5 +657,8 @@ int main(void)
     if (test_double_initial_gas_state() != EXIT_SUCCESS)
         return EXIT_FAILURE;
 
-    return test_long_double_initial_gas_state();
+    if (test_long_double_initial_gas_state() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
+
+    return test_nonfinite_precedence();
 }

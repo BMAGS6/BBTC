@@ -192,7 +192,7 @@ test_float_loading_state(void)
 
     if (require_status("float nonfinite component",
                        bbtc_ib_loading_state_evaluate_float(&candidate, &volumes),
-                       BBTC_STATUS_NONFINITE_INPUT)
+                       BBTC_STATUS_NAN_INPUT)
         != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;
@@ -383,7 +383,7 @@ test_double_loading_state(void)
 
     if (require_status("double nonfinite component",
                        bbtc_ib_loading_state_evaluate_double(&candidate, &volumes),
-                       BBTC_STATUS_NONFINITE_INPUT)
+                       BBTC_STATUS_NAN_INPUT)
         != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;
@@ -573,7 +573,7 @@ test_long_double_loading_state(void)
 
     if (require_status("long double nonfinite component",
                        bbtc_ib_loading_state_evaluate_long_double(&candidate, &volumes),
-                       BBTC_STATUS_NONFINITE_INPUT)
+                       BBTC_STATUS_NAN_INPUT)
         != EXIT_SUCCESS)
     {
         return EXIT_FAILURE;

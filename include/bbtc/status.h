@@ -27,7 +27,11 @@ typedef enum bbtc_status_e : uint8_t
     /** A required pointer was null or another argument was invalid. */
     BBTC_STATUS_INVALID_ARGUMENT = 1,
 
-    /** A floating-point input was NaN or infinite. */
+    /**
+     * A floating-point input was positive or negative infinity.
+     *
+     * NaN inputs use the distinct `BBTC_STATUS_NAN_INPUT` status.
+     */
     BBTC_STATUS_NONFINITE_INPUT = 2,
 
     /** A finite value was outside the mathematical domain of an operation. */
@@ -52,7 +56,10 @@ typedef enum bbtc_status_e : uint8_t
     BBTC_STATUS_ITERATION_LIMIT = 8,
 
     /** An internal invariant was violated. */
-    BBTC_STATUS_INTERNAL_INVARIANT_FAILURE = 9
+    BBTC_STATUS_INTERNAL_INVARIANT_FAILURE = 9,
+
+    /** A floating-point input was NaN (not a number). */
+    BBTC_STATUS_NAN_INPUT = 10
 } bbtc_status_e;
 
 /**

@@ -83,11 +83,13 @@ bbtc_ib_noble_abel_gas_model_long_double_t;
 /**
  * @brief Validates one native-float Noble-Abel gas-model record.
  *
- * A null pointer returns `BBTC_STATUS_INVALID_ARGUMENT`. A NaN or infinity in
+ * A null pointer returns `BBTC_STATUS_INVALID_ARGUMENT`. A NaN in any field
+ * returns `BBTC_STATUS_NAN_INPUT`. Otherwise, positive or negative infinity in
  * any field returns `BBTC_STATUS_NONFINITE_INPUT`. The specific gas constant and
  * constant-volume specific heat must be greater than zero. Covolume must be
- * nonnegative; zero is the explicit ideal-gas limit. The function does not
- * modify the caller-owned record.
+ * nonnegative; zero is the explicit ideal-gas limit. When multiple fields are
+ * nonfinite at once, NaN takes precedence over infinity within this record. The
+ * function does not modify the caller-owned record.
  *
  * @param model Noble-Abel gas-model record to validate.
  *

@@ -66,7 +66,27 @@ test_caloric_reference_validation(void)
     invalid_reference = valid_reference;
     invalid_reference.reference_specific_internal_energy_j_per_kg = NAN;
     if (bbtc_ib_caloric_reference_validate_double(&invalid_reference)
-        != BBTC_STATUS_NONFINITE_INPUT)
+        != BBTC_STATUS_NAN_INPUT)
+    {
+        return 1;
+    }
+
+    invalid_reference = valid_reference;
+    invalid_reference.reference_temperature_k = INFINITY;
+    invalid_reference.reference_specific_internal_energy_j_per_kg = NAN;
+
+    if (bbtc_ib_caloric_reference_validate_double(&invalid_reference)
+        != BBTC_STATUS_NAN_INPUT)
+    {
+        return 1;
+    }
+
+    invalid_reference = valid_reference;
+    invalid_reference.reference_temperature_k = NAN;
+    invalid_reference.reference_specific_internal_energy_j_per_kg = INFINITY;
+
+    if (bbtc_ib_caloric_reference_validate_double(&invalid_reference)
+        != BBTC_STATUS_NAN_INPUT)
     {
         return 1;
     }
@@ -901,10 +921,141 @@ test_virial_calibration_interval_boundaries(void)
 }
 
 
+static int
+test_direct_scalar_nonfinite_classification(void)
+{
+    static const double virial_coefficients[] = {0.0};
+
+    const bbtc_ib_noble_abel_gas_model_double_t noble_model =
+    {
+        .specific_gas_constant_j_per_kg_k = 287.0,
+        .constant_volume_specific_heat_j_per_kg_k = 718.0,
+        .covolume_m3_per_kg = 0.001
+    };
+
+    const bbtc_ib_first_order_virial_gas_model_double_t virial_model =
+    {
+        .specific_gas_constant_j_per_kg_k = 287.0,
+        .ideal_gas_constant_volume_specific_heat_j_per_kg_k = 718.0,
+        .minimum_calibrated_density_kg_per_m3 = 0.0,
+        .maximum_calibrated_density_kg_per_m3 = 10.0,
+        .second_density_virial_coefficient_law =
+        {
+            .minimum_temperature_k = 200.0,
+            .maximum_temperature_k = 400.0,
+            .second_density_virial_chebyshev_coefficients_m3_per_kg =
+                virial_coefficients,
+            .coefficient_count = 1U
+        }
+    };
+
+    const bbtc_ib_caloric_reference_double_t reference =
+    {
+        .reference_temperature_k = 300.0,
+        .reference_specific_internal_energy_j_per_kg = 0.0
+    };
+
+    bbtc_ib_reduced_gas_thermodynamic_result_double_t result = {0};
+
+    if (bbtc_ib_noble_abel_thermodynamics_evaluate_double(
+            &noble_model,
+            NAN,
+            INFINITY,
+            &reference,
+            &result
+        ) != BBTC_STATUS_NAN_INPUT)
+    {
+        return 1;
+    }
+
+    if (bbtc_ib_noble_abel_thermodynamics_evaluate_double(
+            &noble_model,
+            INFINITY,
+            NAN,
+            &reference,
+            &result
+        ) != BBTC_STATUS_NAN_INPUT)
+    {
+        return 1;
+    }
+
+    if (bbtc_ib_noble_abel_thermodynamics_evaluate_double(
+            &noble_model,
+            INFINITY,
+            300.0,
+            &reference,
+            &result
+        ) != BBTC_STATUS_NONFINITE_INPUT)
+    {
+        return 1;
+    }
+
+    if (bbtc_ib_noble_abel_thermodynamics_evaluate_double(
+            &noble_model,
+            1.0,
+            INFINITY,
+            &reference,
+            &result
+        ) != BBTC_STATUS_NONFINITE_INPUT)
+    {
+        return 1;
+    }
+
+    if (bbtc_ib_first_order_virial_thermodynamics_evaluate_double(
+            &virial_model,
+            NAN,
+            INFINITY,
+            &reference,
+            &result
+        ) != BBTC_STATUS_NAN_INPUT)
+    {
+        return 1;
+    }
+
+    if (bbtc_ib_first_order_virial_thermodynamics_evaluate_double(
+            &virial_model,
+            INFINITY,
+            NAN,
+            &reference,
+            &result
+        ) != BBTC_STATUS_NAN_INPUT)
+    {
+        return 1;
+    }
+
+    if (bbtc_ib_first_order_virial_thermodynamics_evaluate_double(
+            &virial_model,
+            INFINITY,
+            300.0,
+            &reference,
+            &result
+        ) != BBTC_STATUS_NONFINITE_INPUT)
+    {
+        return 1;
+    }
+
+    if (bbtc_ib_first_order_virial_thermodynamics_evaluate_double(
+            &virial_model,
+            1.0,
+            INFINITY,
+            &reference,
+            &result
+        ) != BBTC_STATUS_NONFINITE_INPUT)
+    {
+        return 1;
+    }
+
+    return 0;
+}
+
+
 int
 main(void)
 {
     if (test_caloric_reference_validation() != 0)
+        return 1;
+
+    if (test_direct_scalar_nonfinite_classification() != 0)
         return 1;
 
     if (test_noble_abel_double() != 0)

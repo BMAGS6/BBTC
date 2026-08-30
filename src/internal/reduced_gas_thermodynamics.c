@@ -44,7 +44,10 @@ bbtc_ib_noble_abel_thermodynamics_evaluate_float(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(density_kg_per_m3) || !isfinite(temperature_k))
+    if (isnan(density_kg_per_m3) || isnan(temperature_k))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(density_kg_per_m3) || isinf(temperature_k))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (density_kg_per_m3 < 0.0f || temperature_k <= 0.0f)
@@ -143,7 +146,10 @@ bbtc_ib_noble_abel_thermodynamics_evaluate_double(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(density_kg_per_m3) || !isfinite(temperature_k))
+    if (isnan(density_kg_per_m3) || isnan(temperature_k))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(density_kg_per_m3) || isinf(temperature_k))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (density_kg_per_m3 < 0.0 || temperature_k <= 0.0)
@@ -242,7 +248,10 @@ bbtc_ib_noble_abel_thermodynamics_evaluate_long_double(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(density_kg_per_m3) || !isfinite(temperature_k))
+    if (isnan(density_kg_per_m3) || isnan(temperature_k))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(density_kg_per_m3) || isinf(temperature_k))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (density_kg_per_m3 < 0.0L || temperature_k <= 0.0L)
@@ -352,7 +361,10 @@ bbtc_ib_first_order_virial_thermodynamics_evaluate_float(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(density_kg_per_m3) || !isfinite(temperature_k))
+    if (isnan(density_kg_per_m3) || isnan(temperature_k))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(density_kg_per_m3) || isinf(temperature_k))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (density_kg_per_m3 < 0.0f || temperature_k <= 0.0f)
@@ -529,7 +541,10 @@ bbtc_ib_first_order_virial_thermodynamics_evaluate_double(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(density_kg_per_m3) || !isfinite(temperature_k))
+    if (isnan(density_kg_per_m3) || isnan(temperature_k))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(density_kg_per_m3) || isinf(temperature_k))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (density_kg_per_m3 < 0.0 || temperature_k <= 0.0)
@@ -705,7 +720,10 @@ bbtc_ib_first_order_virial_thermodynamics_evaluate_long_double(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(density_kg_per_m3) || !isfinite(temperature_k))
+    if (isnan(density_kg_per_m3) || isnan(temperature_k))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(density_kg_per_m3) || isinf(temperature_k))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (density_kg_per_m3 < 0.0L || temperature_k <= 0.0L)

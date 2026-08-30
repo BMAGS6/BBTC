@@ -7,7 +7,7 @@ Cubes of Honor.
 
 ## Current status
 
-The rewrite is in **IB0.4b**. This checkpoint contains:
+The rewrite is in **IB0.4c**. This checkpoint contains:
 
 - a strict C23 CMake/Ninja library target;
 - the namespaced CMake alias `bbtc::bbtc`;
@@ -45,6 +45,9 @@ The rewrite is in **IB0.4b**. This checkpoint contains:
   validation and derived initial-volume outputs;
 - native precision-qualified initial gas absolute-pressure and temperature
   records with validation;
+- native precision-qualified initial condensed-propellant condition records
+  carrying explicit absolute propellant temperature with no ambient, case,
+  chamber, or initial-free-gas temperature alias;
 - native precision-qualified calorically perfect Noble-Abel gas-model backend
   records with explicit ideal-gas-limit semantics and validation;
 - native precision-qualified temperature-dependent first-order density-virial
@@ -222,6 +225,21 @@ families. Their validators reject null, nonfinite, zero, and negative inputs.
 Pressure and temperature are not derived from each other without an additional
 gas model and state information.
 
+
+`bbtc_ib_initial_propellant_condition_float_t`,
+`bbtc_ib_initial_propellant_condition_double_t`, and
+`bbtc_ib_initial_propellant_condition_long_double_t` carry one explicit initial
+absolute temperature for the condensed propellant charge. This temperature is
+separate from ambient air, cartridge case, chamber walls, initial trapped/free
+gas, and later combustion products. Equal numeric values remain a caller-owned
+physical assumption rather than an implicit BBTC alias.
+
+Their validators accept every finite positive Kelvin value, reject finite
+nonpositive temperatures, distinguish NaN from infinity through the public
+status taxonomy, and impose no hidden "normal temperature" band or universal
+finite upper cap. Primitive validation does not establish material stability,
+cook-off margin, burn-law applicability, ammunition compatibility, or firearm
+safety.
 
 `bbtc_ib_initial_gas_solution_float_t`,
 `bbtc_ib_initial_gas_solution_double_t`, and

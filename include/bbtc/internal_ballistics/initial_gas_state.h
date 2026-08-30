@@ -74,11 +74,13 @@ bbtc_ib_initial_gas_state_long_double_t;
 /**
  * @brief Validates one native-float initial gas-state record.
  *
- * A null pointer returns `BBTC_STATUS_INVALID_ARGUMENT`. A NaN or infinity in
+ * A null pointer returns `BBTC_STATUS_INVALID_ARGUMENT`. A NaN in either field
+ * returns `BBTC_STATUS_NAN_INPUT`. Otherwise, positive or negative infinity in
  * either field returns `BBTC_STATUS_NONFINITE_INPUT`. Both fields must otherwise
  * be greater than zero; zero or a negative value returns
- * `BBTC_STATUS_OUTSIDE_DOMAIN`. The function does not modify the caller-owned
- * record.
+ * `BBTC_STATUS_OUTSIDE_DOMAIN`. When multiple fields are nonfinite at once, NaN
+ * takes precedence over infinity within this record. The function does not
+ * modify the caller-owned record.
  *
  * @param state Initial gas-state record to validate.
  *

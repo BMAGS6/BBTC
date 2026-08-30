@@ -62,10 +62,11 @@ bbtc_ib_projectile_long_double_t;
 /**
  * @brief Validates one native-float internal-ballistics projectile record.
  *
- * A null pointer returns `BBTC_STATUS_INVALID_ARGUMENT`. A NaN or infinity
- * returns `BBTC_STATUS_NONFINITE_INPUT`. Mass must otherwise be greater than
- * zero; zero or a negative value returns `BBTC_STATUS_OUTSIDE_DOMAIN`. The
- * function does not modify the caller-owned record.
+ * A null pointer returns `BBTC_STATUS_INVALID_ARGUMENT`. A NaN returns
+ * `BBTC_STATUS_NAN_INPUT`. Positive or negative infinity returns
+ * `BBTC_STATUS_NONFINITE_INPUT`. Mass must otherwise be greater than zero;
+ * zero or a negative value returns `BBTC_STATUS_OUTSIDE_DOMAIN`. The function
+ * does not modify the caller-owned record.
  *
  * @param projectile Projectile record to validate.
  *

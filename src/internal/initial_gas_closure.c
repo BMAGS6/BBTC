@@ -265,7 +265,10 @@ bbtc_ib_noble_abel_initial_gas_solve_float(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(initial_free_gas_volume_m3))
+    if (isnan(initial_free_gas_volume_m3))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(initial_free_gas_volume_m3))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (initial_free_gas_volume_m3 <= 0.0f)
@@ -374,7 +377,10 @@ bbtc_ib_noble_abel_initial_gas_solve_double(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(initial_free_gas_volume_m3))
+    if (isnan(initial_free_gas_volume_m3))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(initial_free_gas_volume_m3))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (initial_free_gas_volume_m3 <= 0.0)
@@ -483,7 +489,10 @@ bbtc_ib_noble_abel_initial_gas_solve_long_double(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(initial_free_gas_volume_m3))
+    if (isnan(initial_free_gas_volume_m3))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(initial_free_gas_volume_m3))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (initial_free_gas_volume_m3 <= 0.0L)
@@ -597,7 +606,10 @@ bbtc_ib_first_order_virial_initial_gas_solve_float(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(initial_free_gas_volume_m3))
+    if (isnan(initial_free_gas_volume_m3))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(initial_free_gas_volume_m3))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (initial_free_gas_volume_m3 <= 0.0f)
@@ -730,7 +742,10 @@ bbtc_ib_first_order_virial_initial_gas_solve_double(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(initial_free_gas_volume_m3))
+    if (isnan(initial_free_gas_volume_m3))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(initial_free_gas_volume_m3))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (initial_free_gas_volume_m3 <= 0.0)
@@ -863,7 +878,10 @@ bbtc_ib_first_order_virial_initial_gas_solve_long_double(
     if (status != BBTC_STATUS_SUCCESS)
         return status;
 
-    if (!isfinite(initial_free_gas_volume_m3))
+    if (isnan(initial_free_gas_volume_m3))
+        return BBTC_STATUS_NAN_INPUT;
+
+    if (isinf(initial_free_gas_volume_m3))
         return BBTC_STATUS_NONFINITE_INPUT;
 
     if (initial_free_gas_volume_m3 <= 0.0L)
