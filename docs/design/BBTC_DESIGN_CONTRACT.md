@@ -1306,8 +1306,8 @@ negative density and nonpositive absolute temperature are outside the domain.
 Within the direct density/temperature validation layer, a NaN in either scalar
 returns `BBTC_STATUS_NAN_INPUT`; otherwise positive or negative infinity in
 either scalar returns `BBTC_STATUS_NONFINITE_INPUT`. NaN therefore takes
-precedence over infinity within that two-scalar layer. Earlier model and caloric
-reference validation retains its established precedence. Finite-input
+precedence over infinity within that two-scalar layer. Earlier model and
+caloric-reference validations retain their established precedence. Finite-input
 arithmetic that cannot produce finite outputs returns
 `BBTC_STATUS_NUMERICAL_FAILURE`.
 

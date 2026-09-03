@@ -7,9 +7,9 @@
 
 #include "bbtc/internal_ballistics/propellant_grain_geometry.h"
 
-static constexpr float       BBTC_PI_f  = 3.14159265358979323846f;
-static constexpr double      BBTC_PI    = 3.141592653589793238462643383279502884;
-static constexpr long double BBTC_PI_ld = 3.141592653589793238462643383279502884L;
+static const float       BBTC_PI_f  = 3.14159265358979323846f;
+static const double      BBTC_PI    = 3.141592653589793238462643383279502884;
+static const long double BBTC_PI_ld = 3.141592653589793238462643383279502884L;
 
 
 /**

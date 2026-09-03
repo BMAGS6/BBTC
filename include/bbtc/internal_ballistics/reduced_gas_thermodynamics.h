@@ -155,7 +155,7 @@ bbtc_ib_reduced_gas_thermodynamic_result_long_double_t;
  * scalar returns `BBTC_STATUS_NAN_INPUT`; otherwise positive or negative
  * infinity in either scalar returns `BBTC_STATUS_NONFINITE_INPUT`. NaN takes
  * precedence over infinity within this two-scalar layer. Earlier model and
- * caloric-reference validation retains its established precedence.
+ * caloric-reference validations retain their established precedence.
  *
  * The output is cleared before any validation that can fail. Arithmetic that
  * becomes nonfinite from otherwise finite inputs returns
@@ -247,7 +247,7 @@ bbtc_ib_noble_abel_thermodynamics_evaluate_long_double(
  * scalar returns `BBTC_STATUS_NAN_INPUT`; otherwise positive or negative
  * infinity in either scalar returns `BBTC_STATUS_NONFINITE_INPUT`. NaN takes
  * precedence over infinity within this two-scalar layer. Earlier model and
- * caloric-reference validation retains its established precedence.
+ * caloric-reference validations retain their established precedence.
  *
  * The output is cleared before any validation that can fail. Arithmetic that
  * becomes nonfinite from otherwise finite inputs returns
