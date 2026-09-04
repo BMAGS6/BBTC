@@ -1,14 +1,14 @@
 # BBTC Reconstruction Design Contract
 
-**Contract version:** 0.1.16
+**Contract version:** 0.1.17
 
-**Project phase:** IB0.4c
+**Project phase:** IB0.4d
 
-**Applies to:** `rewrite/ib0_4c_initial_propellant_condition_contract_v1`
+**Applies to:** `rewrite/ib0_4d_empirical_propellant_burn_kinetics_contract_v1`
 
-**Status:** Accepted
+**Status:** Draft
 
-**Date:** 2026-08-18
+**Date:** 2026-09-04
 
 ## 1. Purpose
 
@@ -53,6 +53,48 @@ Detail is added in layers. A new effect MUST have:
 An elaborate but unvalidated effect is not automatically better than a simpler,
 well-characterized one.
 
+### 2.1 Engineering fidelity and model-inclusion policy
+
+BBTC targets engineering-appropriate predictive fidelity rather than maximal
+mechanistic resolution. Additional physical detail is valuable only when the
+information and model required to use it are sufficiently trustworthy to improve
+the intended engineering result.
+
+Before a new physical effect, correction, or model term becomes part of the
+default engineering model, its design *MUST* address all of the following:
+
+1. Can the effect *materially change one or more outputs* that BBTC is intended
+   to predict?
+
+2. Can the parameters required by the model realistically be known, measured,
+   calibrated, or otherwise supplied with *useful accuracy*?
+
+3. Can the effect be modeled without introducing assumptions or parameter
+   uncertainty comparable to or larger than the effect being modeled?
+
+4. Is the expected improvement *materially distinguishable* relative to ordinary
+   experimental, calibration, shot-to-shot, or existing-model uncertainty, or
+   does the model materially expand BBTC's documented applicability or
+   diagnostic value?
+
+An effect that fails these tests SHOULD remain deferred, optional, or outside
+the core engineering model until evidence justifies its inclusion. A physical
+effect MUST NOT be added to the default model merely because it *can* be modeled.
+Just because it can be modeled does not mean that it necessarily *should*.
+
+Conversely, an effect MUST NOT be rejected solely because its implementation is
+complex when validation or sensitivity analysis shows that it materially affects
+the intended engineering outputs and its required parameters can be supported
+with useful fidelity.
+
+BBTC SHOULD prefer a simpler well-characterized model whose residual error lies
+within the relevant experimental or application uncertainty over a more
+elaborate model whose additional inputs are unknown or weakly constrained.
+
+Sensitivity, uncertainty, and physical-validation studies SHOULD be used to
+revisit these decisions as the coupled solver matures. Model complexity is
+therefore evidence-driven rather than monotonically increasing.
+
 ## 3. Project boundaries
 
 ### 3.1 Physics library
@@ -93,7 +135,7 @@ The command-line application is a client of the library. It MAY:
 - apply ANSI styling;
 - present concise safety and model notices.
 
-The CLI MUST NOT contain an alternate physics implementation. All physical
+The CLI MUST *NOT* contain an alternate physics implementation. All physical
 results MUST come through the public or explicitly designated internal BBTC
 library API.
 
@@ -110,9 +152,9 @@ as pressure history, muzzle state, and model-limit flags. Cubes of Honor owns:
 - audiovisual presentation;
 - networking and replication.
 
-BBTC MUST NOT encode a gameplay probability that a weapon explodes. A future
+BBTC MUST *NOT* encode a gameplay probability that a weapon explodes. A future
 material-stress module may expose physical loads or estimated failure margins,
-but it still MUST NOT label a real cartridge or firearm as safe.
+but it still MUST *NOT* label a real cartridge or firearm as necessarily safe.
 
 ## 4. Source and build architecture
 
@@ -1943,69 +1985,439 @@ belongs to a future gas-composition/moisture model; age, lot, storage history,
 stabilizer condition, moisture/volatile content, and similar provenance data
 MUST NOT act as undocumented correction factors.
 
-### 11.4 Pressure-dependent burn-law direction
+### 11.4 Empirical propellant burn kinetics
 
-The initial pressure-dependent linear burn law is expressed in normalized form:
+IB0.4d establishes the engineering boundary for empirical propellant
+surface-regression kinetics. A burn-rate backend returns the linear normal
+regression rate of an already burning propellant surface:
 
-```c
-burn_rate_m_per_s = coefficient_m_per_s * pow(pressure_pa / reference_pressure_pa, pressure_exponent)
+```text
+burn_rate_m_per_s = ds/dt
 ```
 
-The reference pressure MUST be positive and explicit. The coefficient's meaning
-must not change when a user chooses a different display unit.
+The regression coordinate `s` is the same geometric coordinate consumed by the
+IB0.4b grain-regression evaluators. Burn rate is not reacted-propellant mass
+rate, burn fraction, burning-surface area, ignition progression, gas-generation
+rate, or projectile velocity.
 
-Relative quickness charts and marketing powder names **MUST NOT** be treated as
-direct substitutes for calibrated burn-law and thermochemical data. A future
-catalog layer may map a named product to a versioned parameter set with source,
-lot assumptions, uncertainty, and applicability metadata.
+Grain geometry and burn kinetics remain orthogonal. Geometry determines
+`A_b(s)`; kinetics determines `ds/dt`. A later charge-coupling layer may combine
+them with condensed-phase density and effective whole-charge burning area to
+derive reacted-propellant mass rate. A burn-law record MUST NOT silently embed
+grain shape merely because experimental calibration may have depended on a
+particular test specimen or grain configuration.
+
+IB0.4d defines two initial concrete pressure-only empirical backend families:
+
+1. a normalized pressure-power backend in the Saint-Robert/Vieille family; and
+2. a tabulated pressure-to-linear-regression-rate backend.
+
+Neither backend is universally preferred. The pressure-power representation is
+compact and appropriate when one pressure exponent adequately represents the
+calibrated data. The tabulated representation preserves measured curvature or
+pressure-regime changes when a single exponent is not adequate.
+
+Backend selection MUST be explicit. The primitive physics API MUST NOT silently
+select a tabulated backend because a table happens to exist, silently fall back
+to a pressure-power backend because data are missing, or otherwise change the
+physical model based on hidden availability state. A higher-level catalog or
+configuration layer MAY implement an explicit documented selection policy and
+MUST make the selected backend discoverable.
+
+All concrete burn-kinetics evaluators share one semantic native-precision result
+contract containing:
+
+```text
+applicability_flags
+burn_rate_m_per_s
+```
+
+`burn_rate_m_per_s` is the evaluated linear normal surface-regression rate.
+`applicability_flags` reports nonfatal limitations on scientific interpretation
+and is independent of operation status.
+
+A null result pointer returns `BBTC_STATUS_INVALID_ARGUMENT`. Once a nonnull
+result pointer has been accepted, the evaluator MUST clear the complete result
+before model validation or direct-state validation that can subsequently fail.
+Every later failure therefore leaves a deterministic zero result.
+
+Successful evaluation at a physical state for which the mathematical model
+requires a strictly positive burn rate MUST return a finite strictly positive
+native value. A zero burn rate is successful only when the concrete backend
+defines an exact mathematical zero-rate boundary. Caller-owned model and input
+records MUST remain unchanged.
+
+The exact public result-type names and declaration layout are frozen when the
+first concrete kinetics API is introduced; this section freezes their physical,
+diagnostic, and failure-output semantics.
+
+#### 11.4.1 Normalized pressure-power backend
+
+The normalized pressure-power relation is:
+
+```text
+r(P) = r_ref * (P / P_ref)^n
+```
+
+where:
+
+```text
+r(P)   = linear normal surface-regression rate, in m/s
+r_ref  = reference burn rate, in m/s
+P      = supplied absolute pressure, in Pa
+P_ref  = explicit reference absolute pressure, in Pa
+n      = positive dimensionless pressure exponent
+```
+
+The normalized representation is algebraically equivalent to a conventional
+Saint-Robert/Vieille relation `r = a*P^n`, but avoids exposing a coefficient
+whose dimensions change with `n`. At `P == P_ref`, the evaluator MUST return
+`r_ref`.
+
+The initial native scalar-family pressure-power model contract contains these
+continuous quantities:
+
+```text
+reference_burn_rate_m_per_s
+reference_pressure_pa
+pressure_exponent
+minimum_calibrated_pressure_pa
+maximum_calibrated_pressure_pa
+```
+
+A concrete pressure-power record MUST expose these quantities without changing
+their physical meaning or units.
+
+The reference burn rate, reference pressure, and calibration pressures MUST be
+finite and strictly positive. The pressure exponent MUST be finite and strictly
+positive for this concrete monotonic pressure-power backend. The maximum
+calibrated pressure MUST be strictly greater than the minimum, and
+`reference_pressure_pa` MUST lie inside the inclusive calibration interval.
+Any finite violation of these positivity, ordering, or containment requirements
+returns `BBTC_STATUS_OUTSIDE_DOMAIN`.
+
+These requirements define this concrete backend; they do not assert that every
+possible propellant burn model has a positive constant exponent. Plateau, mesa,
+multi-regime, pressure-independent, transient, erosive, or other kinetics
+require an explicitly different representation when supported.
+
+Within one pressure-power record, NaN in any scalar field returns
+`BBTC_STATUS_NAN_INPUT`; otherwise infinity in any field returns
+`BBTC_STATUS_NONFINITE_INPUT` before finite-domain relationships are tested.
+Zero initialization is deliberately invalid.
+
+The evaluator consumes absolute pressure. Gauge pressure MUST NOT be accepted by
+an ambiguously named scalar. A null model pointer returns
+`BBTC_STATUS_INVALID_ARGUMENT`. Model validation precedes direct pressure
+validation.
+
+For the direct pressure argument:
+
+```text
+NaN          -> BBTC_STATUS_NAN_INPUT
++Inf / -Inf  -> BBTC_STATUS_NONFINITE_INPUT
+P < 0        -> BBTC_STATUS_OUTSIDE_DOMAIN
+P == 0       -> valid mathematical boundary with burn rate exactly zero
+P > 0        -> evaluate the pressure-power relation
+```
+
+Once a nonnull result pointer has been accepted and cleared, evaluator ordering
+is:
+
+1. validate the pressure-power model;
+2. classify direct-pressure NaN or infinity;
+3. validate the finite direct-pressure mathematical domain;
+4. handle the exact zero-pressure boundary;
+5. evaluate the positive-pressure relation;
+6. classify calibration-domain applicability; and
+7. commit the successful result.
+
+This ordering preserves model-validation precedence over the later direct
+pressure argument.
+
+`P == 0` does not represent an ignition model or assert that a real propellant
+can sustain combustion at vacuum. It is only the exact zero-pressure boundary
+of this mathematical backend.
+
+Any mathematically valid pressure below
+`minimum_calibrated_pressure_pa` or above
+`maximum_calibrated_pressure_pa` remains evaluable. This includes `P == 0`,
+because the required minimum calibrated pressure is strictly positive. A
+successful result outside the inclusive calibration interval MUST set
+`BBTC_APPLICABILITY_OUTSIDE_CALIBRATION_DOMAIN`; the evaluator MUST NOT clip the
+pressure to the calibration interval. The two calibration endpoints themselves
+are inside the interval.
+
+For positive-pressure evaluation, the implementation SHOULD use algebraically
+equivalent or exponent-safe forms when they avoid unnecessary intermediate
+overflow, underflow, or loss of significance while preserving the normalized
+pressure-power relation and exact boundary behavior. This requirement does not
+promise arbitrary-range arithmetic beyond the selected native scalar family.
+
+Because the exact mathematical result is strictly positive for accepted
+`P > 0`, accepted finite inputs that cannot produce the required finite positive
+native result MUST return `BBTC_STATUS_NUMERICAL_FAILURE`. A numerical failure
+MUST NOT be misreported as physical zero burning.
+
+#### 11.4.2 Tabulated pressure backend
+
+The tabulated backend represents measured or otherwise externally calibrated
+pairs:
+
+```text
+(P_i, r_i)
+```
+
+where each `P_i` is absolute pressure in pascals and each `r_i` is positive
+linear surface-regression rate in meters per second.
+
+The native scalar-family table model contains a borrowed immutable point-storage
+reference and an explicit point count. Point storage remains caller-owned for the
+lifetime of every validation or evaluation that consumes the model. The library
+MUST NOT require allocation or make an undocumented copy of the point set.
+
+A null table-model pointer or null point-storage reference returns
+`BBTC_STATUS_INVALID_ARGUMENT`. A table with fewer than two points returns
+`BBTC_STATUS_OUTSIDE_DOMAIN`.
+
+Every pressure and burn-rate value MUST be finite and strictly positive, and
+pressures MUST be strictly increasing. After NaN and infinity classification,
+a finite nonpositive pressure, finite nonpositive burn rate, or failure of the
+strictly increasing pressure ordering returns `BBTC_STATUS_OUTSIDE_DOMAIN`.
+Burn-rate values are not required to be monotonic; the table may therefore
+represent curvature, plateau-like behavior, mesa-like behavior, or changing
+local pressure exponents when supported by the supplied data.
+
+Structural validation of the model pointer, point-storage reference, and count
+precedes scalar-data validation. Within the tabulated scalar-data layer, any NaN
+in the complete point set takes precedence over any infinity; infinity takes
+precedence over finite-domain and ordering failures.
+
+The represented pressure domain is the closed interval from the first pressure
+knot through the last pressure knot. IB0.4d deliberately performs no tabulated
+pressure extrapolation. A finite pressure outside that represented interval
+returns `BBTC_STATUS_OUTSIDE_DOMAIN` rather than extending the first or last
+segment beyond measured support.
+
+Once a nonnull result pointer has been accepted and cleared, tabulated
+evaluation validates the complete table model before classifying the later
+direct pressure argument. Direct-pressure NaN returns `BBTC_STATUS_NAN_INPUT`;
+positive or negative infinity returns `BBTC_STATUS_NONFINITE_INPUT`; a finite
+pressure outside the represented interval returns
+`BBTC_STATUS_OUTSIDE_DOMAIN`.
+
+Evaluation at an exact knot MUST return the corresponding stored burn rate.
+Between adjacent knots, the initial interpolation contract is mathematically
+piecewise linear in log-pressure/log-burn-rate space:
+
+```text
+x = ln(P / P0) / ln(P1 / P0)
+r = r0 * exp(x * ln(r1 / r0))
+```
+
+Every logarithm therefore acts on a dimensionless positive ratio. These
+equations define the interpolation relation, not a mandatory floating-point
+operation sequence. The implementation SHOULD use algebraically equivalent
+forms, including forms based on `log1p`-style evaluation where useful, when they
+reduce cancellation, avoid unnecessary intermediate range loss, or otherwise
+improve native-precision robustness while preserving the same mathematical
+interpolation and exact-knot behavior.
+
+The interpolation is equivalent to a local pressure-power relation within each
+interval while allowing the effective pressure exponent to vary from interval
+to interval. It MUST preserve positive burn rate and MUST NOT replace the
+specified piecewise log/log relation with a higher-order unconstrained spline
+that can overshoot between knots.
+
+Accepted finite inputs that cannot produce the required finite positive native
+result return `BBTC_STATUS_NUMERICAL_FAILURE`. The evaluator MUST NOT clamp a
+failed result or silently substitute a neighboring knot.
+
+The tabulated backend preserves the supplied empirical curve more directly than
+a single pressure-power fit, but it does not remove measurement uncertainty,
+test-fixture dependence, temperature dependence, lot variation, or other model
+limitations. More tabulated points do not imply more physical certainty than the
+measurements support.
+
+#### 11.4.3 Temperature dependence
+
+Initial condensed-propellant temperature is a physically distinct input owned by
+the IB0.4c initial-propellant-condition record. Pressure-only kinetics MUST NOT
+silently copy ambient temperature, initial free-gas temperature, chamber-wall
+temperature, or another population's temperature into that record.
+
+A pressure-only `r(P)` backend MUST NOT accept a temperature argument and then
+quietly ignore it. Conversely, a temperature-aware backend MUST NOT alter burn
+rate from temperature without an explicit calibrated temperature-response model.
+
+A pressure-only model or catalog record MAY preserve the conditioning or
+reference temperature at which its coefficients or table were measured as
+provenance. That temperature metadata does not itself modify the evaluated burn
+rate and MUST NOT be presented as a temperature correction. A higher-level
+validation layer MAY use it to diagnose a mismatch between simulation conditions
+and source-data conditions.
+
+A later temperature-aware kinetics backend may represent, for example:
+
+- a documented compact pressure/temperature response law;
+- temperature-indexed pressure-power fits; or
+- a tabulated pressure/temperature-to-regression-rate surface.
+
+The concrete representation MUST state its interpolation or response equation,
+temperature calibration domain, source data, and behavior outside that domain.
+When a selected kinetics backend requires initial propellant temperature, it
+MUST consume the matching native-precision IB0.4c initial-propellant-condition
+record.
+
+The existence of an initial propellant temperature therefore does not itself
+define a temperature correction. Temperature sensitivity is empirical
+propellant data and MUST NOT be invented from a generic constant.
+
+The solver or result metadata MUST make it possible to determine whether the
+selected burn-kinetics backend was temperature-aware. A pressure-only model MUST
+NOT be presented as having accounted for initial-temperature sensitivity merely
+because the surrounding simulation contains an initial propellant temperature.
+
+#### 11.4.4 Calibration, provenance, and interpretation
+
+Relative-quickness charts, marketing powder names, published charge tables,
+muzzle velocity, and peak chamber pressure are not direct substitutes for
+calibrated linear surface-regression-rate data.
+
+A catalog layer MAY map a named propellant product or formulation to a versioned
+kinetics record, but that mapping SHOULD preserve, when known:
+
+- source and test method;
+- propellant lot or formulation identity;
+- conditioning temperature;
+- pressure domain;
+- measurement uncertainty or repeatability;
+- raw tabulated data or derivation method;
+- fitted-model residuals or other fit-quality information; and
+- record revision.
+
+A numerically precise evaluation does not imply equally precise physical
+knowledge. Model-fit error, measurement uncertainty, test-fixture differences,
+and firing-environment differences remain part of the engineering error budget.
+
+IB0.4d burn-kinetics backends MUST NOT:
+
+- ignite propellant or determine ignition progression;
+- calculate burning surface from grain geometry;
+- infer whole-charge grain count or grain-size distribution;
+- calculate reacted-propellant mass rate by themselves;
+- apply undocumented temperature, deterrent, erosive, or aging corrections;
+- generate combustion-product mass or reaction energy;
+- evolve chamber pressure or gas temperature;
+- move the projectile;
+- select a named commercial powder from relative quickness; or
+- make an ammunition/firearm safety judgment.
 
 ## 12. Initial physical model
 
 The first complete internal-ballistics model is a zero-dimensional,
-lumped-parameter model. Its target scope is:
+lumped-parameter engineering model. Its target scope is:
 
-- spatially uniform mean gas state;
-- pressure-dependent propellant surface regression;
+- explicit initial free-gas absolute pressure and temperature;
+- explicit initial condensed-propellant temperature;
+- initial free-gas mass and density closure from the selected gas model;
+- a documented ignition model or explicitly identified simplified ignition
+  assumption;
+- empirical propellant surface-regression kinetics;
+- temperature-aware burn kinetics when a calibrated selected backend supports
+  that dependence;
 - burn-surface evolution from grain geometry;
-- a nonideal Noble-Abel-style gas equation of state;
-- an explicit energy balance;
-- changing volume as the projectile moves;
-- a defined projectile-start and bore-resistance model;
+- explicit coupling from charge mass, condensed density, grain geometry, and
+  regression rate to whole-charge reacted-mass rate;
+- reduced propellant thermochemical gas-mass and reaction-energy source terms;
+- an explicit closure for the evolving initial-gas and combustion-product gas
+  populations;
+- a selected reduced gas equation of state and compatible caloric model;
+- an explicit single-shot energy balance;
+- changing gas volume as propellant is consumed and the projectile moves;
+- a documented lumped pressure-gradient/gas-inertia correction that can
+  distinguish mean, breech, and projectile-base pressure without claiming to
+  resolve a spatial pressure field;
+- an explicit pressure boundary ahead of the projectile, with equality to
+  ambient pressure only through a documented input or helper policy;
+- a defined projectile-start/engraving and bore-resistance model;
 - adaptive integration of the coupled state;
-- accurate location of projectile-start and muzzle-exit events;
+- accurate location of ignition-related events represented by the model,
+  projectile start, propellant burnout when applicable, and muzzle exit;
 - energy-accounting diagnostics;
-- optional time-history sampling.
+- model/applicability metadata;
+- optional time-history sampling; and
+- reproducible identification of every active physical backend.
 
-Mean chamber pressure and estimated projectile-base pressure are distinct result
-concepts even when an early model makes them numerically equal. A result field
-MUST NOT be marked valid until its corresponding model exists.
+Mean chamber pressure, estimated breech pressure, estimated projectile-base
+pressure, and pressure ahead of the projectile are distinct physical concepts.
+A lumped correction may derive several of them from one mean state, but the
+result MUST NOT imply that a zero-dimensional model resolved multidimensional
+pressure waves or a full spatial field.
+
+A primitive burn-kinetics evaluator receives one explicit absolute-pressure
+scalar and does not infer whether that scalar represents mean, breech,
+projectile-base, or another modeled pressure quantity. The coupled-solver
+contract MUST explicitly define and expose which modeled pressure quantity drives
+the selected burn-kinetics backend. The solver MUST NOT silently substitute a
+different pressure convention when a pressure-gradient correction is enabled or
+disabled.
+
+The first complete model MAY use an adiabatic single-shot energy balance while
+detailed wall, case, barrel, projectile, and unburned-propellant heat transfer
+remains deferred. That approximation MUST be identifiable in the model
+configuration or result metadata.
+
+An initial helper MAY explicitly construct initial free-gas conditions from a
+supplied ambient state, but the low-level physical records MUST NOT silently
+equate chamber gas, propellant, or forward-bore conditions with ambient
+conditions.
 
 Individual physical effects SHOULD be independently selectable where doing so
-supports testing and scientific comparison. A disabled effect must be recorded
-in the model configuration or result metadata.
+supports verification, validation, sensitivity analysis, or scientific
+comparison. A disabled effect MUST be recorded in the model configuration or
+result metadata.
 
-## 13. Deferred physical effects
+## 13. Deferred and evidence-driven physical effects
 
-The initial model deliberately does not claim to resolve:
+The first complete engineering model deliberately does not claim to resolve:
 
-- multidimensional gas flow or pressure waves;
-- spatial primer-flame propagation;
-- granular-bed gas permeability;
-- grain fracture, migration, or collision;
-- erosive burning;
-- deterrent-coating diffusion or multi-zone chemistry;
-- detailed heat transfer to case, chamber, projectile, and barrel;
+- multidimensional gas flow, shocks, or pressure waves;
+- full spatial primer-flame propagation;
+- detailed granular-bed gas permeability;
+- individual-grain fracture, migration, collision, or orientation;
+- explicit grain-to-grain manufacturing distributions;
+- erosive burning unless a later calibrated model earns inclusion;
+- depth-dependent deterrent/coating diffusion or multi-zone chemistry;
+- evolving condensed-propellant temperature beyond the selected initial or
+  reduced temperature-response model;
+- detailed heat transfer to case, chamber, projectile, propellant, and barrel;
 - gas leakage, blow-by, or obturation failure;
-- elastic or plastic case and chamber deformation;
-- detailed projectile engraving deformation;
-- barrel wear, erosion, or changing roughness;
+- detailed compression and expulsion of bore gas ahead of the projectile beyond
+  the selected forward-pressure boundary model;
+- elastic or plastic cartridge-case and chamber deformation;
+- detailed finite-element projectile engraving or rifling deformation;
+- detailed gas-species reaction chemistry or full chemical equilibrium;
+- barrel thermoelastic response, wear, erosion, or changing roughness;
 - structural firearm failure;
 - stochastic cartridge or firearm explosion probability;
 - full rotating-system and recoil-system dynamics;
+- one-, two-, or three-dimensional combustion-flow CFD; or
 - external ballistics.
 
-These are deferred, not forbidden. Each enters as a versioned, testable model
-term rather than an invisible correction factor.
+These effects are deferred, not forbidden. Each MUST enter, if justified, as a
+versioned and independently testable model term rather than an invisible
+correction factor.
+
+Promotion of a deferred effect into the default engineering model SHOULD be
+supported by the section 2.1 engineering-fidelity criteria, validation evidence,
+or sensitivity analysis showing that the effect materially improves intended
+outputs or expands a useful applicability domain.
+
+An effect whose expected contribution is smaller than the uncertainty of the
+parameters required to model it SHOULD normally remain optional or deferred.
+This rule does not prohibit research-oriented implementations; it prevents
+research complexity from silently becoming a mandatory engineering dependency.
 
 ## 14. Internal-ballistics result boundary
 
@@ -2046,9 +2458,14 @@ Catalog and calibration records SHOULD carry:
 - schema version;
 - source citation or source description;
 - publication or retrieval date when applicable;
-- lot, temperature, and test-fixture assumptions when known;
-- uncertainty when known;
-- calibration domain;
+- lot, formulation, conditioning temperature, and test-fixture assumptions when
+  known;
+- measurement or parameter uncertainty when known;
+- repeatability statistics when available;
+- represented and calibrated domains;
+- raw measurement-set identity or location when applicable;
+- derivation or fitting method when a compact model was fitted from data;
+- fit residuals or other fit-quality metrics when available; and
 - revision history.
 
 A simulation result SHOULD be reproducible from:
@@ -2062,6 +2479,41 @@ A simulation result SHOULD be reproducible from:
 - BBTC library version.
 
 The core solver MUST NOT fetch data from a network.
+
+### 15.1 Sensitivity and uncertainty analysis
+
+After the first coupled internal-ballistics solver exists, BBTC SHOULD support
+repeatable sensitivity and uncertainty studies over selected physical inputs and
+model parameters.
+
+Such studies are intended to answer engineering questions such as whether
+uncertainty in charge mass, grain dimensions, burn kinetics, initial propellant
+temperature, thermochemical parameters, gas-model parameters, projectile
+resistance, or another input materially controls uncertainty in an output.
+
+Relevant outputs include, when modeled:
+
+- muzzle velocity;
+- peak mean, breech, and projectile-base pressure;
+- muzzle pressure;
+- barrel time;
+- propellant burnout time and position;
+- burn fraction at muzzle exit; and
+- energy-accounting residuals.
+
+Sensitivity results MUST NOT be interpreted as proof that omitted physics is
+irrelevant outside the studied input and calibration domain.
+
+When an optional physical effect changes an intended engineering output by less
+than the uncertainty already induced by supported inputs or experimental
+variation, that evidence MAY justify leaving the effect optional or deferred.
+When an effect materially changes the result and its parameters can be supplied
+with useful fidelity, that evidence SHOULD weigh in favor of implementing or
+promoting the model.
+
+Uncertainty analysis MUST distinguish numerical precision from parameter,
+calibration, and physical-model uncertainty. Additional floating-point digits
+MUST NOT be presented as additional experimental certainty.
 
 ## 16. Verification and validation
 
@@ -2078,6 +2530,8 @@ Tests will include, as the relevant code appears:
 
 - input-validation tests;
 - unit tests for geometry and burn laws;
+- pressure-power fit-residual studies against source burn-rate data;
+- exact-knot and between-knot tests for tabulated burn-rate interpolation;
 - dimensional and limiting-case checks;
 - closed-bomb tests;
 - energy and monotonicity invariants;
@@ -2086,6 +2540,9 @@ Tests will include, as the relevant code appears:
 - cross-precision comparisons over declared input domains;
 - event-location tests;
 - regression tests with explained tolerances;
+- sensitivity and uncertainty studies for influential physical inputs;
+- comparisons showing whether optional model terms materially improve suitable
+  reference cases;
 - sanitizer runs;
 - fuzz or property tests for parsers and validation boundaries;
 - comparison with cited experimental pressure and velocity data.
@@ -2810,3 +3267,47 @@ IB0.4c is complete when:
   provenance, burn kinetics, thermal evolution, chemistry, and safety; and
 - strict GCC, strict Clang, AddressSanitizer, UndefinedBehaviorSanitizer, C++,
   independent-consumer, and full CTest gates pass.
+
+## 44. Acceptance criteria for IB0.4d-A
+
+IB0.4d-A is complete when:
+
+- section 2 records the engineering-fidelity and model-inclusion policy,
+  including the four explicit questions governing whether additional physical
+  complexity belongs in the default engineering model;
+- section 11.4 defines the physical meaning and coexistence of normalized
+  pressure-power and tabulated pressure burn-kinetics backends without hidden
+  backend selection;
+- the common burn-rate result contract defines applicability metadata,
+  deterministic clearing after a nonnull output is accepted, and the distinction
+  between successful mathematical zero rate and failed positive-rate arithmetic;
+- the pressure-power contract defines absolute-pressure semantics, normalization,
+  finite-domain status, validation ordering, calibration-domain behavior
+  including zero-pressure applicability, exact zero-pressure and
+  reference-pressure boundaries, range-robust implementation freedom, and
+  numerical-failure behavior;
+- the tabulated contract defines borrowed immutable point storage, structural
+  validation precedence and finite-domain statuses, finite positive and strictly
+  increasing pressure knots, positive burn rates, dimensionless-ratio
+  log-pressure/log-rate interpolation, numerically equivalent implementation
+  freedom, exact-knot behavior, and deliberate rejection of extrapolation;
+- the contract preserves the separation between grain geometry, linear
+  regression rate, whole-charge reacted-mass rate, ignition, thermochemistry,
+  and projectile dynamics;
+- temperature dependence is explicitly tied to the IB0.4c initial propellant
+  condition and may affect kinetics only through a documented calibrated
+  temperature-response backend;
+- the first complete solver boundary includes explicit initial gas and
+  propellant thermal conditions, burn kinetics, grain/charge coupling,
+  thermochemical sources, gas/energy closure, a lumped pressure-gradient
+  correction, explicit identification of the pressure quantity driving burn
+  kinetics, forward pressure, projectile resistance, and coupled integration;
+- deferred physical effects are governed by the section 2.1 evidence/ROI policy
+  rather than by an assumption that greater model complexity is automatically
+  better;
+- provenance, fit-quality, sensitivity, uncertainty, and validation expectations
+  are recorded;
+- the contract has been reviewed and its status changed from `Draft` to
+  `Accepted` before the checkpoint is committed; and
+- IB0.4d-A changes documentation only and introduces no public symbol, source
+  implementation, solver, firing prediction, or safety judgment.
