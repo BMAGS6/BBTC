@@ -6,9 +6,9 @@
 
 **Applies to:** `rewrite/ib0_4d_empirical_propellant_burn_kinetics_contract_v1`
 
-**Status:** Draft
+**Status:** Accepted
 
-**Date:** 2026-09-04
+**Date:** 2026-09-05
 
 ## 1. Purpose
 
