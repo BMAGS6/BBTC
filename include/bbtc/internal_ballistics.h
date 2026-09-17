@@ -14,6 +14,7 @@
 #include <bbtc/internal_ballistics/initial_gas_closure.h>
 #include <bbtc/internal_ballistics/initial_propellant_condition.h>
 #include <bbtc/internal_ballistics/projectile.h>
+#include <bbtc/internal_ballistics/propellant_burn_kinetics.h>
 #include <bbtc/internal_ballistics/propellant_charge.h>
 #include <bbtc/internal_ballistics/propellant_grain_geometry.h>
 #include <bbtc/internal_ballistics/propellant_thermochemistry.h>

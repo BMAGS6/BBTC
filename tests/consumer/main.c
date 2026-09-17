@@ -594,6 +594,58 @@ check_propellant_thermochemistry_contract(void)
 
 
 /**
+ * @brief Verifies pressure-power burn kinetics through an independent consumer.
+ *
+ * @details
+ * The exact reference-pressure case verifies public umbrella-header visibility,
+ * static-library linkage, model validation, common result layout, and exact
+ * reference-state semantics without depending on transcendental tolerance.
+ * Detailed boundary and numerical behavior remains in the dedicated IB0.4d
+ * unit test.
+ *
+ * @return `EXIT_SUCCESS` when the public pressure-power API produces the exact
+ *         reference burn rate; otherwise `EXIT_FAILURE`.
+ */
+static int
+check_propellant_burn_kinetics_contract(void)
+{
+    const bbtc_ib_pressure_power_burn_kinetics_double_t model =
+    {
+        .reference_burn_rate_m_per_s    = 0.25,
+        .reference_pressure_pa          = 100.0,
+        .pressure_exponent              = 1.0,
+        .minimum_calibrated_pressure_pa = 50.0,
+        .maximum_calibrated_pressure_pa = 200.0
+    };
+
+    bbtc_ib_propellant_burn_kinetics_result_double_t result = {0};
+
+    if (bbtc_ib_pressure_power_burn_kinetics_validate_double(&model)
+        != BBTC_STATUS_SUCCESS)
+    {
+        return EXIT_FAILURE;
+    }
+
+    if (bbtc_ib_pressure_power_burn_kinetics_evaluate_double(
+            &model,
+            model.reference_pressure_pa,
+            &result
+        ) != BBTC_STATUS_SUCCESS)
+    {
+        return EXIT_FAILURE;
+    }
+
+    if (result.applicability_flags != BBTC_APPLICABILITY_NONE_REPORTED
+        || result.burn_rate_m_per_s != model.reference_burn_rate_m_per_s)
+    {
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+
+/**
  * @brief Exercises public BBTC headers and linked diagnostic symbols.
  *
  * @return `EXIT_SUCCESS` when the external consumer contract works; otherwise
@@ -606,6 +658,9 @@ int main(void)
         return EXIT_FAILURE;
 
     if (check_propellant_thermochemistry_contract() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
+
+    if (check_propellant_burn_kinetics_contract() != EXIT_SUCCESS)
         return EXIT_FAILURE;
 
 

@@ -1,6 +1,6 @@
 # BBTC Reconstruction Design Contract
 
-**Contract version:** 0.1.17
+**Contract version:** 0.1.18
 
 **Project phase:** IB0.4d
 
@@ -8,7 +8,7 @@
 
 **Status:** Accepted
 
-**Date:** 2026-09-05
+**Date:** 2026-09-17
 
 ## 1. Purpose
 
@@ -2051,6 +2051,43 @@ The exact public result-type names and declaration layout are frozen when the
 first concrete kinetics API is introduced; this section freezes their physical,
 diagnostic, and failure-output semantics.
 
+IB0.4d-B1 freezes the first concrete public kinetics declarations in
+`<bbtc/internal_ballistics/propellant_burn_kinetics.h>`. The normalized
+pressure-power model types are:
+
+```c
+bbtc_ib_pressure_power_burn_kinetics_float_t
+bbtc_ib_pressure_power_burn_kinetics_double_t
+bbtc_ib_pressure_power_burn_kinetics_long_double_t
+```
+
+The common result types, intentionally reusable by later empirical kinetics
+backends, are:
+
+```c
+bbtc_ib_propellant_burn_kinetics_result_float_t
+bbtc_ib_propellant_burn_kinetics_result_double_t
+bbtc_ib_propellant_burn_kinetics_result_long_double_t
+```
+
+The first concrete validator and evaluator families are:
+
+```c
+bbtc_ib_pressure_power_burn_kinetics_validate_float(...)
+bbtc_ib_pressure_power_burn_kinetics_validate_double(...)
+bbtc_ib_pressure_power_burn_kinetics_validate_long_double(...)
+
+bbtc_ib_pressure_power_burn_kinetics_evaluate_float(...)
+bbtc_ib_pressure_power_burn_kinetics_evaluate_double(...)
+bbtc_ib_pressure_power_burn_kinetics_evaluate_long_double(...)
+```
+
+Each pressure-power model record contains exactly the five continuous quantities
+already defined by section 11.4.1 in its native scalar family. Each common result
+contains exactly `bbtc_applicability_flags_t applicability_flags` followed by
+one native `burn_rate_m_per_s` scalar. No exact structure-size equality is
+promised; ordinary implementation padding remains permitted.
+
 #### 11.4.1 Normalized pressure-power backend
 
 The normalized pressure-power relation is:
@@ -3311,3 +3348,41 @@ IB0.4d-A is complete when:
   `Accepted` before the checkpoint is committed; and
 - IB0.4d-A changes documentation only and introduces no public symbol, source
   implementation, solver, firing prediction, or safety judgment.
+
+## 45. Acceptance criteria for IB0.4d-B1
+
+IB0.4d-B1 is complete when:
+
+- `<bbtc/internal_ballistics/propellant_burn_kinetics.h>` is public through the
+  internal-ballistics umbrella-header chain and is usable from C23 and C++11;
+- native `float`, `double`, and `long double` normalized pressure-power model
+  records expose exactly the five continuous quantities frozen by section
+  11.4.1 without routing one scalar family through another;
+- the common native result records expose applicability metadata and linear
+  surface-regression rate with the physical meaning frozen by section 11.4;
+- model validators implement null, complete-record NaN-before-infinity, and
+  finite-domain precedence, including positive exponent, ordered calibration
+  bounds, and reference-pressure containment;
+- pressure-power evaluators clear a nonnull result before later failure, preserve
+  model-validation precedence over the direct pressure argument, accept exact
+  zero pressure as the documented zero-rate mathematical boundary, and preserve
+  the reference-pressure burn rate exactly;
+- successful evaluation outside the inclusive calibrated-pressure interval sets
+  `BBTC_APPLICABILITY_OUTSIDE_CALIBRATION_DOMAIN` without clipping pressure;
+- positive-pressure evaluation uses native-scalar, algebraically equivalent
+  arithmetic intended to avoid unnecessary intermediate range loss, and a
+  required positive result that becomes zero or nonfinite is reported as
+  `BBTC_STATUS_NUMERICAL_FAILURE`;
+- dedicated tests cover every scalar family, model validation, mixed NaN/infinity
+  precedence, finite-domain failures, exact zero/reference boundaries,
+  calibration endpoints, out-of-calibration applicability, deterministic output
+  clearing, positive representable floors, and overflow/underflow failure;
+- the independent CMake consumer exercises the new public declarations and
+  linked evaluator, while the C++ public-header test verifies native field types;
+- the tabulated-pressure backend, temperature-aware kinetics, ignition,
+  regression-to-mass coupling, thermochemical coupling, chamber evolution,
+  projectile motion, and firing prediction remain outside this increment;
+- strict GCC, strict Clang, AddressSanitizer, UndefinedBehaviorSanitizer, C++,
+  independent-consumer, and full CTest gates pass; and
+- contract version 0.1.18 is reviewed and changed from `Draft` to `Accepted`
+  before IB0.4d-B1 is committed.

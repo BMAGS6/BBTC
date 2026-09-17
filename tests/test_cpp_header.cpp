@@ -614,6 +614,62 @@ static_assert(
 );
 
 
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_pressure_power_burn_kinetics_float_t{}
+                .reference_burn_rate_m_per_s
+        ),
+        float
+    >::value,
+    "float pressure-power kinetics must use native float fields"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_pressure_power_burn_kinetics_double_t{}
+                .pressure_exponent
+        ),
+        double
+    >::value,
+    "double pressure-power kinetics must use native double fields"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_pressure_power_burn_kinetics_long_double_t{}
+                .maximum_calibrated_pressure_pa
+        ),
+        long double
+    >::value,
+    "long-double pressure-power kinetics must use native long-double fields"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_propellant_burn_kinetics_result_double_t{}
+                .applicability_flags
+        ),
+        bbtc_applicability_flags_t
+    >::value,
+    "burn-kinetics result must use the public applicability-mask type"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_propellant_burn_kinetics_result_long_double_t{}
+                .burn_rate_m_per_s
+        ),
+        long double
+    >::value,
+    "long-double burn-kinetics result must use native long double"
+);
+
+
 int main()
 {
 

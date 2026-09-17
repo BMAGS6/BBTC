@@ -7,7 +7,7 @@ Cubes of Honor.
 
 ## Current status
 
-The rewrite is in **IB0.4c**. This checkpoint contains:
+The rewrite is in **IB0.4d**. This checkpoint contains:
 
 - a strict C23 CMake/Ninja library target;
 - the namespaced CMake alias `bbtc::bbtc`;
@@ -48,6 +48,11 @@ The rewrite is in **IB0.4c**. This checkpoint contains:
 - native precision-qualified initial condensed-propellant condition records
   carrying explicit absolute propellant temperature with no ambient, case,
   chamber, or initial-free-gas temperature alias;
+- native precision-qualified normalized pressure-power propellant burn-kinetics
+  records with explicit reference-rate, reference-pressure, pressure-exponent,
+  and calibrated-pressure-domain semantics;
+- concrete pressure-power burn-kinetics evaluators with exact zero/reference
+  boundaries, calibration applicability metadata, and numerical-failure handling;
 - native precision-qualified calorically perfect Noble-Abel gas-model backend
   records with explicit ideal-gas-limit semantics and validation;
 - native precision-qualified temperature-dependent first-order density-virial
@@ -97,8 +102,10 @@ products and report the associated effective reaction internal-energy release.
 IB0.4b now also evaluates canonical individual-grain geometry as an explicitly
 supplied normal regression distance advances, exposing remaining solid volume,
 burning surface area, remaining regression distance to burnout, and consumed
-volume fraction. It still does not determine regression rate, reacted-mass rate,
-ignition, mixed chamber-gas evolution, projectile motion, or a firing prediction.
+volume fraction. IB0.4d now also evaluates pressure-dependent linear surface-regression rate
+through the normalized pressure-power backend. It still does not determine
+ignition, whole-charge reacted-mass rate, mixed chamber-gas evolution,
+projectile motion, or a firing prediction.
 
 The accepted reconstruction rules live in
 [`docs/design/BBTC_DESIGN_CONTRACT.md`](docs/design/BBTC_DESIGN_CONTRACT.md).
