@@ -6,9 +6,9 @@
 
 **Applies to:** `rewrite/ib0_4d_empirical_propellant_burn_kinetics_contract_v1`
 
-**Status:** Draft
+**Status:** Accepted
 
-**Date:** 2026-09-18
+**Date:** 2026-10-02
 
 ## 1. Purpose
 
@@ -3468,3 +3468,10 @@ IB0.4d-B2 is complete when:
   independent-consumer, and full CTest gates pass; and
 - contract version 0.1.19 is reviewed and changed from `Draft` to `Accepted`
   before IB0.4d-B2 is committed.
+
+**Acceptance note (2026-10-02):** The IB0.4d-B2 implementation commit
+`0d391d67f75b01c7dc333173e054b2b56c6d3b68` was committed and pushed while
+contract version 0.1.19 still carried `Draft` status. The required verification
+gates, including the repository CI workflow, passed on that implementation
+commit. This follow-up acceptance records formal contract acceptance without
+rewriting already-published history.
