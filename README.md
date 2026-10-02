@@ -53,6 +53,11 @@ The rewrite is in **IB0.4d**. This checkpoint contains:
   and calibrated-pressure-domain semantics;
 - concrete pressure-power burn-kinetics evaluators with exact zero/reference
   boundaries, calibration applicability metadata, and numerical-failure handling;
+- native precision-qualified pressure/burn point and pressure-burn-table records
+  with borrowed immutable caller storage and explicit point counts;
+- concrete pressure-burn-table evaluators with complete-table validation,
+  exact-knot recovery, no pressure extrapolation, and piecewise
+  log-pressure/log-burn-rate interpolation;
 - native precision-qualified calorically perfect Noble-Abel gas-model backend
   records with explicit ideal-gas-limit semantics and validation;
 - native precision-qualified temperature-dependent first-order density-virial
@@ -102,10 +107,11 @@ products and report the associated effective reaction internal-energy release.
 IB0.4b now also evaluates canonical individual-grain geometry as an explicitly
 supplied normal regression distance advances, exposing remaining solid volume,
 burning surface area, remaining regression distance to burnout, and consumed
-volume fraction. IB0.4d now also evaluates pressure-dependent linear surface-regression rate
-through the normalized pressure-power backend. It still does not determine
-ignition, whole-charge reacted-mass rate, mixed chamber-gas evolution,
-projectile motion, or a firing prediction.
+volume fraction. IB0.4d now also evaluates pressure-dependent linear
+surface-regression rate through both normalized pressure-power and tabulated
+pressure-burn-table backends. It still does not determine ignition, whole-charge
+reacted-mass rate, mixed chamber-gas evolution, projectile motion, or a firing
+prediction.
 
 The accepted reconstruction rules live in
 [`docs/design/BBTC_DESIGN_CONTRACT.md`](docs/design/BBTC_DESIGN_CONTRACT.md).

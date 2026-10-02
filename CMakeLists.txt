@@ -55,6 +55,7 @@ add_library(
     src/internal/initial_propellant_condition.c
     src/internal/loading_state.c
     src/internal/projectile.c
+    src/internal/pressure_burn_table.c
     src/internal/pressure_power_burn_kinetics.c
     src/internal/propellant_charge.c
     src/internal/propellant_grain_geometry.c

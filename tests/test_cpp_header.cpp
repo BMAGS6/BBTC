@@ -670,6 +670,51 @@ static_assert(
 );
 
 
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_pressure_burn_point_float_t{}
+                .pressure_pa
+        ),
+        float
+    >::value,
+    "float pressure-burn point must use native float pressure"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_pressure_burn_point_long_double_t{}
+                .burn_rate_m_per_s
+        ),
+        long double
+    >::value,
+    "long-double pressure-burn point must use native long-double burn rate"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_pressure_burn_table_double_t{}
+                .points
+        ),
+        const bbtc_ib_pressure_burn_point_double_t*
+    >::value,
+    "pressure-burn table must borrow immutable matching point storage"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_pressure_burn_table_long_double_t{}
+                .point_count
+        ),
+        std::size_t
+    >::value,
+    "pressure-burn table point count must use size_t"
+);
+
+
 int main()
 {
 

@@ -1,14 +1,14 @@
 # BBTC Reconstruction Design Contract
 
-**Contract version:** 0.1.18
+**Contract version:** 0.1.19
 
 **Project phase:** IB0.4d
 
 **Applies to:** `rewrite/ib0_4d_empirical_propellant_burn_kinetics_contract_v1`
 
-**Status:** Accepted
+**Status:** Draft
 
-**Date:** 2026-09-17
+**Date:** 2026-09-18
 
 ## 1. Purpose
 
@@ -2208,6 +2208,42 @@ pairs:
 where each `P_i` is absolute pressure in pascals and each `r_i` is positive
 linear surface-regression rate in meters per second.
 
+IB0.4d-B2 freezes the concrete public names for the tabulated backend in
+`<bbtc/internal_ballistics/propellant_burn_kinetics.h>`. The point types are:
+
+```c
+bbtc_ib_pressure_burn_point_float_t
+bbtc_ib_pressure_burn_point_double_t
+bbtc_ib_pressure_burn_point_long_double_t
+```
+
+The borrowed table-model types are:
+
+```c
+bbtc_ib_pressure_burn_table_float_t
+bbtc_ib_pressure_burn_table_double_t
+bbtc_ib_pressure_burn_table_long_double_t
+```
+
+The corresponding validator and evaluator families are:
+
+```c
+bbtc_ib_pressure_burn_table_validate_float(...)
+bbtc_ib_pressure_burn_table_validate_double(...)
+bbtc_ib_pressure_burn_table_validate_long_double(...)
+
+bbtc_ib_pressure_burn_table_evaluate_float(...)
+bbtc_ib_pressure_burn_table_evaluate_double(...)
+bbtc_ib_pressure_burn_table_evaluate_long_double(...)
+```
+
+Each point record contains one native `pressure_pa` and one native
+`burn_rate_m_per_s`. Each table record contains a borrowed immutable pointer to
+the matching point type plus a `size_t point_count`. These names deliberately use
+`pressure_burn_table` rather than the longer
+`tabulated_pressure_burn_kinetics` phrase while preserving the independent
+variable, modeled behavior, and representation in the public symbol.
+
 The native scalar-family table model contains a borrowed immutable point-storage
 reference and an explicit point count. Point storage remains caller-owned for the
 lifetime of every validation or evaluation that consumes the model. The library
@@ -3386,3 +3422,49 @@ IB0.4d-B1 is complete when:
   independent-consumer, and full CTest gates pass; and
 - contract version 0.1.18 is reviewed and changed from `Draft` to `Accepted`
   before IB0.4d-B1 is committed.
+
+## 46. Acceptance criteria for IB0.4d-B2
+
+IB0.4d-B2 is complete when:
+
+- native `float`, `double`, and `long double` pressure/burn point records expose
+  absolute pressure in pascals and linear normal surface-regression rate in
+  meters per second;
+- native pressure-burn-table records borrow immutable caller-owned point storage
+  with an explicit `size_t` point count and perform no allocation or
+  undocumented copy;
+- table validation performs structural checks first, rejects fewer than two
+  points, applies complete-point-set NaN-before-infinity precedence, then
+  rejects finite nonpositive pressure/rate data or pressure ordering that is not
+  strictly increasing;
+- burn-rate values remain free to be nonmonotonic when the supplied empirical
+  data support that shape;
+- table evaluation clears a nonnull result before later failure, validates the
+  complete table before the direct pressure argument, accepts the closed first-
+  through-last-knot pressure interval, and rejects pressure extrapolation with
+  `BBTC_STATUS_OUTSIDE_DOMAIN`;
+- exact first, interior, and final pressure knots return their stored burn rates
+  exactly without transcendental reconstruction;
+- interpolation between adjacent knots implements the section 11.4.2 piecewise
+  log-pressure/log-burn-rate relation in the selected native scalar family and
+  uses algebraically equivalent forms where useful to avoid unnecessary ratio
+  overflow, underflow, or cancellation;
+- successful table evaluation reports no fabricated applicability limitation,
+  while an accepted finite calculation that cannot produce the required finite
+  positive native result reports `BBTC_STATUS_NUMERICAL_FAILURE`;
+- dedicated tests cover every scalar family, structural failures, whole-table
+  nonfinite precedence, finite positivity and ordering, explicitly
+  nonmonotonic-rate tables, exact knots, interpolation, represented-domain
+  rejection, deterministic output clearing, caller-storage immutability, and
+  extreme-scale native arithmetic;
+- the independent CMake consumer exercises the linked public table API and the
+  C++ public-header test verifies the native point, borrowed-pointer, and count
+  types;
+- temperature-aware kinetics, ignition, regression-to-mass coupling,
+  thermochemical coupling, chamber evolution, projectile motion, catalog
+  provenance infrastructure, and firing prediction remain outside this
+  increment;
+- strict GCC, strict Clang, AddressSanitizer, UndefinedBehaviorSanitizer, C++,
+  independent-consumer, and full CTest gates pass; and
+- contract version 0.1.19 is reviewed and changed from `Draft` to `Accepted`
+  before IB0.4d-B2 is committed.

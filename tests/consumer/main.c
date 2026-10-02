@@ -646,6 +646,60 @@ check_propellant_burn_kinetics_contract(void)
 
 
 /**
+ * @brief Verifies the pressure-burn table through an independent consumer.
+ *
+ * @details
+ * An exact interior knot verifies public point/table declarations, borrowed
+ * storage, static-library linkage, validation, evaluator dispatch, and exact
+ * stored-knot semantics without depending on transcendental tolerances.
+ *
+ * @return `EXIT_SUCCESS` when the public table API returns the exact stored
+ *         interior burn rate; otherwise `EXIT_FAILURE`.
+ */
+static int
+check_pressure_burn_table_contract(void)
+{
+    const bbtc_ib_pressure_burn_point_double_t points[] =
+    {
+        { .pressure_pa = 1.0, .burn_rate_m_per_s = 1.0 },
+        { .pressure_pa = 2.0, .burn_rate_m_per_s = 4.0 },
+        { .pressure_pa = 4.0, .burn_rate_m_per_s = 16.0 }
+    };
+
+    const bbtc_ib_pressure_burn_table_double_t model =
+    {
+        .points = points,
+        .point_count = 3U
+    };
+
+    bbtc_ib_propellant_burn_kinetics_result_double_t result = {0};
+
+    if (bbtc_ib_pressure_burn_table_validate_double(&model)
+        != BBTC_STATUS_SUCCESS)
+    {
+        return EXIT_FAILURE;
+    }
+
+    if (bbtc_ib_pressure_burn_table_evaluate_double(
+            &model,
+            points[1].pressure_pa,
+            &result
+        ) != BBTC_STATUS_SUCCESS)
+    {
+        return EXIT_FAILURE;
+    }
+
+    if (result.applicability_flags != BBTC_APPLICABILITY_NONE_REPORTED
+        || result.burn_rate_m_per_s != points[1].burn_rate_m_per_s)
+    {
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+
+/**
  * @brief Exercises public BBTC headers and linked diagnostic symbols.
  *
  * @return `EXIT_SUCCESS` when the external consumer contract works; otherwise
@@ -661,6 +715,9 @@ int main(void)
         return EXIT_FAILURE;
 
     if (check_propellant_burn_kinetics_contract() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
+
+    if (check_pressure_burn_table_contract() != EXIT_SUCCESS)
         return EXIT_FAILURE;
 
 
