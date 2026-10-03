@@ -1,10 +1,10 @@
 # BBTC Reconstruction Design Contract
 
-**Contract version:** 0.1.19
+**Contract version:** 0.1.20
 
-**Project phase:** IB0.4d
+**Project phase:** IB0.4e
 
-**Applies to:** `rewrite/ib0_4d_empirical_propellant_burn_kinetics_contract_v1`
+**Applies to:** `rewrite/ib0_4e_propellant_mass_rate_coupling_contract_v1`
 
 **Status:** Accepted
 
@@ -94,6 +94,63 @@ elaborate model whose additional inputs are unknown or weakly constrained.
 Sensitivity, uncertainty, and physical-validation studies SHOULD be used to
 revisit these decisions as the coupled solver matures. Model complexity is
 therefore evidence-driven rather than monotonically increasing.
+
+### 2.2 Numerical fidelity and engineering error-budget policy
+
+BBTC predicts physical behavior; it does not reproduce an unknowable exact
+trajectory, exact propellant-combustion history, or exact chamber state.
+Experimental scatter, parameter uncertainty, empirical-model error, unmodeled
+physics, manufacturing variation, and numerical error are distinct contributors
+to the total prediction error budget. A numerically precise answer MUST NOT be
+presented as physically exact merely because the arithmetic converged tightly.
+
+The numerical implementation SHOULD be accurate enough that avoidable numerical
+error is materially smaller than the uncertainty of the physical models and
+input data governing the quantity of interest. As an engineering guideline,
+when a credible physical/model/input uncertainty estimate exists, BBTC SHOULD
+normally target numerical error no larger than approximately one tenth of that
+uncertainty when doing so is practical. This approximately 10:1 separation is a
+design guideline, not a universal mathematical guarantee or a substitute for
+convergence testing.
+
+Numerical rigor remains important even when physical uncertainty is much larger.
+Implementations MUST still:
+
+- use the selected native scalar family without silently routing one precision
+  through another;
+- prefer algebraically equivalent forms that avoid unnecessary overflow,
+  underflow, catastrophic cancellation, or loss of significance;
+- preserve exact semantic boundaries when the contract defines them as exact;
+- report an explicit numerical failure when a mathematically required result
+  cannot be represented with the required sign and finiteness;
+- avoid clipping, saturation, or fabricated fallback values unless a separate
+  contract explicitly defines such behavior; and
+- support convergence or sensitivity checks where an iterative or discretized
+  algorithm can materially affect reported outputs.
+
+Conversely, BBTC MUST NOT demand bit-for-bit identities between independently
+computed interior derived quantities when doing so would require a numerically
+inferior operation sequence or would provide no meaningful engineering benefit.
+Small native-rounding differences are acceptable when each quantity is computed
+from a stable form of the same physical contract and the discrepancy is
+negligible relative to the applicable engineering error budget.
+
+Exact software semantics remain exact even when the underlying physical model is
+uncertain. Status precedence, deterministic failure-output clearing, exact
+identity states, exact supported endpoints, and explicitly specified zero-state
+behavior are contract requirements rather than statistical predictions.
+
+Tolerance selection for the future coupled solver SHOULD therefore be justified
+by convergence studies and by the physical/model uncertainty relevant to the
+reported result. Tightening a tolerance beyond the point at which output changes
+are immaterial relative to the engineering uncertainty is not automatically an
+improvement. Likewise, a numerically cheap approximation is acceptable only
+when its error remains controlled and immaterial at the intended fidelity.
+
+The purpose of this policy is to keep BBTC's numerical machinery quieter than
+the physics it is attempting to model. Model uncertainty MUST NOT be used as an
+excuse for avoidable numerical error, and numerical precision MUST NOT be used
+to imply physical certainty that the model or data do not support.
 
 ## 3. Project boundaries
 
@@ -2386,6 +2443,384 @@ IB0.4d burn-kinetics backends MUST NOT:
 - select a named commercial powder from relative quickness; or
 - make an ammunition/firearm safety judgment.
 
+### 11.5 Propellant regression-to-mass coupling
+
+IB0.4e introduces the engineering layer that maps one canonical grain's
+regression state and an already-evaluated linear surface-regression rate into
+whole-charge condensed-propellant volume, burning area, reacted mass, and
+reacted-mass rate. This layer connects the IB0.4b grain-geometry contract to the
+IB0.4d burn-kinetics contract without making either subsystem responsible for
+the other's physics.
+
+Regression distance remains the authoritative burn-progress state. IB0.4e does
+not introduce independently integrated reacted mass as a second competing
+progress coordinate. A later coupled solver advances the regression coordinate
+through `ds/dt`; grain geometry determines the corresponding geometric state;
+and the mass-coupling layer derives whole-charge mass quantities from that
+state. This ownership prevents numerical drift between an independently
+integrated mass fraction and the geometry that is supposed to represent the
+same propellant.
+
+#### 11.5.1 Required inputs and physical interpretation
+
+The initial coupling primitive consumes matching native-precision forms of:
+
+- one validated propellant-charge record containing initial charge mass `m0` and
+  constant condensed-phase material density `rho_p`;
+- one explicit positive initial canonical-grain volume `V_g0`, in cubic meters;
+- one current canonical-grain state produced by the IB0.4b geometry semantics;
+  and
+- one common IB0.4d burn-kinetics result containing linear normal
+  surface-regression rate `r = ds/dt` and its applicability flags.
+
+The initial single-grain volume is supplied explicitly rather than reconstructed
+from current remaining volume and consumed-volume fraction. A caller may obtain
+`V_g0` once by evaluating the selected canonical geometry at exact regression
+distance `s == 0` and may cache it as an invariant for later coupling calls.
+IB0.4e MUST NOT reconstruct `V_g0` from a quotient such as
+`V_g / (1 - f)` because that becomes poorly conditioned near burnout and is
+undefined at exact burnout.
+
+The coupling primitive is geometry-backend-neutral. It receives the common
+grain-state quantities and does not contain a geometry enumeration, tagged
+union, runtime function-pointer dispatch table, or geometry-specific formula.
+Likewise, it receives the common burn-kinetics result and does not know whether
+`r` came from the normalized pressure-power backend, the pressure-burn table,
+or a future compatible kinetics backend.
+
+For the initial IB0.4e model, condensed propellant material density is treated
+as constant during regression. Thermal expansion, porosity evolution,
+decomposition-driven density change, swelling, fracture, and other
+density-changing effects are outside this increment.
+
+#### 11.5.2 Equivalent population scale
+
+IB0.4e represents the complete charge as a real-valued equivalent population of
+identical canonical grains sharing one regression state. Define the initial
+condensed charge volume
+
+```text
+V_charge0 = m0 / rho_p
+```
+
+and the dimensionless equivalent population scale
+
+```text
+N_eq = V_charge0 / V_g0
+     = m0 / (rho_p * V_g0)
+```
+
+`N_eq` is a scaling factor, not a literal integer grain count. It MUST be
+permitted to take any finite strictly positive representable value, including a
+noninteger value or a value below one. No rounding to an integer grain count is
+permitted. A value such as `12543.8` means that the canonical grain geometry is
+being used as an equivalent monodisperse basis for the supplied charge; it does
+not assert that the physical charge contains a fractional grain.
+
+The represented population assumes that every equivalent grain has the same
+canonical geometry parameters, the same current regression coordinate, and the
+same instantaneous normal regression rate. This is a synchronous,
+monodisperse-equivalent population approximation. It does not assert that real
+manufactured grains are identical or that real ignition occurs simultaneously
+throughout the charge.
+
+Grain-size distributions, mixed geometry populations, explicit integer grain
+counts, partial population ignition, grain fracture, grain migration, and
+multiple simultaneously active regression coordinates require later explicit
+population models rather than hidden corrections to `N_eq`.
+
+#### 11.5.3 Whole-charge geometric and mass quantities
+
+Let the current single-grain state provide:
+
+```text
+V_g = remaining_volume_m3
+A_g = burning_surface_area_m2
+f   = consumed_volume_fraction
+```
+
+The whole-charge remaining condensed-propellant volume is
+
+```text
+V_remaining = N_eq * V_g
+```
+
+and total burning surface area is
+
+```text
+A_total = N_eq * A_g
+```
+
+The mass state is
+
+```text
+m_remaining = m0 * (V_g / V_g0)
+m_reacted   = m0 * f
+```
+
+The result contract for the initial coupling backend MUST expose, in each native
+scalar family, at least these quantities:
+
+```text
+applicability_flags
+equivalent_population_scale
+remaining_condensed_propellant_volume_m3
+total_burning_surface_area_m2
+remaining_propellant_mass_kg
+reacted_propellant_mass_kg
+reacted_propellant_mass_rate_kg_per_s
+```
+
+Exact public result-type names and declaration layout are deferred until the
+first concrete IB0.4e implementation increment. The physical meanings, units,
+endpoint semantics, and applicability propagation defined here are not deferred.
+
+`remaining_condensed_propellant_volume_m3` describes only the modeled condensed
+propellant population represented by this coupling primitive. It is not chamber
+free volume, gas volume, cartridge-case volume, or projectile-displacement
+volume. A later chamber-state layer may use this quantity when constructing the
+evolving free volume.
+
+`total_burning_surface_area_m2` is an explicit diagnostic and coupling output.
+It is useful both for physical interpretation and for later verification of the
+mass-rate calculation. It does not include inhibited, unignited, fractured, or
+otherwise unrepresented surfaces unless a later model explicitly introduces
+those effects.
+
+#### 11.5.4 Reacted-propellant mass rate
+
+For a current linear normal surface-regression rate
+
+```text
+r = ds/dt
+```
+
+the whole-charge reacted-propellant mass rate is mathematically
+
+```text
+dm_reacted/dt = rho_p * A_total * r
+```
+
+or, after substitution of the equivalent population scale,
+
+```text
+dm_reacted/dt = m0 * (A_g / V_g0) * r
+```
+
+These equations define the physical relation, not a mandatory floating-point
+operation sequence. An implementation SHOULD choose an algebraically equivalent
+native-precision form that avoids unnecessary intermediate overflow, underflow,
+or cancellation for the supplied values.
+
+The coupling evaluator does not itself evaluate pressure, temperature, or a burn
+law. It consumes an already evaluated `r`. A finite exact zero burn rate is a
+valid state and produces reacted-propellant mass rate exactly zero. A finite
+negative burn rate returns `BBTC_STATUS_OUTSIDE_DOMAIN`.
+
+At exact geometric burnout, total burning area and reacted-propellant mass rate
+are exactly zero regardless of a positive supplied kinetics rate. The geometry
+has no represented burning surface left on which that rate can act. IB0.4e MUST
+NOT reinterpret a positive post-burnout kinetics value as continued mass
+consumption.
+
+#### 11.5.5 Endpoint semantics
+
+The IB0.4b grain-state contract defines exact initial and exact burnout states.
+IB0.4e preserves those semantic boundaries rather than reconstructing them
+through subtraction of nearly equal floating-point values.
+
+At exact initial grain state:
+
+```text
+m_reacted   = 0
+m_remaining = m0
+V_remaining = V_charge0
+```
+
+The initial total burning area remains the equivalent population scale times
+the initial single-grain burning area. The initial reacted-mass rate is therefore
+zero only when the supplied burn rate is zero; an already-burning initial
+surface with positive `r` may have a positive instantaneous mass rate at
+`s == 0`.
+
+At exact burnout:
+
+```text
+V_remaining       = 0
+A_total           = 0
+m_remaining       = 0
+m_reacted         = m0
+dm_reacted/dt     = 0
+```
+
+These endpoint identities are exact software semantics. They do not imply that a
+real propellant charge burns with perfect simultaneity or reaches a physically
+sharp global burnout event.
+
+For interior states, BBTC does not require the independently stable evaluations
+
+```text
+m_remaining + m_reacted
+```
+
+to equal `m0` bit-for-bit. The quantities MUST remain mathematically consistent
+with the coupling contract to native rounding, but the implementation SHOULD
+prefer stable direct forms over forcing an exact floating-point complement.
+In particular, small reacted mass SHOULD be derived from the consumed-volume
+fraction rather than from subtracting two nearly equal masses, while small
+remaining mass SHOULD be derived from remaining volume rather than from
+`1 - f` when that avoids cancellation.
+
+#### 11.5.6 Validation and failure precedence
+
+A null output-result pointer returns `BBTC_STATUS_INVALID_ARGUMENT`. Once a
+nonnull result pointer has been accepted, the complete result MUST be cleared
+before validating later inputs so every subsequent failure leaves a deterministic
+zero record.
+
+The initial evaluator ordering is:
+
+1. validate the propellant-charge record through its existing native validator;
+2. classify the explicit initial-grain-volume scalar;
+3. validate the complete current grain-state scalar layer;
+4. validate cross-record grain-state consistency against `V_g0`;
+5. classify the burn-kinetics result's burn-rate scalar;
+6. handle exact initial, exact burnout, and exact zero-rate semantics;
+7. evaluate required positive interior coupling quantities; and
+8. commit applicability metadata and the successful result.
+
+For `V_g0`:
+
+```text
+NaN          -> BBTC_STATUS_NAN_INPUT
++Inf / -Inf  -> BBTC_STATUS_NONFINITE_INPUT
+V_g0 <= 0    -> BBTC_STATUS_OUTSIDE_DOMAIN
+```
+
+Within the current grain-state scalar layer, NaN in any floating scalar takes
+precedence over infinity anywhere in that record. Otherwise infinity in any
+floating scalar returns `BBTC_STATUS_NONFINITE_INPUT`. After nonfinite
+classification:
+
+- `remaining_volume_m3` MUST be nonnegative;
+- `burning_surface_area_m2` MUST be nonnegative;
+- `remaining_regression_to_burnout_m` MUST be nonnegative; and
+- `consumed_volume_fraction` MUST lie in the closed interval `[0, 1]`.
+
+A finite violation returns `BBTC_STATUS_OUTSIDE_DOMAIN`.
+
+The following cross-record relationships return
+`BBTC_STATUS_INCONSISTENT_CONFIGURATION`:
+
+- current remaining single-grain volume is greater than `V_g0`;
+- exact `consumed_volume_fraction == 0` does not coincide with
+  `remaining_volume_m3 == V_g0`, strictly positive burning area, and strictly
+  positive remaining regression to burnout;
+- exact `consumed_volume_fraction == 1` does not coincide with zero remaining
+  volume, zero burning area, and zero remaining regression to burnout; or
+- an interior consumed-volume fraction in `(0, 1)` does not coincide with
+  positive remaining volume below `V_g0`, positive burning area, and positive
+  remaining regression to burnout.
+
+IB0.4e deliberately does not impose an arbitrary floating tolerance requiring
+
+```text
+f == 1 - V_g / V_g0
+```
+
+for every interior state. The IB0.4b geometry evaluator owns the detailed
+relation between its own volume and consumed-fraction outputs. Rechecking that
+identity here with an arbitrary tolerance would duplicate geometry logic and
+could reject a numerically sound upstream result merely because two stable forms
+round differently. The coupling layer validates the endpoint and broad
+cross-record invariants it can defend without pretending to reproduce the
+geometry backend.
+
+For the burn-kinetics result's rate scalar:
+
+```text
+NaN          -> BBTC_STATUS_NAN_INPUT
++Inf / -Inf  -> BBTC_STATUS_NONFINITE_INPUT
+r < 0        -> BBTC_STATUS_OUTSIDE_DOMAIN
+r == 0       -> valid exact zero mass-rate state
+r > 0        -> evaluate the positive rate relation when burning area remains
+```
+
+The applicability mask itself is metadata rather than a scalar mathematical
+domain. IB0.4e MUST NOT reject, sanitize, or filter unknown applicability bits.
+
+#### 11.5.7 Applicability propagation
+
+On successful evaluation, the mass-coupling result MUST preserve the complete
+incoming `bbtc_applicability_flags_t` bit pattern from the burn-kinetics result
+verbatim, including bits introduced by future library versions. The coupling
+layer MUST NOT silently discard an upstream scientific limitation merely because
+the regression-to-mass arithmetic succeeded.
+
+The initial IB0.4e coupling primitive introduces no new applicability flag of its
+own. A later model may add one only when this layer has a scientifically distinct
+nonfatal applicability limitation that cannot be represented by existing
+metadata.
+
+On failure, deterministic result clearing leaves the complete output record,
+including applicability metadata, zeroed.
+
+#### 11.5.8 Numerical representability and error budget
+
+Every successful nonzero physical output that is mathematically required to be
+positive MUST remain finite and strictly positive in the selected native scalar
+family. If valid finite inputs require a positive equivalent population scale,
+remaining volume, total burning area, remaining mass, reacted mass, or positive
+reacted-mass rate that becomes zero through underflow or becomes nonfinite
+through overflow, the evaluator returns `BBTC_STATUS_NUMERICAL_FAILURE`.
+
+This rule applies to quantities that are physically required to be positive in
+the evaluated state; it does not turn contract-defined exact zeros into errors.
+Initial reacted mass, burnout remaining quantities, and a zero-rate mass flux
+remain valid exact zeros.
+
+The implementation SHOULD use exponent-safe rearrangement, ratio ordering, or
+other algebraically equivalent native-precision forms when they avoid unnecessary
+intermediate range loss. It is not required to provide arbitrary-range
+arithmetic beyond the selected scalar family.
+
+IB0.4e follows the section 2.2 engineering error-budget policy. Interior
+floating-point identities need not be made artificially exact when doing so
+would worsen conditioning. The target is for numerical error from this primitive
+to be negligible relative to the uncertainty of the grain, kinetics, material,
+and eventual experimental model inputs, while preserving the exact software
+semantics explicitly required by this contract.
+
+#### 11.5.9 Model boundary and deferred population physics
+
+IB0.4e represents a uniformly regressing equivalent monodisperse population.
+It does not determine whether or when that population ignites. A later ignition
+model may determine when regression becomes active or what fraction of a more
+advanced population participates, but such behavior MUST enter through an
+explicit model rather than an undocumented multiplier in this primitive.
+
+IB0.4e MUST NOT:
+
+- evaluate pressure-dependent or temperature-dependent burn kinetics itself;
+- infer a literal integer grain count from the equivalent population scale;
+- round the equivalent population scale to an integer;
+- infer grain-size distributions or mixed grain geometries;
+- model partial ignition, primer-flame propagation, or ignition delay;
+- model grain fracture, migration, collision, orientation, or compaction;
+- alter condensed material density during regression;
+- generate combustion-product mass or thermochemical reaction energy;
+- call the IB0.4a thermochemical-source evaluator;
+- mix combustion products with the initial trapped/free-gas population;
+- evaluate a gas equation of state or chamber temperature;
+- evolve chamber pressure or free volume as a dynamical state;
+- move the projectile or evaluate projectile resistance;
+- integrate time, regression distance, mass, pressure, or projectile motion;
+- select a propellant product, grain geometry, or kinetics backend; or
+- make an ammunition/firearm safety judgment.
+
+The output `reacted_propellant_mass_rate_kg_per_s` is therefore a coupling source
+term for a later solver, not a complete combustion model or firing prediction.
+
 ## 12. Initial physical model
 
 The first complete internal-ballistics model is a zero-dimensional,
@@ -3475,3 +3910,54 @@ contract version 0.1.19 still carried `Draft` status. The required verification
 gates, including the repository CI workflow, passed on that implementation
 commit. This follow-up acceptance records formal contract acceptance without
 rewriting already-published history.
+
+## 47. Acceptance criteria for IB0.4e-A
+
+IB0.4e-A is a design-contract checkpoint. It is complete when:
+
+- section 2.2 explicitly separates numerical error from model, input,
+  experimental, manufacturing, and shot-to-shot uncertainty and establishes the
+  engineering goal that numerical error remain materially smaller than the
+  dominant physical uncertainty;
+- the approximately 10:1 numerical-to-physical uncertainty separation is
+  documented as a practical guideline rather than a universal guarantee;
+- regression distance remains the authoritative propellant burn-progress state,
+  with whole-charge reacted and remaining mass derived algebraically from the
+  canonical grain state rather than independently integrated as competing state;
+- the first regression-to-mass coupling consumes one validated charge record, an
+  explicit positive initial canonical-grain volume, one common current grain
+  state, and one common burn-kinetics result;
+- the equivalent population scale is defined as a real-valued positive
+  dimensionless scaling factor derived from charge mass, condensed density, and
+  initial canonical-grain volume, with no integer interpretation or rounding;
+- the represented population is explicitly a synchronous, monodisperse-equivalent
+  approximation and does not silently claim literal grain count, size
+  distribution, mixed geometry, partial ignition, or grain-fracture physics;
+- the required result semantics include complete applicability metadata,
+  equivalent population scale, remaining condensed-propellant volume, total
+  burning surface area, remaining propellant mass, reacted propellant mass, and
+  reacted-propellant mass rate;
+- exact initial-state, exact burnout, and exact zero-rate semantics are frozen,
+  while interior mass quantities are permitted native-rounding differences when
+  independently stable forms are preferable to a bit-exact complement;
+- validation precedence distinguishes structural argument failure, complete
+  record NaN/infinity classification, finite scalar-domain failure, cross-record
+  inconsistency, and numerical representability failure;
+- negative supplied burn rate is explicitly outside the mathematical domain,
+  while exact zero burn rate remains a valid zero-mass-rate state;
+- successful coupling preserves every incoming burn-kinetics applicability bit
+  verbatim, including future unknown bits, and introduces no new applicability
+  flag in this design checkpoint;
+- required positive results that cannot remain finite and strictly positive in
+  the selected native scalar family are numerical failures rather than clamped
+  or silently zeroed outputs;
+- ignition, temperature correction, thermochemical source generation, gas/EOS
+  evolution, chamber-state integration, projectile dynamics, and firing
+  prediction remain outside this coupling layer;
+- exact public type names, function names, and declaration layout remain
+  intentionally deferred to the first concrete IB0.4e implementation increment;
+- IB0.4e-A changes documentation only and introduces no public symbol, source
+  implementation, CMake integration, solver, firing prediction, or safety
+  judgment; and
+- contract version 0.1.20 is reviewed and changed from `Draft` to `Accepted`
+  before the IB0.4e-A checkpoint is committed.
