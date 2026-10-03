@@ -1,6 +1,6 @@
 # BBTC Reconstruction Design Contract
 
-**Contract version:** 0.1.20
+**Contract version:** 0.1.21
 
 **Project phase:** IB0.4e
 
@@ -8,7 +8,7 @@
 
 **Status:** Accepted
 
-**Date:** 2026-10-02
+**Date:** 2026-10-03
 
 ## 1. Purpose
 
@@ -2558,30 +2558,39 @@ m_remaining = m0 * (V_g / V_g0)
 m_reacted   = m0 * f
 ```
 
-The result contract for the initial coupling backend MUST expose, in each native
-scalar family, at least these quantities:
+IB0.4e-B1 freezes the concrete native result families as:
+
+```text
+bbtc_ib_propellant_mass_result_float_t
+bbtc_ib_propellant_mass_result_double_t
+bbtc_ib_propellant_mass_result_long_double_t
+```
+
+Each record exposes these fields:
 
 ```text
 applicability_flags
 equivalent_population_scale
-remaining_condensed_propellant_volume_m3
-total_burning_surface_area_m2
-remaining_propellant_mass_kg
-reacted_propellant_mass_kg
-reacted_propellant_mass_rate_kg_per_s
+remaining_volume_m3
+burning_surface_area_m2
+remaining_mass_kg
+reacted_mass_kg
+reacted_mass_rate_kg_per_s
 ```
 
-Exact public result-type names and declaration layout are deferred until the
-first concrete IB0.4e implementation increment. The physical meanings, units,
-endpoint semantics, and applicability propagation defined here are not deferred.
+The shorter field names are intentional. The enclosing `bbtc_ib_propellant_mass_*`
+type already establishes that these are whole-charge propellant quantities, so
+repeating `propellant` or `total` in every member would add length without adding
+physical meaning. The units and semantics remain those frozen by IB0.4e-A.
 
-`remaining_condensed_propellant_volume_m3` describes only the modeled condensed
+`remaining_volume_m3` describes only the modeled condensed
 propellant population represented by this coupling primitive. It is not chamber
 free volume, gas volume, cartridge-case volume, or projectile-displacement
 volume. A later chamber-state layer may use this quantity when constructing the
 evolving free volume.
 
-`total_burning_surface_area_m2` is an explicit diagnostic and coupling output.
+`burning_surface_area_m2` is an explicit whole-charge diagnostic and coupling
+output.
 It is useful both for physical interpretation and for later verification of the
 mass-rate calculation. It does not include inhibited, unignited, fractured, or
 otherwise unrepresented surfaces unless a later model explicitly introduces
@@ -2818,8 +2827,65 @@ IB0.4e MUST NOT:
 - select a propellant product, grain geometry, or kinetics backend; or
 - make an ammunition/firearm safety judgment.
 
-The output `reacted_propellant_mass_rate_kg_per_s` is therefore a coupling source
+The output `reacted_mass_rate_kg_per_s` is therefore a coupling source
 term for a later solver, not a complete combustion model or firing prediction.
+
+#### 11.5.10 IB0.4e-B1 public API
+
+The concrete coupling API lives in:
+
+```text
+<bbtc/internal_ballistics/propellant_mass.h>
+```
+
+The module name deliberately uses the shorter `propellant_mass` term. The design
+contract continues to describe the physical responsibility as regression-to-mass
+coupling, but public identifiers do not repeat that phrase when the surrounding
+internal-ballistics namespace already supplies the context.
+
+The native evaluators are:
+
+```c
+bbtc_ib_propellant_mass_evaluate_float(...)
+bbtc_ib_propellant_mass_evaluate_double(...)
+bbtc_ib_propellant_mass_evaluate_long_double(...)
+```
+
+Each evaluator consumes, in this order:
+
+1. a pointer to the matching `bbtc_ib_propellant_charge_*_t` record;
+2. the explicit matching native scalar `initial_grain_volume_m3`;
+3. a pointer to the matching `bbtc_ib_propellant_grain_state_*_t`;
+4. a pointer to the matching
+   `bbtc_ib_propellant_burn_kinetics_result_*_t`; and
+5. a pointer to the matching `bbtc_ib_propellant_mass_result_*_t` output.
+
+No public validator is introduced for `bbtc_ib_propellant_mass_result_*_t` because
+the record is produced by BBTC rather than supplied as model configuration. No
+new public generic grain-state validator is introduced solely for this coupling
+layer; defensive grain-state validation remains a private implementation detail
+whose behavior is governed by section 11.5.6.
+
+A null output pointer returns `BBTC_STATUS_INVALID_ARGUMENT` without a writable
+record. Once a nonnull output is accepted, it is zeroed before charge, scalar,
+grain-state, or kinetics validation. A null grain-state or kinetics pointer is
+therefore an invalid argument after output clearing. Charge validation continues
+to use the existing charge validator and its established precedence.
+
+The B1 implementation MUST keep `float`, `double`, and `long double` arithmetic
+native. It MAY use private exponent-separated product/ratio helpers, `frexp` /
+`ldexp` families, or other algebraically equivalent native forms to avoid
+avoidable intermediate range failure. Such helpers MUST NOT convert one scalar
+family through another or weaken the representability requirements of section
+11.5.8.
+
+The public result preserves the complete incoming applicability mask verbatim on
+success. The evaluator does not inspect the provenance of unknown applicability
+bits and does not add a B1-specific applicability bit.
+
+IB0.4e-B1 remains a primitive algebraic coupling layer. It does not call a burn
+kinetics backend, grain-geometry evaluator, or thermochemical-source evaluator
+internally, and it does not advance regression distance or time.
 
 ## 12. Initial physical model
 
@@ -3961,3 +4027,47 @@ IB0.4e-A is a design-contract checkpoint. It is complete when:
   judgment; and
 - contract version 0.1.20 is reviewed and changed from `Draft` to `Accepted`
   before the IB0.4e-A checkpoint is committed.
+
+## 48. Acceptance criteria for IB0.4e-B1
+
+IB0.4e-B1 is complete when:
+
+- `<bbtc/internal_ballistics/propellant_mass.h>` is public through the
+  internal-ballistics umbrella-header chain and is usable from C23 and C++11;
+- native `bbtc_ib_propellant_mass_result_float_t`, `_double_t`, and
+  `_long_double_t` records expose applicability flags, equivalent population
+  scale, whole-charge remaining volume, whole-charge burning area, remaining
+  mass, reacted mass, and reacted-mass rate using the concise field names frozen
+  by section 11.5.10;
+- `bbtc_ib_propellant_mass_evaluate_float()`, `_double()`, and `_long_double()`
+  consume matching charge, initial-grain-volume, grain-state, kinetics-result,
+  and output families without routing one scalar precision through another;
+- a nonnull output is deterministically cleared before later failure, charge
+  validation precedes the explicit initial volume, complete grain-state
+  NaN-before-infinity precedence is preserved, cross-record invariants are
+  enforced, and burn-rate classification occurs after grain-state validation;
+- exact initial state, exact burnout, and exact zero-rate behavior match section
+  11.5.5, including exact zero burnout area/rate and exact initial/burnout mass
+  identities;
+- equivalent population remains a positive real-valued scale with no integer
+  rounding and supports valid values below one;
+- successful evaluation preserves every incoming applicability bit verbatim,
+  including unknown future bits;
+- native arithmetic uses algebraically equivalent scaling where useful to avoid
+  unnecessary intermediate overflow or underflow, while any mathematically
+  required positive output that is actually unrepresentable returns
+  `BBTC_STATUS_NUMERICAL_FAILURE`;
+- dedicated tests cover all scalar families, argument/output-clearing semantics,
+  initial-volume validation, whole-grain-state nonfinite precedence, finite
+  grain-state domain failures, endpoint/interior inconsistencies, burn-rate
+  classification, fractional equivalent populations, applicability propagation,
+  exact endpoints, zero rate, avoidable intermediate range loss, and genuine
+  representability failure;
+- the independent CMake consumer exercises the linked public evaluator and the
+  C++ public-header test verifies native result field types;
+- ignition, thermochemical source generation, gas/EOS evolution, chamber-state
+  integration, projectile dynamics, and firing prediction remain outside B1;
+- strict GCC, strict Clang, AddressSanitizer, UndefinedBehaviorSanitizer, C++,
+  independent-consumer, and full CTest gates pass; and
+- contract version 0.1.21 is reviewed and changed from `Draft` to `Accepted`
+  before IB0.4e-B1 is committed.

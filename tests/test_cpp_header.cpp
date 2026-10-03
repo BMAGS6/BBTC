@@ -715,6 +715,51 @@ static_assert(
 );
 
 
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_propellant_mass_result_float_t{}
+                .remaining_mass_kg
+        ),
+        float
+    >::value,
+    "float propellant-mass result must use native float"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_propellant_mass_result_double_t{}
+                .reacted_mass_rate_kg_per_s
+        ),
+        double
+    >::value,
+    "double propellant-mass rate must use native double"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_propellant_mass_result_long_double_t{}
+                .equivalent_population_scale
+        ),
+        long double
+    >::value,
+    "long-double propellant population scale must use native long double"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_propellant_mass_result_double_t{}
+                .applicability_flags
+        ),
+        bbtc_applicability_flags_t
+    >::value,
+    "propellant-mass result must use public applicability-mask type"
+);
+
+
 int main()
 {
 

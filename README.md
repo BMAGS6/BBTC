@@ -7,7 +7,7 @@ Cubes of Honor.
 
 ## Current status
 
-The rewrite is in **IB0.4d**. This checkpoint contains:
+The rewrite is in **IB0.4e**. This checkpoint contains:
 
 - a strict C23 CMake/Ninja library target;
 - the namespaced CMake alias `bbtc::bbtc`;
@@ -58,6 +58,11 @@ The rewrite is in **IB0.4d**. This checkpoint contains:
 - concrete pressure-burn-table evaluators with complete-table validation,
   exact-knot recovery, no pressure extrapolation, and piecewise
   log-pressure/log-burn-rate interpolation;
+- native precision-qualified whole-charge propellant-mass result records carrying
+  equivalent population scale, remaining volume, burning area, remaining/reacted
+  mass, reacted-mass rate, and propagated applicability metadata;
+- concrete propellant-mass evaluators coupling canonical grain state and an
+  already-evaluated surface-regression rate without embedding ignition or a burn law;
 - native precision-qualified calorically perfect Noble-Abel gas-model backend
   records with explicit ideal-gas-limit semantics and validation;
 - native precision-qualified temperature-dependent first-order density-virial
@@ -109,9 +114,12 @@ supplied normal regression distance advances, exposing remaining solid volume,
 burning surface area, remaining regression distance to burnout, and consumed
 volume fraction. IB0.4d now also evaluates pressure-dependent linear
 surface-regression rate through both normalized pressure-power and tabulated
-pressure-burn-table backends. It still does not determine ignition, whole-charge
-reacted-mass rate, mixed chamber-gas evolution, projectile motion, or a firing
-prediction.
+pressure-burn-table backends. IB0.4e now couples that regression rate and a
+canonical grain state to whole-charge remaining volume, burning area,
+remaining/reacted propellant mass, and reacted-mass rate through a real-valued
+equivalent population scale. It still does not determine ignition, convert the
+mass rate into thermochemical source rates, evolve mixed chamber-gas state, move
+the projectile, or produce a firing prediction.
 
 The accepted reconstruction rules live in
 [`docs/design/BBTC_DESIGN_CONTRACT.md`](docs/design/BBTC_DESIGN_CONTRACT.md).

@@ -238,6 +238,30 @@ add_test(
     COMMAND bbtc_test_ib_pressure_burn_table
 )
 
+add_executable(
+    bbtc_test_ib_propellant_mass
+    test_ib_propellant_mass.c
+)
+
+target_link_libraries(
+    bbtc_test_ib_propellant_mass
+    PRIVATE
+        bbtc::bbtc
+)
+
+set_target_properties(
+    bbtc_test_ib_propellant_mass
+    PROPERTIES
+        C_EXTENSIONS OFF
+        C_STANDARD 23
+        C_STANDARD_REQUIRED ON
+)
+
+add_test(
+    NAME bbtc.ib_propellant_mass
+    COMMAND bbtc_test_ib_propellant_mass
+)
+
 
 add_executable(
     bbtc_test_ib_loading_state

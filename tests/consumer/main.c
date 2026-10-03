@@ -700,6 +700,68 @@ check_pressure_burn_table_contract(void)
 
 
 /**
+ * @brief Verifies whole-charge propellant mass coupling from a consumer.
+ *
+ * @details
+ * Binary-exact values exercise umbrella-header visibility, linked evaluation,
+ * concise result-field names, equivalent-population scaling, and the mass-rate
+ * relation without introducing tolerance policy into the independent consumer.
+ *
+ * @return `EXIT_SUCCESS` when the public coupling API produces the expected
+ *         whole-charge result; otherwise `EXIT_FAILURE`.
+ */
+static int
+check_propellant_mass_contract(void)
+{
+    const bbtc_ib_propellant_charge_double_t charge =
+    {
+        .charge_mass_kg = 8.0,
+        .condensed_phase_density_kg_per_m3 = 2.0
+    };
+
+    const bbtc_ib_propellant_grain_state_double_t grain_state =
+    {
+        .remaining_volume_m3 = 1.0,
+        .burning_surface_area_m2 = 3.0,
+        .remaining_regression_to_burnout_m = 0.5,
+        .consumed_volume_fraction = 0.5
+    };
+
+    const bbtc_ib_propellant_burn_kinetics_result_double_t kinetics =
+    {
+        .applicability_flags = BBTC_APPLICABILITY_NONE_REPORTED,
+        .burn_rate_m_per_s = 0.25
+    };
+
+    bbtc_ib_propellant_mass_result_double_t result = {0};
+
+    if (bbtc_ib_propellant_mass_evaluate_double(
+            &charge,
+            2.0,
+            &grain_state,
+            &kinetics,
+            &result
+        ) != BBTC_STATUS_SUCCESS)
+    {
+        return EXIT_FAILURE;
+    }
+
+    if (result.applicability_flags != BBTC_APPLICABILITY_NONE_REPORTED
+        || result.equivalent_population_scale != 2.0
+        || result.remaining_volume_m3 != 2.0
+        || result.burning_surface_area_m2 != 6.0
+        || result.remaining_mass_kg != 4.0
+        || result.reacted_mass_kg != 4.0
+        || result.reacted_mass_rate_kg_per_s != 3.0)
+    {
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+
+/**
  * @brief Exercises public BBTC headers and linked diagnostic symbols.
  *
  * @return `EXIT_SUCCESS` when the external consumer contract works; otherwise
@@ -718,6 +780,9 @@ int main(void)
         return EXIT_FAILURE;
 
     if (check_pressure_burn_table_contract() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
+
+    if (check_propellant_mass_contract() != EXIT_SUCCESS)
         return EXIT_FAILURE;
 
 
