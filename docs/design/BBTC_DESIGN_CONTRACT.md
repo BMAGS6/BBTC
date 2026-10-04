@@ -1,14 +1,14 @@
 # BBTC Reconstruction Design Contract
 
-**Contract version:** 0.1.21
+**Contract version:** 0.1.22
 
-**Project phase:** IB0.4e
+**Project phase:** IB0.4f
 
-**Applies to:** `rewrite/ib0_4e_propellant_mass_rate_coupling_contract_v1`
+**Applies to:** `rewrite/ib0_4f_thermochemical_source_rate_contract_v1`
 
 **Status:** Accepted
 
-**Date:** 2026-10-03
+**Date:** 2026-10-04
 
 ## 1. Purpose
 
@@ -298,6 +298,8 @@ The library API and computational core use SI units exclusively:
 | Volume               | cubic meter              | `_m3`         |
 | Mass                 | kilogram                 | `_kg`         |
 | Time                 | second                   | `_s`          |
+| Mass rate            | kilogram per second      | `_kg_per_s`   |
+| Power                | watt                     | `_w`          |
 | Velocity             | meter per second         | `_m_per_s`    |
 | Acceleration         | metre per second squared | `_m_per_s2`   |
 | Force                | newton                   | `_n`          |
@@ -2887,6 +2889,379 @@ IB0.4e-B1 remains a primitive algebraic coupling layer. It does not call a burn
 kinetics backend, grain-geometry evaluator, or thermochemical-source evaluator
 internally, and it does not advance regression distance or time.
 
+### 11.6 Thermochemical source-rate coupling
+
+IB0.4f introduces the explicit algebraic bridge between the whole-charge
+reacted-propellant mass rate produced by IB0.4e and the reduced thermochemical
+source terms required by the future coupled chamber-state solver.
+
+The layer answers one deliberately narrow question:
+
+```text
+Given a valid reduced propellant thermochemistry record and an instantaneous
+whole-charge reacted-propellant mass rate, at what rates are gaseous product,
+condensed product, and reaction internal energy being generated?
+```
+
+IB0.4f does not determine how quickly the grain surface regresses, how much
+surface area is burning, or how the reacted-mass rate was obtained. Those
+responsibilities remain upstream in IB0.4b, IB0.4d, and IB0.4e.
+
+Likewise, IB0.4f does not decide how generated gaseous product mixes with the
+initial trapped gas, how released reaction energy changes gas temperature, how
+condensed product occupies chamber volume, or how any source term changes
+pressure. Those responsibilities belong to later chamber-population, energy,
+equation-of-state, and integration layers.
+
+#### 11.6.1 Inputs and dependency direction
+
+The first source-rate coupling consumes:
+
+1. one matching validated
+   `bbtc_ib_propellant_thermochemistry_*_t` record; and
+2. one matching successful `bbtc_ib_propellant_mass_result_*_t` record from
+   the IB0.4e coupling layer.
+
+The complete propellant-mass result is consumed instead of only a naked scalar
+mass rate so that the downstream source-rate result can preserve the complete
+upstream applicability mask without adding a separate metadata argument.
+
+Only these two fields of the IB0.4e result participate in the IB0.4f source-rate
+contract:
+
+```text
+applicability_flags
+reacted_mass_rate_kg_per_s
+```
+
+The other IB0.4e result fields remain useful diagnostics and state quantities,
+but they are not inputs to the source-rate equations. IB0.4f MUST NOT attempt to
+reconstruct or repeat the IB0.4e charge/geometry consistency checks from those
+diagnostic fields because the original charge, initial grain volume, and grain
+state are not inputs to this layer.
+
+A caller supplying a hand-constructed propellant-mass result rather than a
+successful upstream BBTC result is responsible for the unrelated fields in that
+record. IB0.4f defensively validates the mass-rate scalar it actually consumes
+and treats the applicability mask as opaque metadata.
+
+The dependency direction is therefore:
+
+```text
+burn kinetics + grain geometry + charge
+                  |
+                  v
+       IB0.4e propellant mass
+                  |
+                  | reacted_mass_rate_kg_per_s
+                  | applicability_flags
+                  v
+     IB0.4f thermochemical source rates
+```
+
+IB0.4f MUST NOT call back into a burn-kinetics backend, grain-geometry evaluator,
+or propellant-mass evaluator.
+
+#### 11.6.2 Rate equations and dimensional semantics
+
+Let
+
+```text
+mdot_r = whole-charge reacted-propellant mass rate, kg/s
+y_g    = gaseous-product mass fraction, dimensionless
+q_r    = positive specific reaction internal-energy release, J/kg
+```
+
+with `y_g` and `q_r` retaining exactly the meanings already frozen by
+section 11.1.
+
+The reduced thermochemical source rates are:
+
+```text
+mdot_g = y_g * mdot_r
+mdot_c = (1 - y_g) * mdot_r
+Qdot_r = q_r * mdot_r
+```
+
+where:
+
+```text
+mdot_g = generated gaseous-product mass rate, kg/s
+mdot_c = generated condensed-product mass rate, kg/s
+Qdot_r = positive reaction internal-energy release rate, J/s = W
+```
+
+The energy-rate quantity is intentionally a positive release rate. It is the
+rate at which the reduced thermochemical model makes reaction internal energy
+available to a later energy balance.
+
+`Qdot_r` MUST NOT be interpreted directly as:
+
+- the time derivative of chamber-gas internal energy;
+- net heat-transfer power into the gas;
+- projectile-work power;
+- a flame temperature;
+- propellant force or impetus;
+- an enthalpy-flow term; or
+- a caloric-reference correction.
+
+A later energy balance is responsible for combining reaction-energy release
+with mechanical work, heat transfer, gas and condensed-phase caloric models,
+reference-state conventions, and any other explicitly selected terms.
+
+#### 11.6.3 Relationship to the cumulative IB0.4a source
+
+IB0.4a and IB0.4f describe complementary views of the same reduced
+thermochemistry.
+
+IB0.4a maps an accumulated reacted propellant mass to accumulated extensive
+source quantities:
+
+```text
+m_r  ->  m_g, m_c, Q_r
+```
+
+IB0.4f maps the instantaneous reacted-propellant mass rate to instantaneous
+source rates:
+
+```text
+mdot_r  ->  mdot_g, mdot_c, Qdot_r
+```
+
+For constant `y_g` and `q_r`, and for a differentiable reacted-mass history,
+the IB0.4f equations are the time derivatives of the IB0.4a extensive-source
+equations.
+
+This mathematical relationship does not permit an implementation to pass a
+value expressed in kilograms per second to the IB0.4a evaluator as though it
+were a mass in kilograms. The two APIs have different dimensional contracts
+even though their reduced coefficients lead to algebraically similar
+multiplications.
+
+IB0.4f MUST therefore expose source-rate semantics explicitly. A future
+implementation MAY share private dimension-neutral arithmetic helpers with
+IB0.4a when useful, but it MUST NOT implement the public rate evaluator by
+dimensionally misusing the public cumulative-source evaluator.
+
+When a later time integrator uses constant thermochemistry over an interval,
+the time integral of the IB0.4f source rates SHOULD agree with the corresponding
+change in the IB0.4a cumulative source quantities to within the selected
+integration and native-arithmetic error. IB0.4f itself performs no integration
+and accepts no time step.
+
+#### 11.6.4 Applicability propagation
+
+The first reduced thermochemistry record carries no applicability mask of its
+own. The IB0.4e propellant-mass result, however, preserves applicability
+metadata originating in the selected burn-kinetics backend.
+
+On every successful IB0.4f evaluation, the output applicability mask MUST equal
+the complete incoming IB0.4e applicability mask bit-for-bit.
+
+This includes:
+
+- `BBTC_APPLICABILITY_OUTSIDE_CALIBRATION_DOMAIN`; and
+- any future applicability bits unknown to the IB0.4f implementation.
+
+IB0.4f MUST NOT filter, reinterpret, clear, or manufacture applicability bits.
+It introduces no new applicability flag in this checkpoint.
+
+Propagation is required even for an exact zero reacted-mass-rate identity
+state. A downstream zero source rate does not erase scientific information
+about the upstream state that produced it.
+
+If a later thermochemistry backend gains its own calibration-domain or
+provenance applicability metadata, a future contract revision MUST define how
+the two masks are combined. IB0.4f-A does not invent such a policy in advance.
+
+#### 11.6.5 Zero, positive, and negative reacted-mass-rate semantics
+
+An exact finite zero reacted-propellant mass rate is a valid identity state.
+Successful evaluation at:
+
+```text
+mdot_r == 0
+```
+
+MUST produce exactly:
+
+```text
+mdot_g = 0
+mdot_c = 0
+Qdot_r = 0
+```
+
+while preserving the incoming applicability mask verbatim.
+
+This identity is suitable for pre-reaction states, zero-rate burn-kinetics
+boundaries, and exact geometric burnout. It does not itself distinguish why the
+upstream rate is zero.
+
+A finite negative reacted-propellant mass rate is outside the domain of the
+first irreversible reduced-combustion source model and MUST return
+`BBTC_STATUS_OUTSIDE_DOMAIN`.
+
+IB0.4f does not model reverse chemical reaction, product recombination into
+unreacted propellant, negative burning-area conventions, or a signed source/sink
+formalism. Such models require an explicit later contract if they become
+scientifically justified.
+
+For a positive accepted reacted-mass rate:
+
+- generated gaseous-product mass rate MUST be finite and strictly positive;
+- reaction internal-energy release rate MUST be finite and strictly positive;
+- when `y_g < 1`, generated condensed-product mass rate MUST be finite and
+  strictly positive; and
+- exact `y_g == 1` is the all-gas limit and MUST produce exactly zero
+  condensed-product mass rate.
+
+#### 11.6.6 Validation and failure precedence
+
+IB0.4f preserves the established BBTC pattern of deterministic output clearing
+and model-validation precedence.
+
+The first rate evaluator MUST validate in this order:
+
+1. if the output-result pointer is null, return
+   `BBTC_STATUS_INVALID_ARGUMENT`;
+2. clear the complete output record;
+3. validate the matching reduced thermochemistry record with the existing
+   `bbtc_ib_propellant_thermochemistry_validate_*()` semantics;
+4. if the propellant-mass-result pointer is null, return
+   `BBTC_STATUS_INVALID_ARGUMENT`;
+5. classify `reacted_mass_rate_kg_per_s`: NaN returns
+   `BBTC_STATUS_NAN_INPUT`, otherwise positive or negative infinity returns
+   `BBTC_STATUS_NONFINITE_INPUT`;
+6. reject a finite negative reacted-mass rate with
+   `BBTC_STATUS_OUTSIDE_DOMAIN`;
+7. handle exact zero as the identity state, copy the incoming applicability
+   mask, and return success;
+8. evaluate the three positive-rate source terms in the selected native scalar
+   family;
+9. validate representability and the exact all-gas condensed-rate invariant;
+   and
+10. commit the successful source rates and the unmodified applicability mask to
+    the caller-owned output.
+
+Once a nonnull output is accepted, every subsequent failure MUST leave the
+complete output in its cleared state. Applicability metadata is committed only
+on success.
+
+Thermochemistry validation intentionally precedes classification of the
+upstream mass rate, matching the model-before-direct-source precedence already
+used by the IB0.4a cumulative-source evaluator.
+
+IB0.4f MUST NOT reject an otherwise valid evaluation merely because an
+unrelated diagnostic field in the supplied IB0.4e result is not independently
+revalidated by this layer.
+
+#### 11.6.7 Numerical and conservation requirements
+
+Each scalar family MUST evaluate the source-rate equations natively as
+`float`, `double`, or `long double`. One family MUST NOT route its calculation
+through another.
+
+The implementation MAY use algebraically equivalent native-scalar arithmetic
+when useful, but the public equations and units remain those in section 11.6.2.
+No result may be clipped or saturated to manufacture success.
+
+For positive `mdot_r`, any mathematically required positive source rate that
+overflows, underflows to zero, becomes nonfinite, or otherwise cannot be
+represented as a finite strictly positive value in the selected native scalar
+family MUST produce `BBTC_STATUS_NUMERICAL_FAILURE`.
+
+A positive subnormal output remains valid when it is representable and survives
+the selected native operation as a finite positive value.
+
+The reduced mass-partition equation is:
+
+```text
+mdot_g + mdot_c = mdot_r
+```
+
+This is an algebraic model requirement, not a bit-for-bit floating-point
+identity requirement. Independently rounded native result fields MAY differ
+from an exact floating-point complement by ordinary rounding. Tests and future
+conservation diagnostics SHOULD use a precision-aware residual rather than
+requiring exact equality of the rounded sum.
+
+The rate layer introduces no time-discretization error because it performs no
+integration. Numerical integration error enters only when a later solver
+integrates these rates over time.
+
+#### 11.6.8 Ownership, mutation, and allocation
+
+All IB0.4f input records are borrowed, immutable caller-owned objects for the
+duration of one call.
+
+The evaluator MUST NOT:
+
+- mutate the thermochemistry record;
+- mutate the propellant-mass result;
+- retain pointers to caller-owned inputs after return;
+- allocate dynamic memory;
+- access hidden mutable global state; or
+- perform file, terminal, logging, or environment-variable I/O.
+
+The caller owns the output record. Successful evaluation writes only the
+documented output fields after all validation and numerical checks have passed.
+
+#### 11.6.9 Explicit exclusions and deferred responsibilities
+
+IB0.4f MUST NOT:
+
+- evaluate pressure- or temperature-dependent burn kinetics;
+- determine grain regression distance or burning surface area;
+- derive reacted-propellant mass rate from charge or grain geometry;
+- model ignition progression or primer/flame propagation;
+- infer species composition or chemical equilibrium;
+- calculate flame or adiabatic-combustion temperature;
+- alter the reduced `y_g` or `q_r` coefficients from pressure or temperature;
+- mix generated gaseous product with the initial trapped/free-gas population;
+- assign an equation of state to generated combustion products;
+- determine combustion-product temperature;
+- convert the reaction-energy release rate directly into chamber-gas internal
+  energy without a later explicit energy balance;
+- determine heat-transfer, wall-loss, projectile-work, or flow-work rates;
+- determine the volume occupied by condensed reaction products;
+- evolve chamber free volume, pressure, or temperature;
+- move the projectile or evaluate projectile resistance;
+- integrate any state in time;
+- select a propellant formulation or calibration record; or
+- make an ammunition/firearm safety judgment.
+
+The immediate downstream consumer is a future chamber-state/energy coupling
+layer that will decide how generated products and reaction-energy release enter
+the evolving lumped internal-ballistics state.
+
+#### 11.6.10 IB0.4f-A checkpoint boundary
+
+IB0.4f-A is a design-contract checkpoint only.
+
+It freezes:
+
+- consumption of the complete successful IB0.4e propellant-mass result rather
+  than a naked reacted-mass-rate scalar;
+- reuse of the existing reduced thermochemistry record;
+- verbatim propagation of the complete upstream applicability mask;
+- separate cumulative-source and instantaneous source-rate semantics;
+- exact zero-rate identity behavior;
+- rejection of finite negative reacted-mass rate;
+- positive reaction-energy-release sign convention;
+- model-before-mass-rate validation precedence;
+- native-precision representability requirements; and
+- the responsibility boundary between source-rate generation and the future
+  chamber-state/energy solver.
+
+IB0.4f-A intentionally does not freeze exact public source-rate type names,
+function names, or declaration layout. Those identifiers are reviewed in the
+first concrete IB0.4f implementation checkpoint so that the public API can
+remain concise without weakening dimensional clarity.
+
+IB0.4f-A introduces no source implementation, public symbol, CMake target,
+solver state, time integrator, pressure evolution, projectile motion, firing
+prediction, or safety judgment.
+
 ## 12. Initial physical model
 
 The first complete internal-ballistics model is a zero-dimensional,
@@ -2903,7 +3278,8 @@ lumped-parameter engineering model. Its target scope is:
 - burn-surface evolution from grain geometry;
 - explicit coupling from charge mass, condensed density, grain geometry, and
   regression rate to whole-charge reacted-mass rate;
-- reduced propellant thermochemical gas-mass and reaction-energy source terms;
+- reduced propellant thermochemical gas-mass, condensed-product-mass, and
+  reaction-energy source rates;
 - an explicit closure for the evolving initial-gas and combustion-product gas
   populations;
 - a selected reduced gas equation of state and compatible caloric model;
@@ -4071,3 +4447,54 @@ IB0.4e-B1 is complete when:
   independent-consumer, and full CTest gates pass; and
 - contract version 0.1.21 is reviewed and changed from `Draft` to `Accepted`
   before IB0.4e-B1 is committed.
+
+## 49. Acceptance criteria for IB0.4f-A
+
+IB0.4f-A is a design-contract checkpoint. It is complete when:
+
+- section 6.1 defines canonical public naming suffixes for mass rate in
+  kilograms per second and power in watts;
+- section 11.6 defines thermochemical source-rate coupling as the explicit
+  bridge from IB0.4e whole-charge reacted-propellant mass rate to instantaneous
+  gaseous-product, condensed-product, and reaction-energy source rates;
+- the first source-rate coupling consumes one matching validated reduced
+  thermochemistry record and one complete successful matching IB0.4e
+  propellant-mass result;
+- only the upstream reacted-mass-rate scalar and applicability mask participate
+  in the IB0.4f equations, while unrelated IB0.4e diagnostics are not
+  incompletely revalidated without their original inputs;
+- the source-rate equations, SI units, positive reaction-energy-release sign
+  convention, all-gas limit, and mass-partition relation are unambiguous;
+- the contract distinguishes accumulated IB0.4a extensive-source quantities
+  from instantaneous IB0.4f source rates and forbids dimensionally reusing the
+  cumulative public evaluator as a rate evaluator;
+- exact zero reacted-mass rate succeeds with exact zero source rates while
+  preserving the incoming applicability mask, and finite negative
+  reacted-mass rate returns `BBTC_STATUS_OUTSIDE_DOMAIN`;
+- every successful result preserves all incoming IB0.4e applicability bits
+  verbatim, including future unknown bits, and IB0.4f-A introduces no new
+  applicability flag;
+- validation precedence freezes deterministic output clearing, existing
+  thermochemistry-record validation before upstream mass-rate classification,
+  NaN-before-infinity classification, zero identity handling, native
+  source-rate evaluation, representability checks, and commit-on-success;
+- required positive source rates that cannot be represented as finite strictly
+  positive values in the selected native scalar family produce
+  `BBTC_STATUS_NUMERICAL_FAILURE` rather than clipping, saturation, or silent
+  zero;
+- the algebraic mass-rate partition is required physically without imposing a
+  bit-for-bit sum identity on independently rounded native result fields;
+- thermochemical source-rate generation remains separate from ignition,
+  kinetics, grain geometry, product-gas mixing, gas EOS/caloric closure,
+  chamber energy balance, heat transfer, free-volume evolution, pressure
+  evolution, projectile dynamics, time integration, and firing prediction;
+- the first complete internal-ballistics target explicitly includes
+  thermochemical gas-mass, condensed-product-mass, and reaction-energy source
+  rates before evolving gas-population and chamber-energy closure;
+- exact public source-rate type/function names remain intentionally deferred to
+  the first concrete IB0.4f implementation checkpoint;
+- IB0.4f-A changes documentation only and introduces no public symbol, source
+  implementation, CMake integration, solver, firing prediction, or safety
+  judgment; and
+- contract version 0.1.22 is reviewed and changed from `Draft` to `Accepted`
+  before IB0.4f-A is committed.
