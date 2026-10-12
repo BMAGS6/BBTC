@@ -43,6 +43,7 @@ add_library(
     include/bbtc/internal_ballistics/propellant_grain_geometry.h
     include/bbtc/internal_ballistics/propellant_mass.h
     include/bbtc/internal_ballistics/propellant_thermochemistry.h
+    include/bbtc/internal_ballistics/propellant_source_rate.h
     include/bbtc/internal_ballistics/reduced_gas_thermodynamics.h
     include/bbtc/precision.h
     include/bbtc/status.h
@@ -62,6 +63,7 @@ add_library(
     src/internal/propellant_grain_geometry.c
     src/internal/propellant_mass.c
     src/internal/propellant_thermochemistry.c
+    src/internal/propellant_source_rate.c
     src/internal/reduced_gas_thermodynamics.c
     src/precision.c
     src/status.c

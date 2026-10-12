@@ -19,7 +19,7 @@
  * representation and numeric values are part of the public interface and must
  * not be changed, renumbered, or reused without an explicit ABI revision.
  */
-typedef enum bbtc_status_e : uint8_t
+typedef enum bbtc_status : uint8_t
 {
     /** The operation completed successfully. */
     BBTC_STATUS_SUCCESS = 0,

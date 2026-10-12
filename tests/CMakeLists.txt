@@ -262,6 +262,30 @@ add_test(
     COMMAND bbtc_test_ib_propellant_mass
 )
 
+add_executable(
+    bbtc_test_ib_propellant_source_rate
+    test_ib_propellant_source_rate.c
+)
+
+target_link_libraries(
+    bbtc_test_ib_propellant_source_rate
+    PRIVATE
+        bbtc::bbtc
+)
+
+set_target_properties(
+    bbtc_test_ib_propellant_source_rate
+    PROPERTIES
+        C_EXTENSIONS OFF
+        C_STANDARD 23
+        C_STANDARD_REQUIRED ON
+)
+
+add_test(
+    NAME bbtc.ib_propellant_source_rate
+    COMMAND bbtc_test_ib_propellant_source_rate
+)
+
 
 add_executable(
     bbtc_test_ib_loading_state

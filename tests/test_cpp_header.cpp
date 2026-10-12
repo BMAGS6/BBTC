@@ -759,6 +759,50 @@ static_assert(
     "propellant-mass result must use public applicability-mask type"
 );
 
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_propellant_source_rate_float_t{}
+                .gas_product_mass_rate_kg_per_s
+        ),
+        float
+    >::value,
+    "float propellant source rate must use native float"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_propellant_source_rate_double_t{}
+                .reaction_energy_release_rate_w
+        ),
+        double
+    >::value,
+    "double reaction-energy release rate must use native double"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_propellant_source_rate_long_double_t{}
+                .condensed_product_mass_rate_kg_per_s
+        ),
+        long double
+    >::value,
+    "long-double propellant source rate must use native long double"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_ib_propellant_source_rate_double_t{}
+                .applicability_flags
+        ),
+        bbtc_applicability_flags_t
+    >::value,
+    "propellant source-rate result must use public applicability-mask type"
+);
+
 
 int main()
 {
@@ -802,6 +846,27 @@ int main()
         || thermochemical_source.gas_product_mass_kg != 1.5
         || thermochemical_source.condensed_product_mass_kg != 0.5
         || thermochemical_source.reaction_internal_energy_release_j != 8.0)
+    {
+        return 1;
+    }
+
+    bbtc_ib_propellant_mass_result_double_t source_mass = {};
+    source_mass.applicability_flags =
+        BBTC_APPLICABILITY_OUTSIDE_CALIBRATION_DOMAIN;
+    source_mass.reacted_mass_rate_kg_per_s = 2.0;
+
+    bbtc_ib_propellant_source_rate_double_t source_rate = {};
+
+    if (bbtc_ib_propellant_source_rate_evaluate_double(
+            &thermochemistry,
+            &source_mass,
+            &source_rate
+        ) != BBTC_STATUS_SUCCESS
+        || source_rate.applicability_flags
+            != BBTC_APPLICABILITY_OUTSIDE_CALIBRATION_DOMAIN
+        || source_rate.gas_product_mass_rate_kg_per_s != 1.5
+        || source_rate.condensed_product_mass_rate_kg_per_s != 0.5
+        || source_rate.reaction_energy_release_rate_w != 8.0)
     {
         return 1;
     }

@@ -7,7 +7,7 @@ Cubes of Honor.
 
 ## Current status
 
-The rewrite is in **IB0.4e**. This checkpoint contains:
+The rewrite is in **IB0.4f**. This checkpoint contains:
 
 - a strict C23 CMake/Ninja library target;
 - the namespaced CMake alias `bbtc::bbtc`;
@@ -63,6 +63,12 @@ The rewrite is in **IB0.4e**. This checkpoint contains:
   mass, reacted-mass rate, and propagated applicability metadata;
 - concrete propellant-mass evaluators coupling canonical grain state and an
   already-evaluated surface-regression rate without embedding ignition or a burn law;
+- native precision-qualified propellant source-rate records carrying gaseous-
+  product mass rate, condensed-product mass rate, positive reaction-energy
+  release rate, and propagated applicability metadata;
+- concrete source-rate evaluators coupling an already-evaluated reacted-
+  propellant mass rate to the existing reduced thermochemistry without
+  embedding chamber mixing, gas EOS, energy integration, or projectile motion;
 - native precision-qualified calorically perfect Noble-Abel gas-model backend
   records with explicit ideal-gas-limit semantics and validation;
 - native precision-qualified temperature-dependent first-order density-virial
@@ -117,9 +123,11 @@ surface-regression rate through both normalized pressure-power and tabulated
 pressure-burn-table backends. IB0.4e now couples that regression rate and a
 canonical grain state to whole-charge remaining volume, burning area,
 remaining/reacted propellant mass, and reacted-mass rate through a real-valued
-equivalent population scale. It still does not determine ignition, convert the
-mass rate into thermochemical source rates, evolve mixed chamber-gas state, move
-the projectile, or produce a firing prediction.
+equivalent population scale. IB0.4f now converts that reacted-mass rate into
+instantaneous gaseous-product mass rate, condensed-product mass rate, and
+positive reaction-energy release rate while preserving upstream applicability
+metadata. It still does not determine ignition, evolve the mixed chamber-gas
+state or energy balance, move the projectile, or produce a firing prediction.
 
 The accepted reconstruction rules live in
 [`docs/design/BBTC_DESIGN_CONTRACT.md`](docs/design/BBTC_DESIGN_CONTRACT.md).

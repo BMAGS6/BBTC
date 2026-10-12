@@ -19,6 +19,7 @@
 #include <bbtc/internal_ballistics/propellant_grain_geometry.h>
 #include <bbtc/internal_ballistics/propellant_mass.h>
 #include <bbtc/internal_ballistics/propellant_thermochemistry.h>
+#include <bbtc/internal_ballistics/propellant_source_rate.h>
 #include <bbtc/internal_ballistics/loading_state.h>
 #include <bbtc/internal_ballistics/reduced_gas_thermodynamics.h>
 

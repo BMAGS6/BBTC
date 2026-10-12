@@ -1,6 +1,6 @@
 # BBTC Reconstruction Design Contract
 
-**Contract version:** 0.1.22
+**Contract version:** 0.1.23
 
 **Project phase:** IB0.4f
 
@@ -8,7 +8,7 @@
 
 **Status:** Accepted
 
-**Date:** 2026-10-04
+**Date:** 2026-10-12
 
 ## 1. Purpose
 
@@ -3262,6 +3262,77 @@ IB0.4f-A introduces no source implementation, public symbol, CMake target,
 solver state, time integrator, pressure evolution, projectile motion, firing
 prediction, or safety judgment.
 
+#### 11.6.11 IB0.4f-B1 public API
+
+IB0.4f-B1 freezes a separate public coupling module:
+
+```text
+<bbtc/internal_ballistics/propellant_source_rate.h>
+```
+
+The separate module preserves dependency direction. The lower-level
+`propellant_thermochemistry.h` header continues to define reduced
+thermochemistry and cumulative extensive sources without depending on
+`propellant_mass.h`. The new source-rate coupling header depends on both
+pre-existing layers because it is explicitly their bridge.
+
+The native source-rate result families are:
+
+```text
+bbtc_ib_propellant_source_rate_float_t
+bbtc_ib_propellant_source_rate_double_t
+bbtc_ib_propellant_source_rate_long_double_t
+```
+
+Each result contains exactly:
+
+```text
+applicability_flags
+gas_product_mass_rate_kg_per_s
+condensed_product_mass_rate_kg_per_s
+reaction_energy_release_rate_w
+```
+
+`reaction_energy_release_rate_w` is intentionally shorter than a spelling that
+repeats `internal` in the identifier. Its Doxygen and section 11.6.2 retain the
+precise physical meaning: positive reduced reaction internal-energy release
+made available to a later energy balance.
+
+The native evaluators are:
+
+```c
+bbtc_ib_propellant_source_rate_evaluate_float(...)
+bbtc_ib_propellant_source_rate_evaluate_double(...)
+bbtc_ib_propellant_source_rate_evaluate_long_double(...)
+```
+
+Each consumes, in order:
+
+1. a pointer to the matching
+   `bbtc_ib_propellant_thermochemistry_*_t` record;
+2. a pointer to the matching `bbtc_ib_propellant_mass_result_*_t`; and
+3. a pointer to the matching `bbtc_ib_propellant_source_rate_*_t` output.
+
+No public validator is added for the source-rate result because it is produced
+by BBTC rather than supplied as independent model configuration.
+
+The evaluator validates only the upstream mass-result fields used by this
+coupling contract: `reacted_mass_rate_kg_per_s` and the opaque applicability
+mask. It MUST NOT reject a call because unrelated diagnostic/state fields in a
+hand-constructed mass-result record would fail the original IB0.4e consistency
+rules. Repeating those checks incompletely would create a second, weaker source
+of truth downstream.
+
+The B1 implementation uses direct native multiplication for the three final
+source rates. No exponent-separated helper is required merely for stylistic
+symmetry with IB0.4e: each multiplication directly forms the public result, so
+overflow or underflow of a required positive product is a genuine
+representability failure rather than avoidable intermediate range loss.
+
+IB0.4f-B1 MUST remain allocation-free, reentrant, deterministic, and free of
+hidden mutable global state. It does not invoke a burn-law, geometry,
+propellant-mass, gas-EOS, chamber-state, or time-integration evaluator.
+
 ## 12. Initial physical model
 
 The first complete internal-ballistics model is a zero-dimensional,
@@ -4498,3 +4569,53 @@ IB0.4f-A is a design-contract checkpoint. It is complete when:
   judgment; and
 - contract version 0.1.22 is reviewed and changed from `Draft` to `Accepted`
   before IB0.4f-A is committed.
+
+
+## 50. Acceptance criteria for IB0.4f-B1
+
+IB0.4f-B1 is complete when:
+
+- `<bbtc/internal_ballistics/propellant_source_rate.h>` is public through the
+  internal-ballistics umbrella-header chain and is usable from C23 and C++11;
+- native `bbtc_ib_propellant_source_rate_float_t`, `_double_t`, and
+  `_long_double_t` records expose applicability metadata, gaseous-product mass
+  rate, condensed-product mass rate, and positive reaction-energy release rate
+  with the names and SI units frozen by section 11.6.11;
+- `bbtc_ib_propellant_source_rate_evaluate_float()`, `_double()`, and
+  `_long_double()` consume matching thermochemistry, propellant-mass-result, and
+  output families without routing one scalar family through another;
+- the source-rate module is a separate higher-level coupling layer so the
+  lower-level thermochemistry header does not acquire a dependency on
+  propellant-mass coupling;
+- a nonnull output is deterministically cleared before later validation,
+  thermochemistry validation precedes the mass-result pointer and direct
+  reacted-mass-rate scalar, NaN precedes infinity for that scalar, and finite
+  negative rate returns `BBTC_STATUS_OUTSIDE_DOMAIN`;
+- exact zero reacted-mass rate succeeds with exact zero source rates while
+  preserving every incoming applicability bit verbatim, including unknown
+  future bits;
+- exact all-gas thermochemistry produces exactly zero condensed-product mass
+  rate while positive split-product states require finite strictly positive gas
+  and condensed-product rates;
+- positive reaction-energy release uses the existing IB0.4a coefficient
+  unchanged and a required positive rate that overflows, underflows to zero, or
+  otherwise becomes nonfinite returns `BBTC_STATUS_NUMERICAL_FAILURE`;
+- unrelated diagnostic fields in the supplied propellant-mass result are not
+  incompletely revalidated by IB0.4f;
+- dedicated tests cover every scalar family, validation/output-clearing
+  precedence, null arguments, NaN and both infinities, negative and zero rates,
+  exact all-gas behavior, applicability propagation including unknown bits,
+  unrelated-field nonvalidation, representability failure, mass-rate
+  conservation residuals, cumulative/rate cross-layer consistency, and input
+  immutability;
+- the independent CMake consumer exercises the linked public evaluator and the
+  C++ public-header test verifies native source-rate field types and runtime use;
+- README and build integration expose the new source-rate layer without
+  claiming that a chamber solver or energy balance exists;
+- source-rate generation remains separate from ignition, gas-population
+  mixture closure, gas EOS/caloric state, chamber free-volume evolution, energy
+  integration, pressure evolution, projectile dynamics, and firing prediction;
+- strict GCC, strict Clang, AddressSanitizer, UndefinedBehaviorSanitizer, C++,
+  independent-consumer, and full CTest gates pass; and
+- contract version 0.1.23 is reviewed and changed from `Draft` to `Accepted`
+  before IB0.4f-B1 is committed.
