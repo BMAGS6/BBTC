@@ -22,7 +22,7 @@
  * it does not replace precision-qualified problem, option, result, or function
  * types.
  */
-typedef enum bbtc_precision_e : uint8_t
+typedef enum bbtc_precision : uint8_t
 {
     /** The ISO C `float` scalar family. */
     BBTC_PRECISION_FLOAT = 1,

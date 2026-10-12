@@ -20,7 +20,7 @@
  * values are part of the public interface and must not be changed, renumbered,
  * or reused without an explicit ABI revision.
  */
-typedef enum bbtc_ib_termination_e : uint8_t
+typedef enum bbtc_ib_termination : uint8_t
 {
     /** No internal-ballistics simulation has run. */
     BBTC_IB_TERMINATION_NOT_RUN = 0,
@@ -80,7 +80,7 @@ typedef uint64_t bbtc_warning_flags_t;
  * Every nonzero enumerator is one independent bit. Numeric bit assignments are
  * part of the public interface and must not be renumbered or reused.
  */
-typedef enum bbtc_warning_flag_e : uint64_t
+typedef enum bbtc_warning_flag : uint64_t
 {
     /** No defined warning was reported. */
     BBTC_WARNING_NONE = UINT64_C(0),
@@ -137,7 +137,7 @@ typedef uint64_t bbtc_applicability_flags_t;
  * Every nonzero enumerator is one independent bit. Numeric bit assignments are
  * part of the public interface and must not be renumbered or reused.
  */
-typedef enum bbtc_applicability_flag_e : uint64_t
+typedef enum bbtc_applicability_flag : uint64_t
 {
     /** No defined applicability limitation was reported. */
     BBTC_APPLICABILITY_NONE_REPORTED = UINT64_C(0),
