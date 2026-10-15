@@ -312,8 +312,8 @@ or historically characterizes the group or its members using terminology such
 as "militia," "civil defense," "reserve," or substantially similar
 terminology.
 
-The actual nature and purpose of the organization, together with the particular 
-use of the Software, determine how the permissions and restrictions of this 
+The actual nature and purpose of the organization, together with the particular
+use of the Software, determine how the permissions and restrictions of this
 License apply.
 
 This Section does not determine whether any particular organization is lawfully
