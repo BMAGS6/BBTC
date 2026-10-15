@@ -6,9 +6,9 @@
 
 **Applies to:** `rewrite/ib0_4g_material_bookkeeping_contract_v1`
 
-**Status:** Draft
+**Status:** Accepted
 
-**Date:** 2026-10-12
+**Date:** 2026-10-15
 
 ## 1. Purpose
 
