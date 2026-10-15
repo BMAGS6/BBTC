@@ -1,12 +1,12 @@
 # BBTC Reconstruction Design Contract
 
-**Contract version:** 0.1.23
+**Contract version:** 0.1.24
 
-**Project phase:** IB0.4f
+**Project phase:** IB0.4g
 
-**Applies to:** `rewrite/ib0_4f_thermochemical_source_rate_contract_v1`
+**Applies to:** `rewrite/ib0_4g_material_bookkeeping_contract_v1`
 
-**Status:** Accepted
+**Status:** Draft
 
 **Date:** 2026-10-12
 
@@ -3333,6 +3333,356 @@ IB0.4f-B1 MUST remain allocation-free, reentrant, deterministic, and free of
 hidden mutable global state. It does not invoke a burn-law, geometry,
 propellant-mass, gas-EOS, chamber-state, or time-integration evaluator.
 
+### 11.7 Chamber material-population bookkeeping (IB0.4g-A)
+
+IB0.4g introduces a stateless material-population composition layer downstream
+of the existing initial free-gas closure (IB0.3j), propellant charge, whole-charge
+mass coupling (IB0.4e), and cumulative thermochemical source (IB0.4a).
+It answers the narrow question: **which modeled masses are present behind the
+projectile at one specified burn-progress state, and are the supplied upstream
+results mutually consistent as material bookkeeping?**
+
+IB0.4g MUST NOT become the chamber thermodynamics, free-volume, pressure,
+energy-balance, ignition, projectile-motion, or time-integration subsystem.
+The first IB0.4g model is closed with respect to material exchange: it includes
+no leakage, venting, injection, ablation, or mass crossing the modeled boundary.
+Such effects require later explicitly modeled source/sink terms and new contracts.
+
+#### 11.7.1 Population identities and authoritative state
+
+Keep four distinct material populations:
+
+1. **Initial trapped/free gas:** initial gas mass established by IB0.3j; it is
+   unchanged during the first closed-material-accounting model.
+2. **Remaining condensed propellant:** unreacted mass of the initial charge,
+   supplied by the existing IB0.4e whole-charge mass result.
+3. **Generated gaseous combustion products:** cumulative gas-product mass,
+   supplied by the existing IB0.4a thermochemical source.
+4. **Generated condensed combustion products:** cumulative condensed-product
+   mass, supplied by the same IB0.4a source.
+
+The regression coordinate already established by IB0.4b/IB0.4e remains the
+single authoritative burn-progress state for the initial uniform-regression
+model. IB0.4g receives already derived snapshot quantities; it MUST NOT
+integrate or independently own regression distance, reacted mass, remaining
+mass, or either product mass. Masses in its output are **derived descriptions**,
+not new independent dynamical degrees of freedom.
+
+Retain the distinct physical identities of initial trapped gas and generated
+product gas even when producing a convenient aggregate gaseous mass. Their
+compositions, constitutive properties, and caloric references are not asserted
+to be equal. The equivalent monodisperse regression-population approximation
+from IB0.4e remains unchanged; IB0.4g does not create a new grain distribution.
+
+#### 11.7.2 Inputs, dependencies, and ownership
+
+The first evaluator consumes, in order, matching native-scalar forms of:
+
+1. one complete `bbtc_ib_propellant_charge_*_t` charge record;
+2. one `bbtc_ib_initial_gas_solution_*_t` from IB0.3j;
+3. one `bbtc_ib_propellant_mass_result_*_t` from IB0.4e;
+4. one `bbtc_ib_propellant_thermochemical_source_*_t` from IB0.4a; and
+5. one caller-owned material-snapshot output record.
+
+Input pointers are borrowed, immutable, and retained only during the call.
+The evaluator MUST NOT allocate, retain input pointers, access mutable global
+state, perform I/O, or invoke unrelated physical backends. It MAY use the
+existing charge validator, but MUST NOT rerun the IB0.3j EOS inversion, grain
+geometry, burn kinetics, or IB0.4a thermochemistry calculations.
+
+The first model inherits the IB0.3j strictly-positive initial-gas mass domain:
+`initial_gas_solution->gas_mass_kg` MUST be finite and greater than zero.
+An initially evacuated chamber, an exactly zero trapped-gas mass, and an
+initially absent free-gas population are explicitly deferred; this checkpoint
+MUST NOT silently treat a zero-mass initial gas as valid. This limitation does
+not imply that atmospheric pressure is automatically used for initialization.
+
+The consumed floating-point fields are:
+
+```text
+charge.charge_mass_kg
+initial_gas_solution.gas_mass_kg
+mass.remaining_mass_kg
+mass.reacted_mass_kg
+source.gas_product_mass_kg
+source.condensed_product_mass_kg
+```
+
+The evaluator also consumes the complete, opaque `applicability_flags` masks
+from the initial-gas solution and propellant-mass result. It MUST NOT infer
+another applicability mask from the cumulative thermochemical source, which
+currently has none. The charge's density is validated by its established
+charge validator but is not used to reconstruct any derived mass.
+
+The initial-gas density, other propellant-mass result diagnostics (including
+rates, volumes, surface area, and equivalent population scale), and cumulative
+reaction-energy result are not independent inputs to the new mass identities.
+IB0.4g MUST NOT construct incomplete secondary validators for those unrelated
+fields, because the original EOS, geometry, and thermochemical model inputs
+needed for their validation are absent. Callers supplying hand-constructed
+upstream result records remain responsible for fields not consumed here.
+
+#### 11.7.3 Material snapshot and SI semantics
+
+The first public snapshot **field names and meanings** are frozen by IB0.4g-A;
+exact public header, typedef names, and evaluator names remain deferred to the
+first implementation checkpoint. Each native `float`, `double`, and
+`long double` snapshot family contains exactly these fields:
+
+```text
+bbtc_applicability_flags_t applicability_flags
+<scalar> initial_trapped_gas_mass_kg
+<scalar> remaining_propellant_mass_kg
+<scalar> reacted_propellant_mass_kg
+<scalar> generated_gas_mass_kg
+<scalar> generated_condensed_mass_kg
+<scalar> total_gas_mass_kg
+<scalar> total_material_mass_kg
+```
+
+All masses use kilograms. `reacted_propellant_mass_kg` is a burn-progress
+bookkeeping diagnostic, **not** a fifth material population. `total_gas_mass_kg`
+and `total_material_mass_kg` are convenient algebraic totals, not independently
+integrated quantities or separate ownership of the same material.
+
+For these definitions, let `m0` be initial charge mass, `m_i` initial trapped
+gas mass, `m_rem` remaining propellant mass, `m_r` reacted propellant mass,
+`m_g` generated gaseous-product mass, and `m_c` generated condensed-product
+mass. The reduced closed-system relationships are:
+
+```text
+m0           = m_rem + m_r
+m_r          = m_g + m_c
+m_gas,total  = m_i + m_g
+m_all,total  = m_i + m0
+             = m_i + m_rem + m_g + m_c
+```
+
+The public `total_material_mass_kg` SHOULD be evaluated from the initial
+invariant `m_i + m0`, rather than by unnecessarily summing three independently
+rounded population masses. The two conservation relations are verified using
+precision-aware comparisons, not by forcing bit-for-bit floating-point sums.
+
+No `occupied_volume_m3`, `free_gas_volume_m3`, bulk mixture density, chamber
+pressure, temperature, or energy field is introduced. The already-defined
+remaining-propellant volume from IB0.4e remains available to future volume
+coupling, but is not recalculated here. Condensed-product mass is NOT assumed
+to imply a particular occupied volume.
+
+#### 11.7.4 Scalar classification, endpoints, and cross-record consistency
+
+After established charge validation, each consumed mass field is classified
+in the ordered group defined in section 11.7.5. Within a group, a NaN in any
+consumed scalar takes precedence over positive or negative infinity in that
+group. Otherwise any infinity returns `BBTC_STATUS_NONFINITE_INPUT`.
+A finite scalar outside its individual mass domain returns
+`BBTC_STATUS_OUTSIDE_DOMAIN`:
+
+- initial trapped-gas mass: strictly positive;
+- remaining and reacted propellant mass: nonnegative;
+- generated gaseous and condensed-product mass: nonnegative.
+
+When `m_r == 0`, the first model requires the **exact** pre-reaction identities:
+`m_rem == m0`, `m_g == 0`, and `m_c == 0`. These are endpoint software
+semantics inherited from the successful upstream evaluators, not approximate
+relationships. Initial regression distance may have a **positive instantaneous
+burn rate** despite zero accumulated reaction; this snapshot contains no rate
+and MUST NOT reinterpret that fact as an inconsistency.
+
+When `m_rem == 0`, exact geometric burnout requires `m_r == m0`. The generated
+products must still satisfy the positive-burn consistency relation below.
+Conversely, `m_r == m0` alone MUST NOT be interpreted as exact geometric
+burnout: a strictly positive but small remaining mass may coexist with an
+independently rounded reacted mass numerically equal to `m0`. Exact burnout is
+identified here by the stated exact zero remaining-mass field, not closeness
+or rounded equality of other fields. These checks do not infer the original
+geometry or assert that the physical charge ignites or burns instantaneously.
+
+For `m_r > 0`, `m_g` MUST be strictly positive and `m_c` MAY be zero.
+A zero condensed-product mass is compatible with the IB0.4a all-gas limit,
+but without the thermochemistry record this layer cannot independently prove
+that the upstream coefficient was exactly one. A positive condensed mass is
+also valid. For `m_r > 0` with `m_rem > 0`, the state is an interior material
+snapshot and neither independent population mass is required to be its
+exact floating-point complement.
+
+Every successful snapshot MUST satisfy the two mass partitions to the
+precision-aware tolerance of section 11.7.6. Do NOT reject an otherwise valid
+interior state simply because tiny progress causes the independently rounded
+`m_rem` to equal `m0` numerically. Similarly, do not infer an exact endpoint
+solely from closeness within the interior tolerance. Exact endpoint tests are
+triggered by the stated exact zero mass fields.
+
+A finite violation of an exact endpoint identity, a required positive-product
+condition, or the conservation tolerance returns
+`BBTC_STATUS_INCONSISTENT_CONFIGURATION`. The layer does not classify such a
+cross-record contradiction as a scalar domain error or numerical overflow.
+
+Passing cross-record conservation checks is necessary for a consistent material
+snapshot, but is NOT proof that the supplied upstream records were generated
+from the same charge, grain geometry, thermochemistry, or simulation state.
+Those provenance relationships are not independently observable from the
+consumed fields, and IB0.4g MUST NOT claim to authenticate them.
+
+#### 11.7.5 Frozen validation and failure precedence
+
+The first evaluator MUST use the following sequence:
+
+1. if `result == NULL`, return `BBTC_STATUS_INVALID_ARGUMENT`;
+2. clear the entire output snapshot, including its applicability mask;
+3. validate `charge` with the existing matching propellant-charge validator;
+4. if `initial_gas_solution == NULL`, return `BBTC_STATUS_INVALID_ARGUMENT`;
+5. classify its consumed `gas_mass_kg`: NaN, infinity, finite nonpositive;
+6. if `mass == NULL`, return `BBTC_STATUS_INVALID_ARGUMENT`;
+7. classify its consumed `remaining_mass_kg` and `reacted_mass_kg` together:
+   NaN anywhere first, then infinity anywhere, then finite negative values;
+8. if `source == NULL`, return `BBTC_STATUS_INVALID_ARGUMENT`;
+9. classify consumed `gas_product_mass_kg` and
+   `condensed_product_mass_kg` together: NaN anywhere first, then infinity
+   anywhere, then finite negative values;
+10. validate exact pre-reaction and burnout identities, positive generated-gas
+    requirement for positive reacted mass, and cross-record conservation;
+11. form the two aggregate masses natively and check final representability;
+12. combine the full two incoming applicability masks with bitwise OR, then
+    commit every successful snapshot field and return `BBTC_STATUS_SUCCESS`.
+
+An earlier stage has precedence over errors discovered only in later stages.
+Every failure after accepting a nonnull output MUST leave the complete output
+cleared. Inputs MUST never be mutated. No snapshot result validator is added
+in this increment because the snapshot is produced by BBTC, not supplied as
+independent model configuration.
+
+#### 11.7.6 Precision-aware conservation and numerical policy
+
+For a mass partition `x + y = z` with nonnegative finite `x`, `y` and
+strictly positive finite `z`, define `S = max(x, y, z)`; hence `S > 0`.
+Comparisons MUST avoid requiring a directly representable `x + y`.
+
+Define `u(t)` for a finite, strictly positive native-scalar value `t` as the
+spacing from `t` to its next greater representable finite value. At the largest
+finite value, use the spacing to the immediately preceding finite value instead.
+For an exact-zero input, define `u(0) = 0` because endpoint zero is semantic,
+not an approximate small positive population. This definition includes positive
+subnormals: their spacing is the minimum positive representable subnormal
+increment in that scalar family. One possible implementation uses the matching
+native `nextafter` function; it MUST NOT evaluate an infinite upper neighbor
+as a finite spacing at the maximum finite value.
+
+Define the dimensionless normalized residual and allowance as:
+
+```text
+R = abs( (x/S + y/S) - z/S )
+U = u(x)/S + u(y)/S + u(z)/S
+T = 16 * epsilon + U
+
+accept the partition if and only if R <= T
+```
+
+Here `epsilon` is `FLT_EPSILON`, `DBL_EPSILON`, or `LDBL_EPSILON` in the
+matching scalar family. The `16 * epsilon` term budgets ordinary normalized
+arithmetic rounding; the one-local-spacing-per-positive-operand term bounds
+input quantization on the scale of the represented operands. This is a
+conservative engineering consistency test, not a proof of exact real-number
+conservation or a model-uncertainty estimate. All components of the predicate
+MUST be computed in the selected native precision, without an intermediate
+`x + y` that could overflow. Arithmetic variants retaining these semantics
+MAY be used if needed for numerical robustness.
+
+Apply this predicate to `(m_rem, m_r, m0)` and, when `m_r > 0`, to
+`(m_g, m_c, m_r)`. When `m_r == 0`, enforce the exact pre-reaction identities
+instead of evaluating the latter predicate. The exact endpoint requirements
+and the generated-gas positivity requirement have precedence over the
+approximate predicate and MUST NOT be weakened by `T`.
+
+For a native IEEE binary32 example, let `q` be the least positive subnormal,
+`m0 = 3*q`, and independently rounded `m_rem = m_r = 2*q`. The older
+`16 * epsilon`-only predicate would incorrectly fail the charge partition;
+this version includes the subnormal input-spacing allowance. At such extreme
+scales, the allowance may be large relative to the masses. Acceptance then
+means representational consistency at the selected precision, NOT a useful
+high-relative-accuracy conservation guarantee. The layer cannot recover
+information that its inputs do not encode or validate common input provenance.
+
+The initial multiplier `16` and the one-spacing allowance are provisional
+numerical-contract choices to be tested with genuine upstream IB0.4a/IB0.4e
+outputs for `float`, `double`, and `long double`, including normal/subnormal
+transitions, near-zero progress, near-burnout states, mixed-scale operands,
+all-gas thermochemistry, deliberate inconsistencies, and roundoff extremes.
+They MUST NOT be silently loosened if testing finds an unsupported case;
+revision of the contract is required before acceptance. In particular, a
+meaningful mismatch larger than `T` MUST return
+`BBTC_STATUS_INCONSISTENT_CONFIGURATION`, rather than being reclassified as
+`BBTC_STATUS_NUMERICAL_FAILURE` merely because values are small.
+
+`total_gas_mass_kg = m_i + m_g` and
+`total_material_mass_kg = m_i + m0` MUST be finite and strictly positive
+in native arithmetic. A mathematically required final aggregate that cannot
+be represented (including overflow) returns `BBTC_STATUS_NUMERICAL_FAILURE`.
+The layer MUST NOT clip, saturate, substitute a different scalar family, or
+fabricate a valid-looking mass total. Positive subnormal constituent masses
+are valid if representable; neither normalization nor construction of the
+allowance may silently reinterpret a positive mass as an invalid zero-domain
+scalar.
+
+#### 11.7.7 Applicability propagation
+
+On success, the snapshot's applicability mask is the bitwise OR of the
+**complete** initial-gas-solution and propellant-mass-result masks. Unknown or
+future bits MUST be preserved, without filtering, clearing, or reinterpretation.
+IB0.4g introduces no new applicability bit. This mask describes only the
+upstream state and models represented by the current snapshot; it does NOT
+pretend to be a shot-long cumulative applicability history. A future coupled
+solver may maintain a separate historical mask, with its own explicit contract.
+Failure leaves the output mask cleared with the rest of the result.
+
+#### 11.7.8 Deferred volume models, thermodynamics, and other exclusions
+
+Condensed-product **mass** is determined by IB0.4a; neither its intrinsic
+material volume, aggregate/bulk volume, nor its effective gas-excluded volume
+has yet been established. A future explicit condensed-product-volume interface
+SHOULD support caller-selected, documented backends, potentially including a
+named negligible-volume approximation, an effective-density model, and later
+calibrated state-dependent models. These are **design possibilities**, not
+already implemented or automatically selected models.
+
+A volume backend must declare which notion of volume it supplies, what inputs
+it requires, its applicability limits, and its ownership of any pressure or
+temperature dependency. IB0.4g MUST NOT silently set condensed-product volume
+to zero, assign a density, or convert its mass into gas-accessible volume.
+A later free-volume/thermodynamic layer must handle coupling consistently,
+including any dependence of excluded volume on evolving state.
+
+IB0.4g MUST NOT:
+
+- mix the initial trapped gas and generated combustion gas into one material
+  identity or assign shared EOS, heat capacity, composition, or caloric datum;
+- determine chemical equilibrium, flame temperature, or reaction-energy
+  deposition; independently integrate mass or chemical reaction progress;
+- derive pressure, temperature, mixture density, free volume, or gas-accessible
+  volume; select or evaluate a condensed-product-volume backend;
+- define ignition, leakage, venting, or other mass transfer;
+- determine projectile motion, resistance, muzzle state, or firing prediction;
+- run an ODE solver, establish event times, or advance the simulation clock; or
+- make a firearm, ammunition, or loading-safety determination.
+
+Compatibility between the IB0.4a reaction-energy convention and distinct gas
+caloric reference states belongs to a later explicit mixture/energy contract;
+independently zeroed specific internal energies MUST NOT be silently added.
+
+#### 11.7.9 IB0.4g-A checkpoint boundary
+
+IB0.4g-A is a **documentation-only** design checkpoint. It freezes the four
+population identities, mass/accounting meanings, snapshot field names, input
+family dependency, cross-record validation/endpoint precedence, normalized
+conservation predicate, local applicability aggregation, native precision, and
+explicit exclusions. Exact public module/function/typedef names and the
+implementation checkpoint decomposition are intentionally left for review
+before IB0.4g-B1.
+
+IB0.4g-A MUST NOT add public C declarations, object code, build integration,
+new tests, solver behavior, computed pressure predictions, or safety claims.
+Its contract remains `Draft` until reviewed and explicitly accepted.
+
 ## 12. Initial physical model
 
 The first complete internal-ballistics model is a zero-dimensional,
@@ -4624,3 +4974,49 @@ IB0.4f-B1 is complete when:
   independent-consumer, and full CTest gates pass; and
 - contract version 0.1.23 is reviewed and changed from `Draft` to `Accepted`
   before IB0.4f-B1 is committed.
+
+## 51. Acceptance criteria for IB0.4g-A
+
+IB0.4g-A is complete when:
+
+- section 11.7 defines a stateless chamber material-population bookkeeping
+  layer, explicitly distinct from thermodynamics, free-volume closure, energy,
+  ignition, and numerical integration;
+- four physical populations are distinguished: initial trapped gas, remaining
+  propellant, generated gaseous product, and generated condensed product;
+- one authoritative grain-regression coordinate remains the initial model's
+  burn-progress state; snapshot masses and totals are derived, not independently
+  integrated states;
+- the evaluator consumes matching existing IB0.3j gas solution, charge, IB0.4e
+  mass result, and IB0.4a cumulative thermochemical source without recomputing
+  their upstream physical models;
+- exact zero trapped gas remains unsupported in this first model, consistent
+  with the existing strictly positive IB0.3j gas-mass closure;
+- seven native-scalar snapshot fields plus one applicability mask are given
+  explicit SI meanings, and reacted mass is distinguished from four actual
+  material populations;
+- charge, zero-progress and burnout identities, positive-product constraints,
+  and the two closed-system mass partitions have explicit error semantics;
+- multi-field NaN-before-infinity classification, deterministic clearing,
+  validation precedence, and commit-on-success are frozen;
+- the normalized native-scalar partition predicate combines a `16 * epsilon`
+  arithmetic allowance with input-local representable-spacing (ULP) budgets,
+  includes positive subnormals, preserves exact endpoints, and requires
+  targeted upstream numerical verification before acceptance;
+- rounded equality of reacted mass to initial charge mass alone is not
+  mistaken for exact burnout, and mass consistency is not mistaken for proof
+  of common upstream provenance;
+- aggregate mass representability and preservation of native `float`, `double`,
+  and `long double` arithmetic are required;
+- complete incoming initial-gas and mass-result applicability masks combine
+  through bitwise OR only for the local snapshot, without claiming shot history;
+- condensed-product volume remains explicitly deferred to a future selectable
+  model architecture, with no silent negligible-volume assumption;
+- mixing, EOS/caloric closure, caloric-reference compatibility, energy
+  deposition, pressure, free-volume evolution, projectile dynamics, and
+  integration remain outside IB0.4g-A;
+- no public API, implementation, tests, CMake integration, or scientific
+  safety claim is added by the documentation-only checkpoint; and
+- contract version 0.1.24 is reviewed and its status changed from `Draft` to
+  `Accepted` only after explicit approval, before any IB0.4g implementation
+  checkpoint is committed.
