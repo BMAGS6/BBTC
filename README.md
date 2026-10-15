@@ -379,7 +379,19 @@ cartridge, charge, firearm, or procedure safe. Read
 
 ## License
 
-BBTC is publicly available for noncommercial purposes under the
-[PolyForm Noncommercial License 1.0.0](LICENSE.md). Commercial use requires a
-separate written license or explicit written permission from L. Brandon Magoni.
-See [`LICENSING.md`](LICENSING.md) for details and contact information.
+BBTC is proprietary, source-available software distributed under the
+[BBTC Source-Available License v1.0](LICENSE.md).
+
+The license permits qualifying lawful noncommercial civilian use,
+modification, and redistribution, subject to its terms and conditions.
+
+Commercial use and specified military, law-enforcement, private-military,
+mercenary, and other restricted professional uses require separate
+written authorization from the copyright holder.
+
+Copyright (c) 2026 L. Brandon Magoni.
+
+See [LICENSING.md](LICENSING.md) for additional information about licensing,
+contributions, and contact details.
+
+For licensing inquiries, contact **bmags.software@gmail.com**.

@@ -3715,10 +3715,15 @@ explicitly. Neither code nor prose silently wins.
 
 The following decisions were explicitly approved after IB0.1:
 
-1. **Project license.** BBTC is publicly available under the PolyForm
-   Noncommercial License 1.0.0. Commercial use requires a separate written
-   license or written permission from the copyright holder. Project-specific
-   terms and contact information live in `LICENSING.md`.
+1. **Project license.** BBTC is proprietary, source-available software
+   distributed under the BBTC Source-Available License v1.0. Qualifying
+   lawful noncommercial civilian uses are permitted subject to the
+   license's terms and conditions. Commercial use and specified military,
+   law-enforcement, private-military, mercenary, and other restricted
+   professional uses require separate written authorization from the
+   copyright holder. The authoritative licensing terms are contained
+   in the repository-root `LICENSE.md`; project-level licensing and
+   contribution information is provided in `LICENSING.md`.
 2. **Minimum CMake version.** BBTC requires CMake 3.22 or newer. This matches
    the Cubes of Honor baseline and provides C23 standard-selection support plus
    top-level/subproject detection without requiring newer CMake features.

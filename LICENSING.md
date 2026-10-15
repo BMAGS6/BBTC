@@ -1,41 +1,48 @@
 # BBTC Licensing
 
-Copyright © 2026 L. Brandon Magoni.
+Copyright (c) 2026 L. Brandon Magoni.
 
-## Public noncommercial license
+## Public license
 
-BBTC is publicly available under the
-[PolyForm Noncommercial License 1.0.0](LICENSE.md). It permits use,
-modification, and redistribution for the noncommercial purposes defined by that
-license.
+BBTC is proprietary, source-available software distributed under the
+[BBTC Source-Available License v1.0](LICENSE.md).
 
-Because the public license restricts commercial use, BBTC is source-available
-software rather than Open Source Initiative-approved open-source software.
+The license permits qualifying lawful noncommercial civilian use,
+modification, and redistribution, subject to its terms and conditions.
 
-## Commercial licensing
+Commercial use and specified military, law-enforcement, private-military,
+mercenary, and other restricted professional uses require separate
+written authorization from the copyright holder.
 
-Commercial use that is not permitted by the public license requires a separate
-written license or explicit written permission from the copyright holder before
-that use begins.
+The complete terms in `LICENSE.md` are authoritative. This document
+is an informational summary and does not modify the license.
 
-For commercial licensing inquiries, contact:
-<brandonmagoni111@gmail.com>.
+## Separate licensing
 
-Sending an inquiry does not itself grant permission. Commercial terms exist
-only when they have been agreed to in writing.
+Requests for commercial or otherwise restricted uses may be directed to:
+
+**bmags.software@gmail.com**
+
+Sending an inquiry does not itself grant permission. Any separate
+authorization must be expressly granted in writing.
 
 ## Contributions
 
-External code contributions are not currently accepted unless the copyright
-holder first establishes written contribution terms. This protects BBTC's
-ability to offer commercial licenses without uncertainty about ownership of
-third-party code.
+External code contributions are not currently accepted without
+prior written contribution terms established by the copyright holder.
 
-Bug reports, scientific references, test-case suggestions, and other feedback
-that do not contribute copyrighted code are welcome.
+This policy helps preserve the project's ability to offer separate
+commercial and institutional licenses without uncertainty about
+third-party intellectual-property rights.
+
+Bug reports, scientific references, test-case suggestions, and other
+feedback that do not contribute copyrighted code are welcome.
+
+The copyright holder may require a contributor agreement, assignment,
+certification of origin, or other written terms before accepting
+contributions, as described in Section 19 of the public license.
 
 ## Questions
 
-This file summarizes the project's licensing structure. The public license text
-in `LICENSE.md` controls noncommercial use. Contact the address above if a
-planned use is unclear or requires commercial permission.
+For clarification concerning licensing permissions or restrictions,
+contact bmags.software@gmail.com.
