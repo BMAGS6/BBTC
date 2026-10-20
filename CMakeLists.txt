@@ -105,3 +105,27 @@ if(BBTC_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
 endif()
+
+# Optional developer-only validation tools. Never linked by bbtc::bbtc.
+option(BBTC_BUILD_VVUQ "Build the independent VVUQ developer tools" OFF)
+option(BBTC_VVUQ_BUILD_TESTS "Build VVUQ cmocka/CTest self-tests" OFF)
+option(BBTC_VVUQ_ORACLE_TESTS
+    "Enable reproducible independent Python Fraction oracle tests" OFF)
+
+# A user explicitly requesting the oracle must not get a false-green test run
+# merely because the parent VVUQ test gate is disabled.
+if(BBTC_VVUQ_ORACLE_TESTS AND NOT BBTC_VVUQ_BUILD_TESTS)
+    message(FATAL_ERROR
+        "BBTC_VVUQ_ORACLE_TESTS requires BBTC_VVUQ_BUILD_TESTS=ON")
+endif()
+
+if(BBTC_VVUQ_BUILD_TESTS AND NOT BBTC_BUILD_VVUQ)
+    message(FATAL_ERROR "BBTC_VVUQ_BUILD_TESTS requires BBTC_BUILD_VVUQ=ON")
+endif()
+
+if(BBTC_BUILD_VVUQ)
+    if(BBTC_VVUQ_BUILD_TESTS AND NOT BBTC_BUILD_TESTS)
+        enable_testing()
+    endif()
+    add_subdirectory(tools/bbtc_vv)
+endif()
