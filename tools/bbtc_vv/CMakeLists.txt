@@ -20,3 +20,21 @@ if(BBTC_VVUQ_BUILD_TESTS)
     enable_testing()
     add_subdirectory("${PROJECT_SOURCE_DIR}/tests/validation" "${PROJECT_BINARY_DIR}/vv-validation-tests")
 endif()
+
+# B1b.3b is intentionally a private decision-preparation foundation only.
+# The contractual bbtc_vv_compare_* entry points are not exported or linked
+# until B1b.3c supplies correctly rounded scalar diagnostic metrics.
+# This library depends exclusively on the exact dyadic kernel, never bbtc::bbtc.
+add_library(bbtc_vv_comparison_foundation STATIC
+    comparison.c comparison.h comparison_internal.h)
+target_link_libraries(bbtc_vv_comparison_foundation PUBLIC bbtc_vv_exact_dyadic)
+target_include_directories(bbtc_vv_comparison_foundation PUBLIC
+    "${CMAKE_CURRENT_SOURCE_DIR}")
+target_compile_features(bbtc_vv_comparison_foundation PUBLIC c_std_23)
+set_target_properties(bbtc_vv_comparison_foundation PROPERTIES
+    C_STANDARD 23 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
+
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(bbtc_vv_comparison_foundation PRIVATE
+        -frounding-math -ffp-contract=off -fno-fast-math)
+endif()

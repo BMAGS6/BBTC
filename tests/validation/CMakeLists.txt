@@ -44,3 +44,21 @@ if(BBTC_VVUQ_ORACLE_TESTS)
             --seed 0xBB7C2026)
     set_tests_properties(bbtc.vv.exact_dyadic.oracle PROPERTIES TIMEOUT 180)
 endif()
+
+# VV0.1-B1b.3b: test the deliberately *internal* decision-preparation layer.
+# This target does not call, declare, or imply availability of the final
+# metric-producing bbtc_vv_compare_* API.
+add_executable(bbtc_vv_test_comparison_foundation test_comparison_foundation.c)
+target_link_libraries(bbtc_vv_test_comparison_foundation PRIVATE
+    bbtc_vv_comparison_foundation PkgConfig::CMOCKA)
+target_compile_features(bbtc_vv_test_comparison_foundation PRIVATE c_std_23)
+set_target_properties(bbtc_vv_test_comparison_foundation PROPERTIES
+    C_STANDARD 23 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
+
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(bbtc_vv_test_comparison_foundation PRIVATE
+        -frounding-math -ffp-contract=off -fno-fast-math)
+endif()
+
+add_test(NAME bbtc.vv.comparison_foundation
+    COMMAND bbtc_vv_test_comparison_foundation)
