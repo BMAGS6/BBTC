@@ -52,3 +52,17 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(bbtc_vv_exact_metric PRIVATE
         -frounding-math -ffp-contract=off -fno-fast-math)
 endif()
+
+# VV0.1-B1b.3c-2: integer-exact nearest-even conversion. Deliberately
+# developer-internal: no final bbtc_vv_compare_* function is exported here.
+# Consumers of this target can also obtain its exact_metric_t dependency.
+add_library(bbtc_vv_exact_round STATIC exact_round.c exact_round.h)
+target_link_libraries(bbtc_vv_exact_round PUBLIC bbtc_vv_exact_metric)
+target_include_directories(bbtc_vv_exact_round PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+target_compile_features(bbtc_vv_exact_round PUBLIC c_std_23)
+set_target_properties(bbtc_vv_exact_round PROPERTIES
+    C_STANDARD 23 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(bbtc_vv_exact_round PRIVATE
+        -frounding-math -ffp-contract=off -fno-fast-math)
+endif()

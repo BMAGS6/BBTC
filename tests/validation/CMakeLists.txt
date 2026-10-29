@@ -99,3 +99,38 @@ if(BBTC_VVUQ_ORACLE_TESTS)
             --seed 0xC023C1)
     set_tests_properties(bbtc.vv.exact_metric.oracle PROPERTIES TIMEOUT 180)
 endif()
+
+# VV0.1-B1b.3c-2: separately prove the exact-rational-to-native conversion.
+# The cmocka suite is an ordinary VVUQ developer test. Python remains opt-in.
+add_executable(bbtc_vv_test_exact_round test_exact_round.c)
+target_link_libraries(bbtc_vv_test_exact_round PRIVATE
+    bbtc_vv_exact_round PkgConfig::CMOCKA)
+target_compile_features(bbtc_vv_test_exact_round PRIVATE c_std_23)
+set_target_properties(bbtc_vv_test_exact_round PROPERTIES
+    C_STANDARD 23 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(bbtc_vv_test_exact_round PRIVATE
+        -frounding-math -ffp-contract=off -fno-fast-math)
+endif()
+add_test(NAME bbtc.vv.exact_round COMMAND bbtc_vv_test_exact_round)
+
+set(BBTC_VVUQ_ROUND_ORACLE_CASES 2000 CACHE STRING
+    "Seeded exact-rational rounding cases per scalar family for opt-in oracle")
+if(BBTC_VVUQ_ORACLE_TESTS)
+    add_executable(bbtc_vv_round_oracle_driver exact_round_oracle_driver.c)
+    target_link_libraries(bbtc_vv_round_oracle_driver PRIVATE bbtc_vv_exact_round)
+    target_compile_features(bbtc_vv_round_oracle_driver PRIVATE c_std_23)
+    set_target_properties(bbtc_vv_round_oracle_driver PROPERTIES
+        C_STANDARD 23 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
+    if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options(bbtc_vv_round_oracle_driver PRIVATE
+            -frounding-math -ffp-contract=off -fno-fast-math)
+    endif()
+    add_test(NAME bbtc.vv.exact_round.oracle
+        COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/test_exact_round_oracle.py"
+            --driver "$<TARGET_FILE:bbtc_vv_round_oracle_driver>"
+            --per-family "${BBTC_VVUQ_ROUND_ORACLE_CASES}"
+            --seed 0xC023C2)
+    set_tests_properties(bbtc.vv.exact_round.oracle PROPERTIES TIMEOUT 180)
+endif()
