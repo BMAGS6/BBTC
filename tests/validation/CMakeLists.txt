@@ -150,3 +150,31 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
         -frounding-math -ffp-contract=off -fno-fast-math)
 endif()
 add_test(NAME bbtc.vv.comparison_api COMMAND bbtc_vv_test_comparison_api)
+
+# VV0.1-B1b.3d-1: black-box differential acceptance of the COMPLETE B1a API.
+# The Python reference is written independently of the three C numerical
+# engines, including validation precedence and full native metric rounding.
+# Keep this behind the existing explicit oracle opt-in: a normal BBTC build
+# MUST NOT acquire Python or the test-driver as a production dependency.
+set(BBTC_VVUQ_API_ORACLE_CASES 2000 CACHE STRING
+    "Seeded end-to-end comparison API cases per native scalar family")
+if(BBTC_VVUQ_ORACLE_TESTS)
+    add_executable(bbtc_vv_comparison_api_oracle_driver
+        comparison_api_oracle_driver.c)
+    target_link_libraries(bbtc_vv_comparison_api_oracle_driver PRIVATE
+        bbtc_vv_comparison)
+    target_compile_features(bbtc_vv_comparison_api_oracle_driver PRIVATE c_std_23)
+    set_target_properties(bbtc_vv_comparison_api_oracle_driver PROPERTIES
+        C_STANDARD 23 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
+    if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options(bbtc_vv_comparison_api_oracle_driver PRIVATE
+            -frounding-math -ffp-contract=off -fno-fast-math)
+    endif()
+    add_test(NAME bbtc.vv.comparison_api.oracle
+        COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/test_comparison_api_oracle.py"
+            --driver "$<TARGET_FILE:bbtc_vv_comparison_api_oracle_driver>"
+            --per-family "${BBTC_VVUQ_API_ORACLE_CASES}"
+            --seed 0xB1B3D)
+    set_tests_properties(bbtc.vv.comparison_api.oracle PROPERTIES TIMEOUT 300)
+endif()
