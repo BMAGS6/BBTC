@@ -165,6 +165,51 @@ typedef struct bbtc_vv_result_long_double_t
     bbtc_vv_metric_state_e metric_state;
     long double metric;
 } bbtc_vv_result_long_double_t;
+/**
+ * @brief Compare native-float inputs under the accepted B1 policy.
+ *
+ * @param reference Native reference, interpreted as its exact binary value.
+ * @param observation Native observation, interpreted the same way.
+ * @param policy Required method and native tolerance (no implicit defaults).
+ * @param out_result Required result; all fields are cleared before any other
+ *                   argument validation. No write occurs when it is null.
+ * @return Execution status, separate from the comparison PASS/FAIL finding.
+ *
+ * EXACT returns NOT_COMPUTED and +0. ABSOLUTE computes |o-r| in native
+ * units; REFERENCE_RELATIVE computes |o-r|/|r| (reference must be nonzero).
+ * Both metrics are rounded nearest/ties-even from *exact rational arithmetic*
+ * and receive an independent exact/rounded/out-of-range classification.
+ * All successful findings are mathematically exact PASS/FAIL, regardless of
+ * diagnostic representability or the caller's rounding mode. Any failure
+ * leaves finding=NOT_EVALUATED, metric_state=NOT_COMPUTED, metric=+0.
+ *
+ * Supported caller rounding mode and sticky flags are unchanged on return.
+ * Unmasked traps, fast-math, and unqualified numerical formats are excluded.
+ *
+ * @warning Numerical comparison is NOT a physical safety or model verdict.
+ */
+bbtc_vv_operation_status_e bbtc_vv_compare_float(
+    float reference,
+    float observation,
+    const bbtc_vv_policy_float_t* policy,
+    bbtc_vv_result_float_t* out_result
+);
+
+/** @brief Native binary64 counterpart; does not narrow through float. */
+bbtc_vv_operation_status_e bbtc_vv_compare_double(
+    double reference,
+    double observation,
+    const bbtc_vv_policy_double_t* policy,
+    bbtc_vv_result_double_t* out_result
+);
+
+/** @brief Native extended long-double counterpart; never narrows to double. */
+bbtc_vv_operation_status_e bbtc_vv_compare_long_double(
+    long double reference,
+    long double observation,
+    const bbtc_vv_policy_long_double_t* policy,
+    bbtc_vv_result_long_double_t* out_result
+);
 
 
 #ifdef __cplusplus

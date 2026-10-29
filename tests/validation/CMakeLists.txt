@@ -134,3 +134,19 @@ if(BBTC_VVUQ_ORACLE_TESTS)
             --seed 0xC023C2)
     set_tests_properties(bbtc.vv.exact_round.oracle PROPERTIES TIMEOUT 180)
 endif()
+
+# VV0.1-B1b.3c-3: the first complete, native-family comparison API. All
+# decisions remain governed by the original exact dyadic kernel; diagnostics
+# are independently constructed and rounded. No production BBTC dependency.
+# B1b.3d will add a separately implemented end-to-end rational oracle.
+add_executable(bbtc_vv_test_comparison_api test_comparison_api.c)
+target_link_libraries(bbtc_vv_test_comparison_api PRIVATE
+    bbtc_vv_comparison PkgConfig::CMOCKA)
+target_compile_features(bbtc_vv_test_comparison_api PRIVATE c_std_23)
+set_target_properties(bbtc_vv_test_comparison_api PROPERTIES
+    C_STANDARD 23 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(bbtc_vv_test_comparison_api PRIVATE
+        -frounding-math -ffp-contract=off -fno-fast-math)
+endif()
+add_test(NAME bbtc.vv.comparison_api COMMAND bbtc_vv_test_comparison_api)

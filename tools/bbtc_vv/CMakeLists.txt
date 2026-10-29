@@ -66,3 +66,19 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(bbtc_vv_exact_round PRIVATE
         -frounding-math -ffp-contract=off -fno-fast-math)
 endif()
+
+# VV0.1-B1b.3c-3: complete comparison API, preserving the original B1b.3b
+# foundation as its own separately testable dependency. Links only developer-
+# internal exact dyadic, exact rational metric, and nearest-even rounding code.
+# The production bbtc::bbtc library is deliberately not a dependency.
+add_library(bbtc_vv_comparison STATIC comparison_api.c comparison.h)
+target_link_libraries(bbtc_vv_comparison PUBLIC
+    bbtc_vv_comparison_foundation bbtc_vv_exact_round)
+target_include_directories(bbtc_vv_comparison PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+target_compile_features(bbtc_vv_comparison PUBLIC c_std_23)
+set_target_properties(bbtc_vv_comparison PROPERTIES
+    C_STANDARD 23 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(bbtc_vv_comparison PRIVATE
+        -frounding-math -ffp-contract=off -fno-fast-math)
+endif()
