@@ -38,3 +38,17 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(bbtc_vv_comparison_foundation PRIVATE
         -frounding-math -ffp-contract=off -fno-fast-math)
 endif()
+
+# VV0.1-B1b.3c-1: exact mathematical error construction, deliberately without
+# any output rounding or complete comparison entrypoints. Developer-only.
+# The only dependency is the independently qualified exact-dyadic kernel.
+add_library(bbtc_vv_exact_metric STATIC exact_metric.c exact_metric.h)
+target_include_directories(bbtc_vv_exact_metric PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(bbtc_vv_exact_metric PUBLIC bbtc_vv_exact_dyadic)
+target_compile_features(bbtc_vv_exact_metric PUBLIC c_std_23)
+set_target_properties(bbtc_vv_exact_metric PROPERTIES
+    C_STANDARD 23 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(bbtc_vv_exact_metric PRIVATE
+        -frounding-math -ffp-contract=off -fno-fast-math)
+endif()

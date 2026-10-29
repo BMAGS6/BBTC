@@ -62,3 +62,40 @@ endif()
 
 add_test(NAME bbtc.vv.comparison_foundation
     COMMAND bbtc_vv_test_comparison_foundation)
+
+# VV0.1-B1b.3c-1: the numerator/denominator output is an *exact* rational,
+# not a rounded scalar diagnostic or the final bbtc_vv_compare_* interface.
+add_executable(bbtc_vv_test_exact_metric test_exact_metric.c)
+target_link_libraries(bbtc_vv_test_exact_metric PRIVATE
+    bbtc_vv_exact_metric PkgConfig::CMOCKA)
+target_compile_features(bbtc_vv_test_exact_metric PRIVATE c_std_23)
+set_target_properties(bbtc_vv_test_exact_metric PROPERTIES
+    C_STANDARD 23 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(bbtc_vv_test_exact_metric PRIVATE
+        -frounding-math -ffp-contract=off -fno-fast-math)
+endif()
+add_test(NAME bbtc.vv.exact_metric COMMAND bbtc_vv_test_exact_metric)
+
+# Extend the *existing* explicit oracle opt-in; Python is never required by
+# ordinary BBTC builds, and its absence fails loudly when requested.
+set(BBTC_VVUQ_METRIC_ORACLE_CASES 2000 CACHE STRING
+    "Random exact metric cases per scalar family for the optional oracle")
+if(BBTC_VVUQ_ORACLE_TESTS)
+    add_executable(bbtc_vv_metric_oracle_driver exact_metric_oracle_driver.c)
+    target_link_libraries(bbtc_vv_metric_oracle_driver PRIVATE bbtc_vv_exact_metric)
+    target_compile_features(bbtc_vv_metric_oracle_driver PRIVATE c_std_23)
+    set_target_properties(bbtc_vv_metric_oracle_driver PROPERTIES
+        C_STANDARD 23 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
+    if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options(bbtc_vv_metric_oracle_driver PRIVATE
+            -frounding-math -ffp-contract=off -fno-fast-math)
+    endif()
+    add_test(NAME bbtc.vv.exact_metric.oracle
+        COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/test_exact_metric_oracle.py"
+            --driver "$<TARGET_FILE:bbtc_vv_metric_oracle_driver>"
+            --per-family "${BBTC_VVUQ_METRIC_ORACLE_CASES}"
+            --seed 0xC023C1)
+    set_tests_properties(bbtc.vv.exact_metric.oracle PROPERTIES TIMEOUT 180)
+endif()
