@@ -79,7 +79,7 @@ static void print_format_profile(void)
  */
 static bool profile_matches_primary_target(void)
 {
-    return CHAR_BIT == 8 && FLT_RADIX == 2 &&
+    return CHAR_BIT == 8 && FLT_RADIX == 2 && FLT_EVAL_METHOD == 0 &&
         sizeof(float) == 4 && sizeof(double) == 8 &&
         sizeof(long double) == 16 &&
         FLT_MANT_DIG == 24 && FLT_MIN_EXP == -125 && FLT_MAX_EXP == 128 &&

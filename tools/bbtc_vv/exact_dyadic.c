@@ -22,8 +22,11 @@
  * the exact sign, including inclusive equality at the threshold.
  *
  * The supported exponent envelope is initially limited to binary32,
- * binary64 and x87 extended binary80 (16-byte storage). The bit-buffer range
- * [-33152, 33152) includes every bit of every admissible input or product,
+ * binary64 and x87 extended binary80 (16-byte storage). This initial
+ * qualified host profile requires FLT_EVAL_METHOD == 0 and rejects
+ * binary64-backed long double until it is separately qualified.
+ * The bit-buffer range [-33152, 33152) includes every bit of every
+ * admissible input or product,
  * with spare carry headroom. Smallest possible normalized-frexp exponent
  * after scaling to a p-bit integer is MIN_EXP - 2p + 1. For x87 p=64 and
  * MIN_EXP=-16381, a two-input product begins no lower than -33016.
@@ -291,7 +294,7 @@ static bool valid_method(bbtc_vv_dyadic_method_e method)
 #define BBTC_VV_DEFINE_FAMILY(NAME, TYPE, SUFFIX, MANT_DIG, MIN_EXP, MAX_EXP, FORMAT_OK, TRUE_MIN) \
     static bool NAME##_environment_ok(void)                                                   \
     {                                                                                         \
-        if (!(FORMAT_OK) || FLT_RADIX != 2)                                                   \
+        if (!(FORMAT_OK) || FLT_RADIX != 2 || FLT_EVAL_METHOD != 0)                                                   \
             return false;                                                                     \
         if ((MANT_DIG) > 64 || (MIN_EXP) < -16381 || (MAX_EXP) > 16384)                       \
             return false;                                                                     \
@@ -331,8 +334,8 @@ static bool valid_method(bbtc_vv_dyadic_method_e method)
         *out_pass = false;                                                                    \
         if (!valid_method(method))                                                            \
             return BBTC_VV_DYADIC_INVALID_ARGUMENT;                                          \
-        if (!(FORMAT_OK) || FLT_RADIX != 2 || (MANT_DIG) > 64 ||                              \
-            (MIN_EXP) < -16381 || (MAX_EXP) > 16384)                                          \
+        if (!(FORMAT_OK) || FLT_RADIX != 2 || FLT_EVAL_METHOD != 0 ||                         \
+            (MANT_DIG) > 64 || (MIN_EXP) < -16381 || (MAX_EXP) > 16384)                       \
             return BBTC_VV_DYADIC_UNSUPPORTED_ENVIRONMENT;                                   \
         fenv_t original;                                                                      \
         if (feholdexcept(&original) != 0)                                                     \
@@ -406,9 +409,8 @@ BBTC_VV_DEFINE_FAMILY(
 
 BBTC_VV_DEFINE_FAMILY(
     long_double, long double, l, LDBL_MANT_DIG, LDBL_MIN_EXP, LDBL_MAX_EXP,
-    ((LDBL_MANT_DIG == 64 && LDBL_MIN_EXP == -16381 && LDBL_MAX_EXP == 16384 &&
-      sizeof(long double) == 16) ||
-     (LDBL_MANT_DIG == 53 && LDBL_MIN_EXP == -1021 && LDBL_MAX_EXP == 1024)), LDBL_TRUE_MIN
+    (LDBL_MANT_DIG == 64 && LDBL_MIN_EXP == -16381 && LDBL_MAX_EXP == 16384 &&
+     sizeof(long double) == 16), LDBL_TRUE_MIN
 )
 
 #undef BBTC_VV_DEFINE_FAMILY

@@ -18,8 +18,10 @@
  *
  * Decimal conversions, excess precision in unqualified environments,
  * unmasked traps, unsafe math transformations, and noncanonical formats are
- * deliberately out of scope. A sanitized and independently reproduced test
- * campaign is a separate acceptance requirement.
+ * deliberately out of scope. The initial supported profile requires
+ * FLT_EVAL_METHOD == 0 and padded x87 long double; the binary64-backed
+ * long-double alternative awaits separate qualification. A sanitized and
+ * independently reproduced test campaign is a separate acceptance requirement.
  */
 #include "exact_round.h"
 
@@ -392,7 +394,8 @@ static bbtc_vv_metric_state_e select_rounding(
             *out_value = (TYPE)0;                                                \
         if (exact == NULL || out_state == NULL || out_value == NULL)             \
             return BBTC_VV_STATUS_INVALID_ARGUMENT;                             \
-        if (!(FORMAT_OK) || FLT_RADIX != 2 || (PRECISION) > 64)                  \
+        if (!(FORMAT_OK) || FLT_RADIX != 2 || FLT_EVAL_METHOD != 0 ||            \
+            (PRECISION) > 64)                                                   \
             return BBTC_VV_STATUS_UNSUPPORTED_FP_ENVIRONMENT;                   \
         fenv_t incoming;                                                         \
         if (feholdexcept(&incoming) != 0)                                        \
@@ -432,8 +435,7 @@ DEFINE_METRIC_ROUND(double, double, , DBL_MANT_DIG, DBL_MIN_EXP, DBL_MAX_EXP,
     (DBL_MANT_DIG == 53 && DBL_MIN_EXP == -1021 && DBL_MAX_EXP == 1024))
 DEFINE_METRIC_ROUND(long_double, long double, l,
     LDBL_MANT_DIG, LDBL_MIN_EXP, LDBL_MAX_EXP,
-    ((LDBL_MANT_DIG == 64 && LDBL_MIN_EXP == -16381 && LDBL_MAX_EXP == 16384 &&
-      sizeof(long double) == 16) ||
-     (LDBL_MANT_DIG == 53 && LDBL_MIN_EXP == -1021 && LDBL_MAX_EXP == 1024)))
+    (LDBL_MANT_DIG == 64 && LDBL_MIN_EXP == -16381 && LDBL_MAX_EXP == 16384 &&
+     sizeof(long double) == 16))
 
 #undef DEFINE_METRIC_ROUND
