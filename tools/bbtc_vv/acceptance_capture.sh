@@ -52,6 +52,15 @@ ninja --version
 python3 --version
 pkg-config --modversion cmocka
 
+# A13/A14: the reference program must fail on deliberately corrupted protocol
+# replies. This tests oracle validation logic itself without calling the C
+# kernels. It is part of acceptance capture, not a tenth CTest target, so the
+# existing nine-suite registration and oracle-case totals remain unchanged.
+# A failure is fatal under set -e; no numerical campaign may be accepted with
+# a known blind spot in its result parser.
+printf '\n=== PYTHON ORACLE INTEGRITY SELF-TEST ===\n'
+PYTHONDONTWRITEBYTECODE=1 python3 tests/validation/test_oracle_integrity.py -v
+
 # Avoid reporting the unsupported assumption that all configurations are
 # interchangeable: each compiler independently emits its format profile.
 readonly warn=(
@@ -160,7 +169,17 @@ sha256sum \
     tools/bbtc_vv/exact_round.c \
     tools/bbtc_vv/comparison.c \
     tools/bbtc_vv/comparison_api.c \
-    tests/validation/test_comparison_api_oracle.py
+    tests/validation/test_exact_dyadic_oracle.py \
+    tests/validation/test_exact_metric_oracle.py \
+    tests/validation/test_exact_round_oracle.py \
+    tests/validation/test_comparison_api_oracle.py \
+    tests/validation/test_oracle_integrity.py \
+    tests/validation/dyadic_oracle_driver.c \
+    tests/validation/exact_metric_oracle_driver.c \
+    tests/validation/exact_round_oracle_driver.c \
+    tests/validation/comparison_api_oracle_driver.c \
+    tests/validation/CMakeLists.txt \
+    tools/bbtc_vv/acceptance_capture.sh
 
 git diff --check
 git diff --cached --check
