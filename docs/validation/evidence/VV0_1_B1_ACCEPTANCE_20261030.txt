@@ -1,0 +1,240 @@
+
+=== FINAL ACCEPTANCE SOURCE ===
+21f804ba0fc2ecb32242662f1c55d9cc8ed74396
+## rewrite/vv0_1b1b3_comparison_api_v1...origin/rewrite/vv0_1b1b3_comparison_api_v1
+PRE_RUN_CLEAN=1
+
+=== COMPLETE ACCEPTANCE CAMPAIGN ===
+
+=== SOURCE AND TOOLCHAIN IDENTITY ===
+UTC=2026-10-30T04:50:07Z
+Linux BrandonsPC 7.2.11-arch1-1 #1 SMP PREEMPT_DYNAMIC Fri, 16 Oct 2026 00:28:58 +0000 x86_64 GNU/Linux
+ROOT=/home/bmags/Projects/BBTC_VVUQ_B1b
+21f804ba0fc2ecb32242662f1c55d9cc8ed74396
+rewrite/vv0_1b1b3_comparison_api_v1
+## rewrite/vv0_1b1b3_comparison_api_v1...origin/rewrite/vv0_1b1b3_comparison_api_v1
+gcc (GCC) 16.2.1 20260810
+clang version 23.1.4
+cmake version 4.4.5
+1.13.2
+Python 3.14.8
+2.0.2
+
+=== PYTHON ORACLE INTEGRITY SELF-TEST ===
+test_accept_canonical_successful_zero (__main__.MetricOracleProtocolTests.test_accept_canonical_successful_zero)
+A fully canonical zero magnitude is a valid successful output. ... ok
+test_reject_absolute_equivalent_denominator (__main__.MetricOracleProtocolTests.test_reject_absolute_equivalent_denominator)
+A numerically equivalent ratio is not a valid absolute encoding. ... ok
+test_reject_bad_field_count (__main__.MetricOracleProtocolTests.test_reject_bad_field_count)
+A partial or extended response line cannot be silently accepted. ... ok
+test_reject_bad_hex_and_negative_numerator (__main__.MetricOracleProtocolTests.test_reject_bad_hex_and_negative_numerator)
+Malformed and negative unsigned hexadecimal fields fail closed. ... ok
+test_reject_failure_stale_denominator_exponent (__main__.MetricOracleProtocolTests.test_reject_failure_stale_denominator_exponent)
+Denominator exponent must also clear on every failure. ... ok
+test_reject_failure_stale_exponent (__main__.MetricOracleProtocolTests.test_reject_failure_stale_exponent)
+A failure must not leak even a nonzero exponent with N=0. ... ok
+test_reject_failure_stale_numerator (__main__.MetricOracleProtocolTests.test_reject_failure_stale_numerator)
+A failure must not leak a nonzero numerator despite D=0. ... ok
+test_reject_relative_equivalent_denominator (__main__.MetricOracleProtocolTests.test_reject_relative_equivalent_denominator)
+Relative denominator must be the native reference, not a reduction. ... ok
+test_reject_success_zero_denominator (__main__.MetricOracleProtocolTests.test_reject_success_zero_denominator)
+A successful record cannot contain D=0, even for N=0. ... ok
+test_reject_wrong_numerical_result (__main__.MetricOracleProtocolTests.test_reject_wrong_numerical_result)
+Correct field shape never excuses an incorrect rational result. ... ok
+test_reject_wrong_status (__main__.MetricOracleProtocolTests.test_reject_wrong_status)
+The oracle must never accept an unexpected success status. ... ok
+test_reject_zero_noncanonical_exponent (__main__.MetricOracleProtocolTests.test_reject_zero_noncanonical_exponent)
+An exact zero numerator MUST have canonical E=0. ... ok
+test_valid_absolute (__main__.MetricOracleProtocolTests.test_valid_absolute)
+Exact magnitude one has a valid absolute rational encoding. ... ok
+test_valid_canonical_failure (__main__.MetricOracleProtocolTests.test_valid_canonical_failure)
+A zero-reference relative rejection has all-zero metric fields. ... ok
+test_valid_relative_non_dyadic (__main__.MetricOracleProtocolTests.test_valid_relative_non_dyadic)
+The normalized binary32 representation of three encodes 1/3. ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.000s
+
+OK
+
+=== HOST PROFILE: gcc ===
+C_STANDARD=202311
+CHAR_BIT=8
+FLT_RADIX=2
+FLT_EVAL_METHOD=0
+FLOAT_BITS=32
+DOUBLE_BITS=64
+LONG_DOUBLE_STORAGE_BITS=128
+FLOAT_MANT_DIG=24 MIN_EXP=-125 MAX_EXP=128
+DOUBLE_MANT_DIG=53 MIN_EXP=-1021 MAX_EXP=1024
+LONG_DOUBLE_MANT_DIG=64 MIN_EXP=-16381 MAX_EXP=16384
+FLOAT_TRUE_MIN=0x1p-149
+DOUBLE_TRUE_MIN=0x0.0000000000001p-1022
+LONG_DOUBLE_TRUE_MIN=0x0.000000000000001p-16385
+PRIMARY_FORMAT_PROFILE_MATCH=1
+FENV_SMOKE_TEST_PASS=1
+
+=== VVUQ STRICT BUILD AND TEST: gcc ===
+-- Configuring done (0.1s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/bmags/Projects/BBTC_VVUQ_B1b/build/vv0_1b3d2_acceptance/strict_gcc
+ninja: no work to do.
+Total Tests: 9
+Test project /home/bmags/Projects/BBTC_VVUQ_B1b/build/vv0_1b3d2_acceptance/strict_gcc
+    Start 1: bbtc.vv.exact_dyadic
+1/9 Test #1: bbtc.vv.exact_dyadic .............   Passed    0.00 sec
+    Start 2: bbtc.vv.exact_dyadic.oracle
+2/9 Test #2: bbtc.vv.exact_dyadic.oracle ......   Passed    4.28 sec
+    Start 3: bbtc.vv.comparison_foundation
+3/9 Test #3: bbtc.vv.comparison_foundation ....   Passed    0.00 sec
+    Start 4: bbtc.vv.exact_metric
+4/9 Test #4: bbtc.vv.exact_metric .............   Passed    0.00 sec
+    Start 5: bbtc.vv.exact_metric.oracle
+5/9 Test #5: bbtc.vv.exact_metric.oracle ......   Passed    2.12 sec
+    Start 6: bbtc.vv.exact_round
+6/9 Test #6: bbtc.vv.exact_round ..............   Passed    0.00 sec
+    Start 7: bbtc.vv.exact_round.oracle
+7/9 Test #7: bbtc.vv.exact_round.oracle .......   Passed    1.83 sec
+    Start 8: bbtc.vv.comparison_api
+8/9 Test #8: bbtc.vv.comparison_api ...........   Passed    0.00 sec
+    Start 9: bbtc.vv.comparison_api.oracle
+9/9 Test #9: bbtc.vv.comparison_api.oracle ....   Passed    1.32 sec
+
+100% tests passed out of 9
+
+Total Test time (real) =   9.55 sec
+
+=== DEVELOPER API SYMBOLS: gcc ===
+DEVELOPER_API_DEFINED=bbtc_vv_compare_float
+DEVELOPER_API_DEFINED=bbtc_vv_compare_double
+DEVELOPER_API_DEFINED=bbtc_vv_compare_long_double
+
+=== HOST PROFILE: clang ===
+C_STANDARD=202311
+CHAR_BIT=8
+FLT_RADIX=2
+FLT_EVAL_METHOD=0
+FLOAT_BITS=32
+DOUBLE_BITS=64
+LONG_DOUBLE_STORAGE_BITS=128
+FLOAT_MANT_DIG=24 MIN_EXP=-125 MAX_EXP=128
+DOUBLE_MANT_DIG=53 MIN_EXP=-1021 MAX_EXP=1024
+LONG_DOUBLE_MANT_DIG=64 MIN_EXP=-16381 MAX_EXP=16384
+FLOAT_TRUE_MIN=0x1p-149
+DOUBLE_TRUE_MIN=0x0.0000000000001p-1022
+LONG_DOUBLE_TRUE_MIN=0x0.000000000000001p-16385
+PRIMARY_FORMAT_PROFILE_MATCH=1
+FENV_SMOKE_TEST_PASS=1
+
+=== VVUQ STRICT BUILD AND TEST: clang ===
+-- Configuring done (0.1s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/bmags/Projects/BBTC_VVUQ_B1b/build/vv0_1b3d2_acceptance/strict_clang
+ninja: no work to do.
+Total Tests: 9
+Test project /home/bmags/Projects/BBTC_VVUQ_B1b/build/vv0_1b3d2_acceptance/strict_clang
+    Start 1: bbtc.vv.exact_dyadic
+1/9 Test #1: bbtc.vv.exact_dyadic .............   Passed    0.00 sec
+    Start 2: bbtc.vv.exact_dyadic.oracle
+2/9 Test #2: bbtc.vv.exact_dyadic.oracle ......   Passed    4.25 sec
+    Start 3: bbtc.vv.comparison_foundation
+3/9 Test #3: bbtc.vv.comparison_foundation ....   Passed    0.00 sec
+    Start 4: bbtc.vv.exact_metric
+4/9 Test #4: bbtc.vv.exact_metric .............   Passed    0.00 sec
+    Start 5: bbtc.vv.exact_metric.oracle
+5/9 Test #5: bbtc.vv.exact_metric.oracle ......   Passed    2.15 sec
+    Start 6: bbtc.vv.exact_round
+6/9 Test #6: bbtc.vv.exact_round ..............   Passed    0.00 sec
+    Start 7: bbtc.vv.exact_round.oracle
+7/9 Test #7: bbtc.vv.exact_round.oracle .......   Passed    1.84 sec
+    Start 8: bbtc.vv.comparison_api
+8/9 Test #8: bbtc.vv.comparison_api ...........   Passed    0.00 sec
+    Start 9: bbtc.vv.comparison_api.oracle
+9/9 Test #9: bbtc.vv.comparison_api.oracle ....   Passed    1.31 sec
+
+100% tests passed out of 9
+
+Total Test time (real) =   9.55 sec
+
+=== DEVELOPER API SYMBOLS: clang ===
+DEVELOPER_API_DEFINED=bbtc_vv_compare_float
+DEVELOPER_API_DEFINED=bbtc_vv_compare_double
+DEVELOPER_API_DEFINED=bbtc_vv_compare_long_double
+
+=== CLANG DEBUG ASAN/UBSAN ===
+C_STANDARD=202311
+CHAR_BIT=8
+FLT_RADIX=2
+FLT_EVAL_METHOD=0
+FLOAT_BITS=32
+DOUBLE_BITS=64
+LONG_DOUBLE_STORAGE_BITS=128
+FLOAT_MANT_DIG=24 MIN_EXP=-125 MAX_EXP=128
+DOUBLE_MANT_DIG=53 MIN_EXP=-1021 MAX_EXP=1024
+LONG_DOUBLE_MANT_DIG=64 MIN_EXP=-16381 MAX_EXP=16384
+FLOAT_TRUE_MIN=0x1p-149
+DOUBLE_TRUE_MIN=0x0.0000000000001p-1022
+LONG_DOUBLE_TRUE_MIN=0x0.000000000000001p-16385
+PRIMARY_FORMAT_PROFILE_MATCH=1
+FENV_SMOKE_TEST_PASS=1
+-- Configuring done (0.1s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/bmags/Projects/BBTC_VVUQ_B1b/build/vv0_1b3d2_acceptance/sanitized_clang
+ninja: no work to do.
+Total Tests: 9
+Test project /home/bmags/Projects/BBTC_VVUQ_B1b/build/vv0_1b3d2_acceptance/sanitized_clang
+    Start 1: bbtc.vv.exact_dyadic
+1/9 Test #1: bbtc.vv.exact_dyadic .............   Passed    0.01 sec
+    Start 2: bbtc.vv.exact_dyadic.oracle
+2/9 Test #2: bbtc.vv.exact_dyadic.oracle ......   Passed    6.06 sec
+    Start 3: bbtc.vv.comparison_foundation
+3/9 Test #3: bbtc.vv.comparison_foundation ....   Passed    0.01 sec
+    Start 4: bbtc.vv.exact_metric
+4/9 Test #4: bbtc.vv.exact_metric .............   Passed    0.01 sec
+    Start 5: bbtc.vv.exact_metric.oracle
+5/9 Test #5: bbtc.vv.exact_metric.oracle ......   Passed    3.04 sec
+    Start 6: bbtc.vv.exact_round
+6/9 Test #6: bbtc.vv.exact_round ..............   Passed    0.01 sec
+    Start 7: bbtc.vv.exact_round.oracle
+7/9 Test #7: bbtc.vv.exact_round.oracle .......   Passed    2.16 sec
+    Start 8: bbtc.vv.comparison_api
+8/9 Test #8: bbtc.vv.comparison_api ...........   Passed    0.01 sec
+    Start 9: bbtc.vv.comparison_api.oracle
+9/9 Test #9: bbtc.vv.comparison_api.oracle ....   Passed    1.90 sec
+
+100% tests passed out of 9
+
+Total Test time (real) =  13.20 sec
+
+=== PRODUCTION-ONLY BUILD SEPARATION ===
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/bmags/Projects/BBTC_VVUQ_B1b/build/vv0_1b3d2_acceptance/production_clang
+ninja: no work to do.
+PRODUCTION_VVUQ_TARGETS=0
+PRODUCTION_DEFINED_VVUQ_SYMBOLS=0
+
+=== SOURCE INTEGRITY AND WHITESPACE ===
+36e9603defbfc358cb444fef2468e03c31569c945ba03bfb023fd3b1114c0d63  tools/bbtc_vv/exact_dyadic.c
+162d6f10135b93b2c5de1ff639f46bd7fd7ba0b82b0ae51cb84851c550135bd1  tools/bbtc_vv/exact_metric.c
+6b18205d510a30afa31094fa23bd9250a514b03eb0beeb71bd524d3861693bea  tools/bbtc_vv/exact_round.c
+2f8e8dd239c7dd88d0727d05cbb949d621d98b17f212762ff075959c53615883  tools/bbtc_vv/comparison.c
+96f1e2f3cfc853ca272057cc6c9b5323d414fd3952bb84d1851b7b9f07a6ad08  tools/bbtc_vv/comparison_api.c
+61c3d91b1b9d081f22320eb2586e189346111939ea620c385b43cf158e6c29fb  tests/validation/test_exact_dyadic_oracle.py
+a1d0265ae9c698489e6bfbd4d48305be165d2fdb3bef9f61dcf7efd80ba958b4  tests/validation/test_exact_metric_oracle.py
+6c68bf5fc249270e2f062a47dd4b9767ef25cba2994573f33b6541f890f336d3  tests/validation/test_exact_round_oracle.py
+5cc692d4d68ecf58442c88b6dc850b9580f8d896f8fb09f398c16d9fcb52d25b  tests/validation/test_comparison_api_oracle.py
+500685b6aa2b47653421213c173d5813e6fc0c03e957726cfeca8ffb56d95826  tests/validation/test_oracle_integrity.py
+3ba97f1094515df061ae4733266444887bd4d4dfe2dbf7e046c9bc47cdde1a3a  tests/validation/dyadic_oracle_driver.c
+bbcc849edf2a9c2a8a10f5755d2738ae80ec68c7238084eacffefa153ca7be56  tests/validation/exact_metric_oracle_driver.c
+46de553d44aa098d2c02989d1ddc7ad61d86cfd6e79badc44bf2cfc7bb1687ee  tests/validation/exact_round_oracle_driver.c
+5dbb34d9d22eccf251ba13bd5d9515c086774b44c931e1456718b8f4b9c4ca57  tests/validation/comparison_api_oracle_driver.c
+18a6437e3f73131eaf7f671859f7ae81575a53bb18bc858a501ebc5b066488eb  tests/validation/CMakeLists.txt
+e86daa191bece76d1a01549cf9d376ae053f28091a547e3214af2da3756afaf7  tools/bbtc_vv/acceptance_capture.sh
+
+=== EVIDENCE CAPTURE COMPLETE; MANUAL ACCEPTANCE REVIEW STILL REQUIRED ===
+
+=== POST-RUN INTEGRITY ===
+POST_RUN_CLEAN=1
+
+=== FINAL CAPTURE SUCCESS ===
