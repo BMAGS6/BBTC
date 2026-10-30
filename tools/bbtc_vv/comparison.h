@@ -1,20 +1,19 @@
 /**
  * @file comparison.h
- * @brief Accepted VV0.1-B1 comparison data model (developer-only).
+ * @brief Complete VV0.1-B1 comparison API and data model (developer-only).
  *
  * @details
- * This header freezes the internal comparison vocabulary established by
- * VVUQ_COMPARISON_CORE_CONTRACT.md, version 0.1.0. It deliberately does NOT
- * declare the final bbtc_vv_compare_* entry points during B1b.3b: those
- * entry points promise correctly rounded diagnostic metrics for Absolute and
- * Reference-relative comparisons, which are the subject of B1b.3c.
+ * The types and three typed `bbtc_vv_compare_*` entry points implement the
+ * accepted numerical contract in VVUQ_COMPARISON_CORE_CONTRACT.md, version
+ * 0.1.0. The exact dyadic decision and independently rounded diagnostic are
+ * separate obligations; a rounded metric never determines a PASS/FAIL.
  *
- * Until that mathematical implementation is qualified, the only callable
- * B1b.3b interface is comparison_internal.h. Its decision preparation
- * functions are NOT substitutes for the promised public-facing developer API.
+ * `comparison_internal.h` remains a developer-private preparation adapter.
+ * Its decision-only functions are not substitutes for the full API.
  *
- * No type here belongs to BBTC's installed public ABI. Consumers must not
- * install this header as a production BBTC include file.
+ * No type or function here belongs to BBTC's installed public ABI. Consumers
+ * must not install this header as a production BBTC include file. The final
+ * source-level acceptance decision remains subject to the A01-A14 audit.
  *
  * @warning A comparison result is a numerical finding, not a physical safety
  *          finding or scientific model-validation verdict.
