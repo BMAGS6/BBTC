@@ -279,6 +279,94 @@ DEFINE_FENV_MATRIX(double, double, , DBL_MANT_DIG)
 DEFINE_FENV_MATRIX(long_double, long double, l, LDBL_MANT_DIG)
 #undef DEFINE_FENV_MATRIX
 
+/**
+ * @brief Exercise both extremes of the fixed dyadic accumulator's exponent grid.
+ *
+ * @details
+ * The source-level proof for A01/A03 derives the following exact identities
+ * entirely from the represented binary values; the expectations below do
+ * NOT depend on a native floating-point subtraction or multiplication:
+ *
+ * Let epsilon be the smallest positive subnormal and M the largest finite
+ * value in the selected native family. For any epsilon > 0 and M > 2:
+ *
+ *   |epsilon - epsilon| = 0 <= epsilon * epsilon;
+ *   |-epsilon - epsilon| = 2*epsilon > epsilon * epsilon;
+ *   |-epsilon - epsilon| = 2*epsilon = 2*|epsilon|;
+ *   |M - (-M)| = 2*M = 2*|M|;
+ *   |M - (-M)| = 2*M > nextafter(2, 0)*|M|;
+ *   |M - (-M)| = 2*M <= M*|M|.
+ *
+ * The first two cases exercise a relative threshold whose binary exponent
+ * reaches the lower end of the proven 128-bit product envelope. The final
+ * case uses the largest admitted relative-threshold product, which exceeds
+ * every finite native scalar but must remain exact in the integer grid.
+ *
+ * The near-two case checks an INCLUSIVE rational threshold boundary that
+ * would be easy to misclassify if the threshold were first rounded in the
+ * native floating-point type. Nothing here implies support for unqualified
+ * formats, unmasked traps, or physical/ballistics model validation.
+ *
+ * @param state Unused cmocka fixture pointer.
+ */
+#define DEFINE_GRID_BOUNDARY_TEST(NAME, TYPE, SUFFIX, MAX_FINITE, TRUE_MIN)     \
+    static void test_##NAME##_grid_boundaries(void **state)                     \
+    {                                                                           \
+        (void)state;                                                            \
+        const TYPE epsilon = (TRUE_MIN);                                        \
+        const TYPE maximum = (MAX_FINITE);                                      \
+        const TYPE just_below_two = nextafter##SUFFIX((TYPE)2, (TYPE)0);        \
+        bool pass = false;                                                      \
+        bbtc_vv_dyadic_status_e status;                                        \
+                                                                                \
+        /* Minimum representable *product*: epsilon * epsilon. */             \
+        status = bbtc_vv_dyadic_compare_##NAME(                                 \
+            BBTC_VV_DYADIC_REFERENCE_RELATIVE,                                 \
+            epsilon, epsilon, epsilon, &pass);                                  \
+        assert_int_equal(status, BBTC_VV_DYADIC_SUCCESS);                      \
+        assert_true(pass);                                                      \
+                                                                                \
+        /* Exactly 2*epsilon exceeds epsilon*epsilon. */                     \
+        status = bbtc_vv_dyadic_compare_##NAME(                                 \
+            BBTC_VV_DYADIC_REFERENCE_RELATIVE,                                 \
+            epsilon, -epsilon, epsilon, &pass);                                 \
+        assert_int_equal(status, BBTC_VV_DYADIC_SUCCESS);                      \
+        assert_false(pass);                                                     \
+                                                                                \
+        /* The next threshold is exactly on the inclusive boundary. */       \
+        status = bbtc_vv_dyadic_compare_##NAME(                                 \
+            BBTC_VV_DYADIC_REFERENCE_RELATIVE,                                 \
+            epsilon, -epsilon, (TYPE)2, &pass);                                 \
+        assert_int_equal(status, BBTC_VV_DYADIC_SUCCESS);                      \
+        assert_true(pass);                                                      \
+                                                                                \
+        /* A strictly smaller represented tolerance MUST fail. */            \
+        status = bbtc_vv_dyadic_compare_##NAME(                                 \
+            BBTC_VV_DYADIC_REFERENCE_RELATIVE,                                 \
+            maximum, -maximum, just_below_two, &pass);                          \
+        assert_int_equal(status, BBTC_VV_DYADIC_SUCCESS);                      \
+        assert_false(pass);                                                     \
+                                                                                \
+        status = bbtc_vv_dyadic_compare_##NAME(                                 \
+            BBTC_VV_DYADIC_REFERENCE_RELATIVE,                                 \
+            maximum, -maximum, (TYPE)2, &pass);                                 \
+        assert_int_equal(status, BBTC_VV_DYADIC_SUCCESS);                      \
+        assert_true(pass);                                                      \
+                                                                                \
+        /* Maximum relative product M*M cannot fit in native TYPE. */         \
+        status = bbtc_vv_dyadic_compare_##NAME(                                 \
+            BBTC_VV_DYADIC_REFERENCE_RELATIVE,                                 \
+            maximum, -maximum, maximum, &pass);                                 \
+        assert_int_equal(status, BBTC_VV_DYADIC_SUCCESS);                      \
+        assert_true(pass);                                                      \
+    }
+
+DEFINE_GRID_BOUNDARY_TEST(float, float, f, FLT_MAX, FLT_TRUE_MIN)
+DEFINE_GRID_BOUNDARY_TEST(double, double, , DBL_MAX, DBL_TRUE_MIN)
+DEFINE_GRID_BOUNDARY_TEST(long_double, long double, l, LDBL_MAX, LDBL_TRUE_MIN)
+
+#undef DEFINE_GRID_BOUNDARY_TEST
+
 /** @brief Register tests with CTest through cmocka. */
 int main(void)
 {
@@ -290,6 +378,9 @@ int main(void)
         cmocka_unit_test(test_float_extremes),
         cmocka_unit_test(test_double_extremes),
         cmocka_unit_test(test_long_double_extremes),
+        cmocka_unit_test(test_float_grid_boundaries),
+        cmocka_unit_test(test_double_grid_boundaries),
+        cmocka_unit_test(test_long_double_grid_boundaries),
         cmocka_unit_test(test_failure_precedence),
         cmocka_unit_test(test_preserve_fenv),
         cmocka_unit_test(test_float_fenv_matrix),
