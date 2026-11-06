@@ -1,24 +1,30 @@
-# BBTC VVUQ Independent References and Adapter — Design Contract (Draft)
+# BBTC VVUQ Independent References and Adapter — Design Contract
 
-| Metadata                      | Value                                                                                            |
-| ----------------------------- | ------------------------------------------------------------------------------------------------ |
-| Contract version              | **0.1.0-draft.2**                                                                                |
-| Project phase                 | **VV0.1-B2a**                                                                                    |
-| Status                        | **DRAFT — NOT ACCEPTED; implementation NOT authorized**                                          |
-| Original draft date           | **2026-11-03**                                                                                   |
-| Revision 2 date               | **2026-11-05**                                                                                   |
-| Review status                 | **Seven design decisions approved for drafting; independent technical acceptance still pending** |
-| Proposed branch               | `rewrite/vv0_1b2a_reference_adapter_design_v1`                                                   |
-| Exact proposed baseline       | `af2a7591d74bd27b764268dd65f8c1b367bc0164`                                                       |
-| Accepted prior checkpoint     | `vv0.1-b1-accepted-20261030`                                                                     |
-| Governing scientific contract | `docs/validation/VVUQ_DESIGN_CONTRACT.md` v0.1.0                                                 |
-| Governing comparison contract | `docs/validation/VVUQ_COMPARISON_CORE_CONTRACT.md` v0.1.0                                        |
-| Governing production contract | `docs/design/BBTC_DESIGN_CONTRACT.md` v0.1.24                                                    |
+| Metadata                         | Value                                                           |
+| -------------------------------- | --------------------------------------------------------------- |
+| Contract version                 | **0.1.0**                                                       |
+| Project phase                    | **VV0.1-B2a**                                                   |
+| Status                           | **ACCEPTED — DESIGN ONLY; B2 IMPLEMENTATION NOT YET QUALIFIED** |
+| Original draft date              | **2026-11-03**                                                  |
+| Revision 2 date                  | **2026-11-05**                                                  |
+| Owner approval date (US Eastern) | **2026-11-05**                                                  |
+| Owner approval date (UTC)        | **2026-11-06**                                                  |
+| Review authority                 | **BMAGS project owner; scoped design acceptance**               |
+| Reviewed design commit           | `a9ae0c60a5562c5d7911428004d301ec3d106f39`                      |
+| Acceptance branch                | `rewrite/vv0_1b2a_reference_adapter_design_v1`                  |
+| Accepted B1 source baseline      | `af2a7591d74bd27b764268dd65f8c1b367bc0164`                      |
+| Accepted prior checkpoint        | `vv0.1-b1-accepted-20261030`                                    |
+| Acceptance decision record       | `docs/validation/VV0_1_B2A_FINAL_ACCEPTANCE_DECISION.md`        |
+| Governing scientific contract    | `docs/validation/VVUQ_DESIGN_CONTRACT.md` v0.1.0                |
+| Governing comparison contract    | `docs/validation/VVUQ_COMPARISON_CORE_CONTRACT.md` v0.1.0       |
+| Governing production contract    | `docs/design/BBTC_DESIGN_CONTRACT.md` v0.1.24                   |
 
-> **Review warning:** This is a proposed architecture, not an accepted milestone. Nothing
-> in this document changes production behavior, authorizes implementing new public
-> APIs, certifies numerical results on new hosts, or establishes physical-model,
-> ammunition, firearm, or structural safety.
+> **Scoped acceptance boundary:** VV0.1-B2a accepts the documented reference-case
+> and developer-only adapter **architecture**, not implementation code, executable
+> qualification, or scientific performance. This decision neither changes
+> production behavior nor authorizes an unreviewed public API, and it does not
+> certify numerical behavior on new hosts, physical-model accuracy, ammunition,
+> firearm, or structural safety. See the linked final acceptance decision.
 
 ## 1. Purpose and precedence
 
@@ -30,7 +36,7 @@ of B2a acceptance.
 
 The accepted contracts identified above remain authoritative. The terms
 **MUST**, **MUST NOT**, **SHOULD**, **SHOULD NOT**, and **MAY** are normative
-within this draft. A disagreement with an accepted contract must be documented
+within this accepted design contract. A disagreement with an accepted contract must be documented
 and resolved explicitly; a B2a decision cannot silently weaken an earlier
 requirement.
 
@@ -136,7 +142,7 @@ not by executing BBTC's Clenshaw recurrence or copying BBTC test outputs.
 The future reference implementation must be sufficiently distinct from the
 production routine to avoid systematic shared algorithm defects.
 
-### 4.3 Proposed *review examples*, not yet frozen fixture records
+### 4.3 Accepted mathematical case directions, not yet frozen fixture records
 
 For **M-01 through M-03**, select `T_min = 256 K`, `T_max = 512 K`,
 and `T = 384 K`. Then `x = 0` and `s = 2^-7 K^-1` as exact mathematical
@@ -475,10 +481,13 @@ The implementation checkpoint must plan for:
 Passing B1 acceptance evidence does not qualify newly added B2 adapter code.
 That adapter must obtain its **own** scoped verification evidence.
 
-## 10. VV0.1-B2a proposed acceptance gates
+## 10. VV0.1-B2a acceptance conditions (documentation only)
 
-This **documentation-only** design checkpoint can be considered for acceptance
-only after review confirms all the following:
+The project owner explicitly accepted this **documentation-only** design on
+2026-11-05 US Eastern (2026-11-06 UTC), after review of the following
+conditions. Acceptance is recorded separately in
+`docs/validation/VV0_1_B2A_FINAL_ACCEPTANCE_DECISION.md`. Each condition
+concerns the **design** only; implementation qualification is deferred:
 
 1. The exact accepted source baseline and governing contracts are identified.
 2. API inventory distinguishes implemented functions from future interfaces.
@@ -509,11 +518,13 @@ only after review confirms all the following:
 14. **No C implementation, tests, production ABI, accepted B1 numerical code,
     tag, or physics contract is modified by accepting B2a.**
 
-## 11. Resolved design decisions (draft revision 2)
+## 11. Resolved design decisions (accepted contract version 0.1.0)
 
-The project owner approved all seven proposed *design directions* on
-**2026-11-05**. That approval is permission to incorporate these decisions
-in this **draft**, not formal milestone acceptance or qualification of B2 code.
+The project owner approved all seven *design directions* on **2026-11-05**
+and subsequently gave explicit approval for **scoped B2a design acceptance** on
+2026-11-05 US Eastern (2026-11-06 UTC). This acceptance does **not** qualify
+future B2 implementation code, new compiler/ABI/fenv profiles, or physical
+model predictions.
 
 | Decision | Revision-2 disposition | Governing section |
 | --- | --- | --- |
@@ -525,11 +536,11 @@ in this **draft**, not formal milestone acceptance or qualification of B2 code.
 | Ownership/status/output semantics | Borrowed lifetime, native type, cleared fields, distinct statuses | §§4.4, 6.3 |
 | Off-center case and failing controls | M-04 at 320 K; deliberately incorrect reference MUST fail | §§4.3–4.4, 9 |
 
-### 11.1 Proposed documentation placement
+### 11.1 Documentation placement and planned records
 
 - **Current B2a design:**
   `docs/validation/VVUQ_REFERENCE_ADAPTER_DESIGN_CONTRACT.md`.
-- **Future B2a acceptance decision (only if expressly approved):**
+- **Approved B2a acceptance decision:**
   `docs/validation/VV0_1_B2A_FINAL_ACCEPTANCE_DECISION.md`.
 - **Future case-derivation and provenance index (not yet created):**
   `docs/validation/references/VV0_1_B2_REFERENCE_PROVENANCE.md`.
@@ -545,7 +556,7 @@ formats, and the index does not claim experimental validation.
 
 The six former *architecture-choice* questions are resolved as design
 directions. The following **verification obligations remain open** and are
-not silently resolved by accepting a draft:
+not resolved by design acceptance:
 
 1. A reviewer must check the arithmetic exactness argument against **each
    actual** native implementation and admitted compiler/fenv profile before
@@ -558,11 +569,11 @@ not silently resolved by accepting a draft:
    without public ABI or B1 core changes.
 4. The later VV0.1-C design must settle fixture representation, canonical
    identities, report schema, provenance transport, and CI gate policy.
-5. A final B2a reviewer must record any unresolved contract conflicts,
-   revisions and limitations, and the exact Git revision to which a formal
-   acceptance decision applies.
+5. The B2a decision remains tied to the immutable reviewed **draft** commit
+   `a9ae0c60a5562c5d7911428004d301ec3d106f39` and its recorded SHA-256.
+   Any substantive change to this accepted design requires explicit review;
+   acceptance of a changed file must not be implied from this decision.
 
-**Next review action:** inspect this revised draft for internal consistency,
-confirm that the analytical and status/reference boundaries are defensible,
-then explicitly decide whether it warrants B2a acceptance. Do not mark it
-accepted or begin B2 implementation merely because this revised file exists.
+**Next checkpoint:** plan the separately reviewed B2 implementation, beginning
+with compiler/fenv-qualified reference-case checks and a developer-only C23
+adapter. No B2 implementation is accepted by this document.
