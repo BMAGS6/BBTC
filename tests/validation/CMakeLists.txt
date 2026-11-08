@@ -17,6 +17,20 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
 endif()
 add_test(NAME bbtc.vv.virial_adapter COMMAND bbtc_vv_test_virial_adapter)
 
+# VV0.1-B2b.2b: contract/status checks are distinct from numerical
+# reference comparisons and remain in their own developer-only CTest entry.
+add_executable(bbtc_vv_test_virial_adapter_contract test_virial_adapter_contract.c)
+target_link_libraries(bbtc_vv_test_virial_adapter_contract PRIVATE
+    bbtc_vv_virial_adapter PkgConfig::CMOCKA)
+target_compile_features(bbtc_vv_test_virial_adapter_contract PRIVATE c_std_23)
+set_target_properties(bbtc_vv_test_virial_adapter_contract PROPERTIES
+    C_STANDARD 23 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(bbtc_vv_test_virial_adapter_contract PRIVATE
+        -frounding-math -ffp-contract=off -fno-fast-math)
+endif()
+add_test(NAME bbtc.vv.virial_adapter.contract COMMAND bbtc_vv_test_virial_adapter_contract)
+
 add_executable(bbtc_vv_test_exact_dyadic test_exact_dyadic.c)
 target_link_libraries(bbtc_vv_test_exact_dyadic PRIVATE
     bbtc_vv_exact_dyadic PkgConfig::CMOCKA)
