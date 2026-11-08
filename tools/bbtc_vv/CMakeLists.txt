@@ -1,4 +1,19 @@
-# Independent VVUQ-only library. No dependency on the production BBTC target.
+# VVUQ developer-only targets. The B1 comparison core is independent of production BBTC.
+# The optional B2 observation adapter links bbtc::bbtc, never the reverse.
+
+# VV0.1-B2b: developer-only adapter depends on the production BBTC target.
+# Production BBTC never depends on this adapter; the B1 comparison engine
+# remains independent. A later runner may link both developer components.
+add_library(bbtc_vv_virial_adapter STATIC virial_adapter.c virial_adapter.h)
+target_include_directories(bbtc_vv_virial_adapter PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(bbtc_vv_virial_adapter PUBLIC bbtc::bbtc)
+target_compile_features(bbtc_vv_virial_adapter PUBLIC c_std_23)
+set_target_properties(bbtc_vv_virial_adapter PROPERTIES
+    C_STANDARD 23 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(bbtc_vv_virial_adapter PRIVATE
+        -frounding-math -ffp-contract=off -fno-fast-math)
+endif()
 add_library(bbtc_vv_exact_dyadic STATIC exact_dyadic.c exact_dyadic.h)
 
 target_include_directories(bbtc_vv_exact_dyadic PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")

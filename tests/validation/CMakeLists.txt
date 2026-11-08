@@ -2,6 +2,21 @@
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(CMOCKA REQUIRED IMPORTED_TARGET cmocka)
 
+# VV0.1-B2b: observation-adapter smoke tests, distinct from mathematical
+# reference qualification and deliberately independent of the B1 comparator.
+# The accepted 36-comparison matrix and negative controls are a later runner.
+add_executable(bbtc_vv_test_virial_adapter test_virial_adapter.c)
+target_link_libraries(bbtc_vv_test_virial_adapter PRIVATE
+    bbtc_vv_virial_adapter PkgConfig::CMOCKA)
+target_compile_features(bbtc_vv_test_virial_adapter PRIVATE c_std_23)
+set_target_properties(bbtc_vv_test_virial_adapter PROPERTIES
+    C_STANDARD 23 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(bbtc_vv_test_virial_adapter PRIVATE
+        -frounding-math -ffp-contract=off -fno-fast-math)
+endif()
+add_test(NAME bbtc.vv.virial_adapter COMMAND bbtc_vv_test_virial_adapter)
+
 add_executable(bbtc_vv_test_exact_dyadic test_exact_dyadic.c)
 target_link_libraries(bbtc_vv_test_exact_dyadic PRIVATE
     bbtc_vv_exact_dyadic PkgConfig::CMOCKA)
