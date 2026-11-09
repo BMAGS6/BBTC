@@ -14,6 +14,21 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(bbtc_vv_virial_adapter PRIVATE
         -frounding-math -ffp-contract=off -fno-fast-math)
 endif()
+
+# VV0.1-B2b.3c.2: developer-only floating-point profile preflight. This
+# library can observe the linked production metadata but cannot qualify its
+# compiled instructions or compiler options. Never linked from bbtc::bbtc.
+add_library(bbtc_vv_virial_profile STATIC virial_fp_profile.c virial_fp_profile.h)
+target_include_directories(bbtc_vv_virial_profile PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(bbtc_vv_virial_profile PUBLIC bbtc::bbtc)
+target_compile_features(bbtc_vv_virial_profile PUBLIC c_std_23)
+set_target_properties(bbtc_vv_virial_profile PROPERTIES
+    C_STANDARD 23 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(bbtc_vv_virial_profile PRIVATE
+        -frounding-math -ffp-contract=off -fno-fast-math)
+endif()
+
 add_library(bbtc_vv_exact_dyadic STATIC exact_dyadic.c exact_dyadic.h)
 
 target_include_directories(bbtc_vv_exact_dyadic PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")

@@ -9,7 +9,8 @@ pkg_check_modules(CMOCKA REQUIRED IMPORTED_TARGET cmocka)
 # No production target or public BBTC API depends on this runner.
 add_executable(bbtc_vv_test_virial_reference_matrix test_virial_reference_matrix.c)
 target_link_libraries(bbtc_vv_test_virial_reference_matrix PRIVATE
-    bbtc_vv_virial_adapter bbtc_vv_comparison PkgConfig::CMOCKA)
+    bbtc_vv_virial_adapter bbtc_vv_virial_profile
+    bbtc_vv_comparison PkgConfig::CMOCKA)
 target_compile_features(bbtc_vv_test_virial_reference_matrix PRIVATE c_std_23)
 set_target_properties(bbtc_vv_test_virial_reference_matrix PROPERTIES
     C_STANDARD 23 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
@@ -19,6 +20,21 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
 endif()
 add_test(NAME bbtc.vv.virial_reference_matrix
     COMMAND bbtc_vv_test_virial_reference_matrix)
+
+# VV0.1-B2b.3c.2: reject inconsistent host ABI, fenv, or production metadata.
+# The profile module can return only SCREENED_UNQUALIFIED or UNSUPPORTED.
+# These checks are separate from the 36 numerical reference findings.
+add_executable(bbtc_vv_test_virial_fp_profile test_virial_fp_profile.c)
+target_link_libraries(bbtc_vv_test_virial_fp_profile PRIVATE
+    bbtc_vv_virial_profile PkgConfig::CMOCKA)
+target_compile_features(bbtc_vv_test_virial_fp_profile PRIVATE c_std_23)
+set_target_properties(bbtc_vv_test_virial_fp_profile PROPERTIES
+    C_STANDARD 23 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(bbtc_vv_test_virial_fp_profile PRIVATE
+        -frounding-math -ffp-contract=off -fno-fast-math)
+endif()
+add_test(NAME bbtc.vv.virial_fp_profile COMMAND bbtc_vv_test_virial_fp_profile)
 
 # VV0.1-B2b: observation-adapter smoke tests, distinct from mathematical
 # reference qualification and deliberately independent of the B1 comparator.

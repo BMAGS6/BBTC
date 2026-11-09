@@ -66,6 +66,7 @@
 
 #include "comparison.h"
 #include "virial_adapter.h"
+#include "virial_fp_profile.h"
 
 #if defined(__FAST_MATH__)
     #error "B2b.3a reference comparisons prohibit fast-math"
@@ -312,58 +313,26 @@ static bool required_matrix_complete(
 }
 
 /**
- * @brief Screen compiler/runtime scalar metadata against the production ABI.
+ * @brief Delegate baseline ABI/fenv screening to the shared B2b.3c.2 module.
  *
  * @details
- * This is intentionally weaker than a B2b.3c numerical qualification: it
- * checks basic representation consistency and nearest rounding, but does NOT
- * prove every emitted producer instruction, contraction behavior, or all
- * environment assumptions. A failing screen is an explicit unsupported
- * environment, never a passing or silently skipped mathematical reference.
+ * The shared profile screen compares the caller compiler metadata with the
+ * linked production-library metadata and checks nearest rounding. It cannot
+ * certify the producer object compilation or its generated instructions. A
+ * failing screen forbids mathematical comparison, without silently skipping
+ * the required matrix; successful screening is still UNQUALIFIED.
  *
  * @return true when basic host and production scalar identities are coherent.
  */
 static bool screen_native_profile(void)
 {
-    bbtc_precision_info_t info = {0};
+    bbtc_vv_virial_profile_observation_t observation = {0};
+    bbtc_vv_virial_profile_result_t result = {0};
 
-    if (FLT_RADIX != 2 || fegetround() != FE_TONEAREST)
-        return false;
-
-    if (bbtc_precision_info(BBTC_PRECISION_FLOAT, &info) != BBTC_STATUS_SUCCESS ||
-        info.radix != (uint32_t)FLT_RADIX ||
-        info.mantissa_digits != (uint32_t)FLT_MANT_DIG ||
-        info.minimum_normal_exponent != FLT_MIN_EXP ||
-        info.maximum_finite_exponent != FLT_MAX_EXP ||
-        info.storage_bytes != (uint32_t)sizeof(float))
-    {
-        return false;
-    }
-
-    if (bbtc_precision_info(BBTC_PRECISION_DOUBLE, &info) != BBTC_STATUS_SUCCESS ||
-        info.radix != (uint32_t)FLT_RADIX ||
-        info.mantissa_digits != (uint32_t)DBL_MANT_DIG ||
-        info.minimum_normal_exponent != DBL_MIN_EXP ||
-        info.maximum_finite_exponent != DBL_MAX_EXP ||
-        info.storage_bytes != (uint32_t)sizeof(double))
-    {
-        return false;
-    }
-
-    if (bbtc_precision_info(BBTC_PRECISION_LONG_DOUBLE, &info) != BBTC_STATUS_SUCCESS ||
-        info.radix != (uint32_t)FLT_RADIX ||
-        info.mantissa_digits != (uint32_t)LDBL_MANT_DIG ||
-        info.minimum_normal_exponent != LDBL_MIN_EXP ||
-        info.maximum_finite_exponent != LDBL_MAX_EXP ||
-        info.storage_bytes != (uint32_t)sizeof(long double))
-    {
-        return false;
-    }
-
-    /* Require a conventional supported binary format, not merely radix 2. */
-    return FLT_MANT_DIG == 24 && DBL_MANT_DIG == 53 &&
-           (LDBL_MANT_DIG == 53 || LDBL_MANT_DIG == 64 || LDBL_MANT_DIG == 113) &&
-           FLT_MAX_EXP >= 128 && DBL_MAX_EXP >= 1024 && LDBL_MAX_EXP >= 1024;
+    /* A positive screen does NOT certify producer compiler flags or runtime ABI. */
+    return bbtc_vv_virial_profile_screen(&observation, &result) ==
+               BBTC_VV_VIRIAL_PROFILE_SCREENED_UNQUALIFIED &&
+           result.issue_mask == BBTC_VV_VIRIAL_ISSUE_NONE;
 }
 
 /**
