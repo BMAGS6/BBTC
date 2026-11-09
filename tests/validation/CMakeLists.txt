@@ -2,9 +2,27 @@
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(CMOCKA REQUIRED IMPORTED_TARGET cmocka)
 
+# VV0.1-B2b.3a: first independent M-01..M-04 mathematical reference matrix.
+# The runner is intentionally a developer-only cmocka executable. It obtains
+# observations through the production-facing B2 adapter, and its three EXACT
+# decisions per case are delegated to the separately linkable B1 comparator.
+# No production target or public BBTC API depends on this runner.
+add_executable(bbtc_vv_test_virial_reference_matrix test_virial_reference_matrix.c)
+target_link_libraries(bbtc_vv_test_virial_reference_matrix PRIVATE
+    bbtc_vv_virial_adapter bbtc_vv_comparison PkgConfig::CMOCKA)
+target_compile_features(bbtc_vv_test_virial_reference_matrix PRIVATE c_std_23)
+set_target_properties(bbtc_vv_test_virial_reference_matrix PROPERTIES
+    C_STANDARD 23 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(bbtc_vv_test_virial_reference_matrix PRIVATE
+        -frounding-math -ffp-contract=off -fno-fast-math)
+endif()
+add_test(NAME bbtc.vv.virial_reference_matrix
+    COMMAND bbtc_vv_test_virial_reference_matrix)
+
 # VV0.1-B2b: observation-adapter smoke tests, distinct from mathematical
 # reference qualification and deliberately independent of the B1 comparator.
-# The accepted 36-comparison matrix and negative controls are a later runner.
+# The matrix is tested above; negative controls remain a B2b.3b task.
 add_executable(bbtc_vv_test_virial_adapter test_virial_adapter.c)
 target_link_libraries(bbtc_vv_test_virial_adapter PRIVATE
     bbtc_vv_virial_adapter PkgConfig::CMOCKA)
