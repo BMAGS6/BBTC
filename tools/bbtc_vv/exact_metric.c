@@ -23,15 +23,16 @@
  * docs/validation/VV0_1_B1B3C1_EXACT_METRIC_PROOF.md. This increment does NOT
  * implement the final bbtc_vv_compare_* API or diagnostic rounding.
  */
-#include "exact_metric.h"
-#include "exact_dyadic.h"
-
-#include <fenv.h>
-#include <float.h>
-#include <math.h>
-#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <math.h>
+#include <fenv.h>
+#include <float.h>
+
+#include <stdbool.h>
+
+#include "exact_metric.h"
+#include "exact_dyadic.h"
 
 #if defined(__FAST_MATH__)
     #error "BBTC VVUQ exact metric forbids -ffast-math"
@@ -49,19 +50,26 @@ _Static_assert(BBTC_VV_METRIC_LIMBS >= 515,
     "fixed exact-metric integer lacks x87 exponent headroom");
 _Static_assert(sizeof(uint64_t) * 8 == 64, "64-bit integer limbs required");
 
-/** @brief Nonnegative 64-bit native significand and exact power of two. */
+
+/**
+ * @brief Nonnegative 64-bit native significand and exact power of two.
+ */
 typedef struct bbtc_vv_metric_atom_t
 {
     uint64_t mantissa;
-    int32_t exponent;
-    bool negative;
-} bbtc_vv_metric_atom_t;
+    int32_t  exponent;
+    bool     negative;
+}
+bbtc_vv_metric_atom_t;
 
-/** @brief Local unsigned working magnitude, little-endian by *word order*. */
+/**
+ *@brief Local unsigned working magnitude, little-endian by *word order*.
+ */
 typedef struct bbtc_vv_metric_big_t
 {
     uint64_t word[BBTC_VV_METRIC_LIMBS];
-} bbtc_vv_metric_big_t;
+}
+bbtc_vv_metric_big_t;
 
 /**
  * @brief Checked addition of a single digit with carry propagation.
@@ -75,11 +83,16 @@ static bool add_digit(bbtc_vv_metric_big_t* magnitude, size_t index, uint64_t di
     {
         if (index >= BBTC_VV_METRIC_LIMBS)
             return false;
+
         const uint64_t prior = magnitude->word[index];
+
         magnitude->word[index] += digit;
+
         digit = (magnitude->word[index] < prior) ? UINT64_C(1) : UINT64_C(0);
+
         ++index;
     }
+
     return true;
 }
 
@@ -90,39 +103,43 @@ static bool add_digit(bbtc_vv_metric_big_t* magnitude, size_t index, uint64_t di
  * be undefined behavior). The low and high pieces are added separately.
  * Both range checks are made by add_digit before dereferencing an array.
  */
-static bool add_shifted(
-    bbtc_vv_metric_big_t* magnitude, uint64_t mantissa, int32_t offset
-)
+static bool
+add_shifted(bbtc_vv_metric_big_t* magnitude, uint64_t mantissa, int32_t offset)
 {
     if (mantissa == 0)
         return true;
     if (offset < 0)
         return false;
-    const size_t base = (size_t)offset / 64;
+
+    const size_t   base  = (size_t)offset / 64;
     const unsigned shift = (unsigned)((uint32_t)offset % 64U);
+
     if (base >= BBTC_VV_METRIC_LIMBS)
         return false;
+
     if (!add_digit(magnitude, base, mantissa << shift))
         return false;
-    if (shift != 0 && !add_digit(magnitude, base + 1,
-        mantissa >> (64U - shift)))
+
+    if (shift != 0 && !add_digit(magnitude, base + 1, mantissa >> (64U - shift)))
         return false;
+
     return true;
 }
 
 /** @brief Compare two aligned nonnegative big integers exactly. */
-static int compare_magnitude(
-    const bbtc_vv_metric_big_t* a, const bbtc_vv_metric_big_t* b
-)
+static int
+compare_magnitude(const bbtc_vv_metric_big_t* a, const bbtc_vv_metric_big_t* b)
 {
     for (size_t i = BBTC_VV_METRIC_LIMBS; i != 0; --i)
     {
         const size_t k = i - 1;
+
         if (a->word[k] > b->word[k])
             return 1;
         if (a->word[k] < b->word[k])
             return -1;
     }
+
     return 0;
 }
 
@@ -133,20 +150,24 @@ static int compare_magnitude(
  * The two-step subtraction distinguishes subtraction borrow from input
  * borrow; neither signed overflow nor wider integers are necessary.
  */
-static bool subtract_magnitude(
-    bbtc_vv_metric_big_t* larger, const bbtc_vv_metric_big_t* smaller
-)
+static bool
+subtract_magnitude(bbtc_vv_metric_big_t* larger, const bbtc_vv_metric_big_t* smaller)
 {
     uint64_t borrow = 0;
+
     for (size_t i = 0; i < BBTC_VV_METRIC_LIMBS; ++i)
     {
         const uint64_t original = larger->word[i];
-        const uint64_t partial = original - smaller->word[i];
-        const uint64_t first = (original < smaller->word[i]) ? 1U : 0U;
+        const uint64_t partial  = original  - smaller->word[i];
+        const uint64_t first    = (original < smaller->word[i]) ? 1U : 0U;
+
         larger->word[i] = partial - borrow;
+
         const uint64_t second = (partial < borrow) ? 1U : 0U;
+
         borrow = first | second;
     }
+
     return borrow == 0;
 }
 
@@ -158,23 +179,25 @@ static bool subtract_magnitude(
  * *signs of zero* are immaterial, because each zero atom's magnitude is 0.
  * A zero atom does not affect the exponent anchor.
  */
-static bool form_difference(
-    bbtc_vv_metric_atom_t reference,
-    bbtc_vv_metric_atom_t observation,
-    bbtc_vv_exact_metric_t* result
-)
+static bool
+form_difference(bbtc_vv_metric_atom_t reference,
+                bbtc_vv_metric_atom_t observation,
+                bbtc_vv_exact_metric_t* result)
 {
     if (reference.mantissa == 0 && observation.mantissa == 0)
     {
         result->numerator_exponent = 0;
         return true;
     }
+
     int32_t origin = reference.mantissa != 0 ? reference.exponent : observation.exponent;
+
     if (observation.mantissa != 0 && observation.exponent < origin)
         origin = observation.exponent;
 
     bbtc_vv_metric_big_t rm = {0};
     bbtc_vv_metric_big_t om = {0};
+
     if (!add_shifted(&rm, reference.mantissa, reference.exponent - origin) ||
         !add_shifted(&om, observation.mantissa, observation.exponent - origin))
         return false;
@@ -183,8 +206,10 @@ static bool form_difference(
     {
         /* In a signed difference opposite signs always add magnitudes. */
         bbtc_vv_metric_big_t sum = rm;
+
         if (!add_shifted(&sum, observation.mantissa, observation.exponent - origin))
             return false;
+
         for (size_t i = 0; i < BBTC_VV_METRIC_LIMBS; ++i)
             result->word[i] = sum.word[i];
     }
@@ -194,6 +219,7 @@ static bool form_difference(
         {
             if (!subtract_magnitude(&rm, &om))
                 return false;
+
             for (size_t i = 0; i < BBTC_VV_METRIC_LIMBS; ++i)
                 result->word[i] = rm.word[i];
         }
@@ -201,10 +227,12 @@ static bool form_difference(
         {
             if (!subtract_magnitude(&om, &rm))
                 return false;
+
             for (size_t i = 0; i < BBTC_VV_METRIC_LIMBS; ++i)
                 result->word[i] = om.word[i];
         }
     }
+
     result->numerator_exponent = origin;
     for (size_t i = BBTC_VV_METRIC_LIMBS; i != 0; --i)
     {
@@ -214,6 +242,7 @@ static bool form_difference(
             return true;
         }
     }
+
     result->numerator_exponent = 0;
     return true;
 }

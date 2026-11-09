@@ -20,8 +20,10 @@
 #ifndef BBTC_VV_EXACT_DYADIC_H
 #define BBTC_VV_EXACT_DYADIC_H
 
-#include <stdbool.h>
 #include <stdint.h>
+
+#include <stdbool.h>
+
 
 /** @brief Selects one mathematically specified comparison relation. */
 typedef enum bbtc_vv_dyadic_method : uint8_t
@@ -34,7 +36,8 @@ typedef enum bbtc_vv_dyadic_method : uint8_t
 
     /** Test |observation - reference| <= tolerance * |reference|. */
     BBTC_VV_DYADIC_REFERENCE_RELATIVE = 3
-} bbtc_vv_dyadic_method_e;
+}
+bbtc_vv_dyadic_method_e;
 
 /**
  * @brief Kernel execution result; NOT a physical validation verdict.
@@ -43,14 +46,15 @@ typedef enum bbtc_vv_dyadic_method : uint8_t
  */
 typedef enum bbtc_vv_dyadic_status : uint8_t
 {
-    BBTC_VV_DYADIC_SUCCESS = 0,
-    BBTC_VV_DYADIC_INVALID_ARGUMENT = 1,
-    BBTC_VV_DYADIC_NAN_INPUT = 2,
-    BBTC_VV_DYADIC_NONFINITE_INPUT = 3,
-    BBTC_VV_DYADIC_OUTSIDE_DOMAIN = 4,
+    BBTC_VV_DYADIC_SUCCESS                 = 0,
+    BBTC_VV_DYADIC_INVALID_ARGUMENT        = 1,
+    BBTC_VV_DYADIC_NAN_INPUT               = 2,
+    BBTC_VV_DYADIC_NONFINITE_INPUT         = 3,
+    BBTC_VV_DYADIC_OUTSIDE_DOMAIN          = 4,
     BBTC_VV_DYADIC_UNSUPPORTED_ENVIRONMENT = 5,
-    BBTC_VV_DYADIC_INTERNAL_FAILURE = 6
-} bbtc_vv_dyadic_status_e;
+    BBTC_VV_DYADIC_INTERNAL_FAILURE        = 6
+}
+bbtc_vv_dyadic_status_e;
 
 /**
  * @brief Decide an exact relation for native `float` values.
@@ -64,32 +68,29 @@ typedef enum bbtc_vv_dyadic_status : uint8_t
  *         failure with `*out_pass == false`.
  */
 bbtc_vv_dyadic_status_e
-bbtc_vv_dyadic_compare_float(
-    bbtc_vv_dyadic_method_e method,
-    float reference,
-    float observation,
-    float tolerance,
-    bool* out_pass
+bbtc_vv_dyadic_compare_float(bbtc_vv_dyadic_method_e method,
+                             float reference,
+                             float observation,
+                             float tolerance,
+                             bool* out_pass
 );
 
 /** @brief Native `double` counterpart of bbtc_vv_dyadic_compare_float(). */
 bbtc_vv_dyadic_status_e
-bbtc_vv_dyadic_compare_double(
-    bbtc_vv_dyadic_method_e method,
-    double reference,
-    double observation,
-    double tolerance,
-    bool* out_pass
+bbtc_vv_dyadic_compare_double(bbtc_vv_dyadic_method_e method,
+                              double reference,
+                              double observation,
+                              double tolerance,
+                              bool* out_pass
 );
 
 /** @brief Native `long double` counterpart; never narrowed to `double`. */
 bbtc_vv_dyadic_status_e
-bbtc_vv_dyadic_compare_long_double(
-    bbtc_vv_dyadic_method_e method,
-    long double reference,
-    long double observation,
-    long double tolerance,
-    bool* out_pass
+bbtc_vv_dyadic_compare_long_double(bbtc_vv_dyadic_method_e method,
+                                   long double reference,
+                                   long double observation,
+                                   long double tolerance,
+                                   bool* out_pass
 );
 
 #endif /* BBTC_VV_EXACT_DYADIC_H */

@@ -45,13 +45,13 @@
  * Failed environment restoration is surfaced as INTERNAL_FAILURE, never a
  * successful comparison. Build with rounding-aware, non-fast-math options.
  */
-#include "exact_dyadic.h"
-
-#include <fenv.h>
-#include <float.h>
-#include <math.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <math.h>
+#include <fenv.h>
+#include <float.h>
+
+#include "exact_dyadic.h"
 
 /* Unsafe finite-math assumptions would invalidate NaN/input classification.
  * Reject such builds instead of silently compiling weaker semantics. */
@@ -85,7 +85,8 @@ _Static_assert(sizeof(uint64_t) * 8 == 64, "64-bit words required");
 typedef struct bbtc_vv_big_t
 {
     uint64_t word[BBTC_VV_WORDS];
-} bbtc_vv_big_t;
+}
+bbtc_vv_big_t;
 
 /** @brief Exact signed magnitude with at most 64 significand bits. */
 typedef struct bbtc_vv_atom_t
@@ -93,14 +94,16 @@ typedef struct bbtc_vv_atom_t
     uint64_t mantissa;
     int32_t exponent;
     bool negative;
-} bbtc_vv_atom_t;
+}
+bbtc_vv_atom_t;
 
 /** @brief Exact 128-bit unsigned product, stored in two portable words. */
 typedef struct bbtc_vv_product_t
 {
     uint64_t low;
     uint64_t high;
-} bbtc_vv_product_t;
+}
+bbtc_vv_product_t;
 
 /**
  * @brief Multiply two 64-bit integers without uint128_t or compiler extensions.
@@ -123,7 +126,7 @@ static bbtc_vv_product_t multiply_u64(uint64_t a, uint64_t b)
 
     return (bbtc_vv_product_t)
     {
-        .low = (mid << 32) | (uint32_t)p00,
+        .low  = (mid << 32) | (uint32_t)p00,
         .high = p11 + (p01 >> 32) + (p10 >> 32) + (mid >> 32)
     };
 }
@@ -165,11 +168,12 @@ static bool add_dyadic(
         return true;
 
     const int64_t offset = (int64_t)exponent - BBTC_VV_ORIGIN_BIT;
+
     if (offset < 0 || offset >= BBTC_VV_END_BIT - BBTC_VV_ORIGIN_BIT)
         return false;
 
-    const size_t base = (size_t)(offset / 64);
-    const unsigned shift = (unsigned)(offset % 64);
+    const size_t   base      = (size_t)(offset / 64);
+    const unsigned shift     = (unsigned)(offset % 64);
     const uint64_t source[2] = {magnitude.low, magnitude.high};
 
     for (size_t i = 0; i < 2; ++i)
@@ -196,6 +200,7 @@ static int compare_big(const bbtc_vv_big_t* a, const bbtc_vv_big_t* b)
     for (size_t i = BBTC_VV_WORDS; i != 0; --i)
     {
         const size_t k = i - 1;
+
         if (a->word[k] > b->word[k])
             return 1;
         if (a->word[k] < b->word[k])
@@ -211,13 +216,12 @@ static int compare_big(const bbtc_vv_big_t* a, const bbtc_vv_big_t* b)
  * The threshold is always nonnegative; u and v may have either sign.
  * Returned sign is -1, 0 or +1; a failed range check is reported separately.
  */
-static bool signed_difference_minus_threshold(
-    bbtc_vv_atom_t u,
-    bbtc_vv_atom_t v,
-    bbtc_vv_product_t threshold,
-    int32_t threshold_exponent,
-    int* const out_sign
-)
+static bool
+signed_difference_minus_threshold(bbtc_vv_atom_t u,
+                                  bbtc_vv_atom_t v,
+                                  bbtc_vv_product_t threshold,
+                                  int32_t threshold_exponent,
+                                  int* const out_sign)
 {
     bbtc_vv_big_t positive = {0};
     bbtc_vv_big_t negative = {0};
@@ -241,12 +245,12 @@ static bool signed_difference_minus_threshold(
  * Two signed half-space comparisons are logically equivalent to the stated
  * absolute-value relation, without ever forming a rounded difference.
  */
-static bool compare_absolute_threshold(
-    bbtc_vv_atom_t reference,
-    bbtc_vv_atom_t observation,
-    bbtc_vv_product_t threshold,
-    int32_t threshold_exponent,
-    bool* const out_pass
+static bool
+compare_absolute_threshold(bbtc_vv_atom_t reference,
+                           bbtc_vv_atom_t observation,
+                           bbtc_vv_product_t threshold,
+                           int32_t threshold_exponent,
+                           bool* const out_pass
 )
 {
     int sign = 0;

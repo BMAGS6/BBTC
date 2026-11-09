@@ -12,9 +12,9 @@
  * surrogate result is introduced, and cleared terms on failure must not be
  * treated as a valid result. This translation unit has no B1 dependency.
  */
-#include "virial_adapter.h"
-
 #include <stddef.h>
+
+#include "virial_adapter.h"
 
 /**
  * @brief Forward one float evaluation without transforming its inputs.
@@ -28,19 +28,14 @@ bbtc_status_e bbtc_vv_virial_observe_float(
 )
 {
     if (out_terms_valid != NULL)
-    {
         *out_terms_valid = false;
-    }
 
     /* Preserve the production null-output check and validation precedence. */
     const bbtc_status_e status =
-        bbtc_ib_first_order_virial_temperature_law_evaluate_float(
-            law, temperature_k, out_terms);
+        bbtc_ib_first_order_virial_temperature_law_evaluate_float(law, temperature_k, out_terms);
 
     if (out_terms_valid != NULL)
-    {
         *out_terms_valid = (status == BBTC_STATUS_SUCCESS);
-    }
 
     return status;
 }
@@ -58,18 +53,13 @@ bbtc_status_e bbtc_vv_virial_observe_double(
 )
 {
     if (out_terms_valid != NULL)
-    {
         *out_terms_valid = false;
-    }
 
     const bbtc_status_e status =
-        bbtc_ib_first_order_virial_temperature_law_evaluate_double(
-            law, temperature_k, out_terms);
+        bbtc_ib_first_order_virial_temperature_law_evaluate_double(law, temperature_k, out_terms);
 
     if (out_terms_valid != NULL)
-    {
         *out_terms_valid = (status == BBTC_STATUS_SUCCESS);
-    }
 
     return status;
 }
@@ -87,18 +77,13 @@ bbtc_status_e bbtc_vv_virial_observe_long_double(
 )
 {
     if (out_terms_valid != NULL)
-    {
         *out_terms_valid = false;
-    }
 
     const bbtc_status_e status =
-        bbtc_ib_first_order_virial_temperature_law_evaluate_long_double(
-            law, temperature_k, out_terms);
+        bbtc_ib_first_order_virial_temperature_law_evaluate_long_double(law, temperature_k, out_terms);
 
     if (out_terms_valid != NULL)
-    {
         *out_terms_valid = (status == BBTC_STATUS_SUCCESS);
-    }
 
     return status;
 }

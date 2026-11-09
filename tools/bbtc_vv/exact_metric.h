@@ -25,9 +25,9 @@
 #ifndef BBTC_VV_EXACT_METRIC_H
 #define BBTC_VV_EXACT_METRIC_H
 
-#include "comparison.h"
-
 #include <stdint.h>
+
+#include "comparison.h"
 
 /**
  * @brief Conservative ceiling for aligned input differences on certified
@@ -46,10 +46,11 @@ typedef struct bbtc_vv_exact_metric_t
 {
     uint64_t word[BBTC_VV_METRIC_LIMBS];
     uint32_t used;
-    int32_t numerator_exponent;
+    int32_t  numerator_exponent;
     uint64_t denominator;
-    int32_t denominator_exponent;
-} bbtc_vv_exact_metric_t;
+    int32_t  denominator_exponent;
+}
+bbtc_vv_exact_metric_t;
 
 /**
  * @brief Construct an exact absolute or reference-relative error (float).

@@ -23,6 +23,7 @@
 
 #include "exact_metric.h"
 
+
 /**
  * @brief Round the exact rational metric into native float without narrowing.
  * @param exact Required exact metric, constructed by bbtc_vv_metric_exact_*.

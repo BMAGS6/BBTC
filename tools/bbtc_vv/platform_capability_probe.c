@@ -17,13 +17,16 @@
  * Compile independently with ISO C23, non-fast-math semantics, and
  * -frounding-math -ffp-contract=off. No BBTC library is linked.
  */
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
 #include <fenv.h>
 #include <float.h>
 #include <limits.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
+
+#if __STDC_VERSION__ < 202311L
+#   include <stdbool.h>
+#endif
 
 #if defined(__FAST_MATH__)
     #error "The VVUQ platform probe forbids fast-math"
@@ -79,13 +82,21 @@ static void print_format_profile(void)
  */
 static bool profile_matches_primary_target(void)
 {
-    return CHAR_BIT == 8 && FLT_RADIX == 2 && FLT_EVAL_METHOD == 0 &&
-        sizeof(float) == 4 && sizeof(double) == 8 &&
-        sizeof(long double) == 16 &&
-        FLT_MANT_DIG == 24 && FLT_MIN_EXP == -125 && FLT_MAX_EXP == 128 &&
-        DBL_MANT_DIG == 53 && DBL_MIN_EXP == -1021 && DBL_MAX_EXP == 1024 &&
-        LDBL_MANT_DIG == 64 && LDBL_MIN_EXP == -16381 &&
-        LDBL_MAX_EXP == 16384;
+    return CHAR_BIT            ==      8 &&
+           FLT_RADIX           ==      2 &&
+           FLT_EVAL_METHOD     ==      0 &&
+           sizeof(float)       ==      4 &&
+           sizeof(double)      ==      8 &&
+           sizeof(long double) ==     16 &&
+           FLT_MANT_DIG        ==     24 &&
+           FLT_MIN_EXP         ==   -125 &&
+           FLT_MAX_EXP         ==    128 &&
+           DBL_MANT_DIG        ==     53 &&
+           DBL_MIN_EXP         ==  -1021 &&
+           DBL_MAX_EXP         ==   1024 &&
+           LDBL_MANT_DIG       ==     64 &&
+           LDBL_MIN_EXP        == -16381 &&
+           LDBL_MAX_EXP        ==  16384;
 }
 
 /**
@@ -112,13 +123,15 @@ static bool probe_fenv(void)
         FE_DOWNWARD,
         FE_TOWARDZERO
     };
+
     bool success = true;
 
     for (size_t i = 0; i < sizeof(modes) / sizeof(modes[0]); ++i)
     {
-        if (fesetround(modes[i]) != 0 || fegetround() != modes[i] ||
-            feclearexcept(FE_ALL_EXCEPT) != 0 ||
-            feraiseexcept(FE_INEXACT) != 0 ||
+        if (fesetround(modes[i])                    != 0        ||
+            fegetround()                            != modes[i] ||
+            feclearexcept(FE_ALL_EXCEPT)            != 0        ||
+            feraiseexcept(FE_INEXACT)               != 0        ||
             (fetestexcept(FE_INEXACT) & FE_INEXACT) == 0)
         {
             success = false;
@@ -131,14 +144,17 @@ static bool probe_fenv(void)
             success = false;
             break;
         }
+
         if (fetestexcept(FE_ALL_EXCEPT) != 0)
             success = false;
+
         if (fesetenv(&held) != 0 ||
             (fetestexcept(FE_INEXACT) & FE_INEXACT) == 0 ||
             fegetround() != modes[i])
         {
             success = false;
         }
+
         if (!success)
             break;
     }
@@ -146,6 +162,7 @@ static bool probe_fenv(void)
     /* Even a failed probe must attempt to return the host to its caller state. */
     if (fesetenv(&original) != 0)
         return false;
+
     return success;
 }
 
@@ -156,9 +173,12 @@ static bool probe_fenv(void)
 int main(void)
 {
     print_format_profile();
+
     const bool format_ok = profile_matches_primary_target();
-    const bool fenv_ok = probe_fenv();
+    const bool fenv_ok   = probe_fenv();
+
     printf("PRIMARY_FORMAT_PROFILE_MATCH=%d\n", format_ok ? 1 : 0);
     printf("FENV_SMOKE_TEST_PASS=%d\n", fenv_ok ? 1 : 0);
+
     return format_ok && fenv_ok ? EXIT_SUCCESS : EXIT_FAILURE;
 }

@@ -20,6 +20,9 @@
 
 #include "comparison.h"
 
+
+
+
 /**
  * @brief Validate policy and decide an exact mathematical comparison (float).
  *
@@ -33,27 +36,29 @@
  * precede NaN/infinity classification where required for safe inspection.
  * The dyadic kernel remains the sole authority for the finding.
  */
-bbtc_vv_operation_status_e bbtc_vv_prepare_float(
-    float reference,
-    float observation,
-    const bbtc_vv_policy_float_t* policy,
-    bbtc_vv_finding_e* out_finding
-);
+bbtc_vv_operation_status_e
+bbtc_vv_prepare_float(float reference,
+                      float observation,
+                      const bbtc_vv_policy_float_t* policy,
+                      bbtc_vv_finding_e* out_finding);
 
-/** @brief Native-double decision preparation; no float/double narrowing. */
-bbtc_vv_operation_status_e bbtc_vv_prepare_double(
-    double reference,
-    double observation,
-    const bbtc_vv_policy_double_t* policy,
-    bbtc_vv_finding_e* out_finding
-);
+/**
+ * @brief Native-double decision preparation; no float/double narrowing.
+ */
+bbtc_vv_operation_status_e
+bbtc_vv_prepare_double(double reference,
+                       double observation,
+                       const bbtc_vv_policy_double_t* policy,
+                       bbtc_vv_finding_e* out_finding);
 
-/** @brief Native-long-double decision preparation; no double narrowing. */
-bbtc_vv_operation_status_e bbtc_vv_prepare_long_double(
-    long double reference,
-    long double observation,
-    const bbtc_vv_policy_long_double_t* policy,
-    bbtc_vv_finding_e* out_finding
-);
+/**
+ * @brief Native-long-double decision preparation; no double narrowing.
+ */
+bbtc_vv_operation_status_e
+bbtc_vv_prepare_long_double(long double reference,
+                            long double observation,
+                            const bbtc_vv_policy_long_double_t* policy,
+                            bbtc_vv_finding_e* out_finding);
+
 
 #endif /* BBTC_VV_COMPARISON_INTERNAL_H */

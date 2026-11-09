@@ -20,13 +20,15 @@
 #ifndef BBTC_VV_VIRIAL_ADAPTER_H
 #define BBTC_VV_VIRIAL_ADAPTER_H
 
-#include <stdbool.h>
+#if __STDC_VERSION__ < 202311L
+#   include <stdbool.h>
+#endif
 
 #include <bbtc/internal_ballistics/first_order_virial_gas_model.h>
 #include <bbtc/status.h>
 
 #ifdef __cplusplus
-extern "C" {
+    extern "C" {
 #endif
 
 /**
@@ -108,6 +110,6 @@ bbtc_status_e bbtc_vv_virial_observe_long_double(
 );
 
 #ifdef __cplusplus
-} /* extern "C" */
+    }  /* extern "C" */
 #endif
 #endif /* BBTC_VV_VIRIAL_ADAPTER_H */
