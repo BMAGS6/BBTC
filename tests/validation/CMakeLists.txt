@@ -22,7 +22,7 @@ add_test(NAME bbtc.vv.virial_reference_matrix
 
 # VV0.1-B2b: observation-adapter smoke tests, distinct from mathematical
 # reference qualification and deliberately independent of the B1 comparator.
-# The matrix is tested above; negative controls remain a B2b.3b task.
+# The matrix and its B2b.3b negative controls are tested above.
 add_executable(bbtc_vv_test_virial_adapter test_virial_adapter.c)
 target_link_libraries(bbtc_vv_test_virial_adapter PRIVATE
     bbtc_vv_virial_adapter PkgConfig::CMOCKA)

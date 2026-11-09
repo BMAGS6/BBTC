@@ -1,6 +1,6 @@
 /**
  * @file test_virial_reference_matrix.c
- * @brief VV0.1-B2b.3a independent mathematical reference matrix.
+ * @brief VV0.1-B2b.3a/3b mathematical references and adversarial controls.
  *
  * @details
  * This developer-only cmocka test is the FIRST executable reference-runner
@@ -39,10 +39,11 @@
  * 4*3*3=36 decisions and fails if any is unexecuted or fails.
  *
  * ENVIRONMENT LIMIT: Basic host metadata, binary radix and current rounding
- * mode are screened here. This is not the full source-level/compiler/fenv
- * EXACT qualification required for B2b-wide scientific acceptance. Those
- * controls, plus deliberately wrong references and adversarial fixture
- * integrity checks, remain B2b.3b/3c obligations. Accordingly a passing test
+ * mode are screened here. Full source-level/compiler/fenv EXACT
+ * qualification remains a B2b.3c obligation. B2b.3b adds
+ * deliberately wrong references, invalid metadata and quantity/unit guards,
+ * failed-observation gating, and missing/duplicate required-case controls.
+ * Accordingly a passing test
  * is implementation-verification evidence, NOT physical model validation,
  * ammunition safety certification, or a B2b milestone acceptance decision.
  *
@@ -55,6 +56,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <float.h>
+#include <math.h>
 #include <fenv.h>
 #include <string.h>
 
@@ -216,6 +218,100 @@ static bool validate_case_metadata(size_t index, const bbtc_vv_case_metadata_t* 
 }
 
 /**
+ * @brief Validate a fixture's *supplied* quantity and SI-unit declarations.
+ *
+ * @details
+ * A numerical value is inadmissible unless the fixture identifies the exact
+ * quantity and its SI unit. Comparing bare numbers and attaching canonical
+ * units only after comparison would let a wrongly labelled reference pass.
+ *
+ * Callers supply exactly BBTC_VV_REFERENCE_QUANTITIES readable records. In
+ * this fixed in-process fixture suite, all arrays are statically sized; a
+ * pointer alone cannot establish the length of arbitrary external storage.
+ * The future interchange/parser design must validate external allocation
+ * extents before it calls a routine with this contract.
+ *
+ * @param quantities Readable, ordered fixture-owned quantity/unit declarations.
+ * @return true if and only if every slot matches the accepted SI identity.
+ */
+static bool validate_quantity_metadata(const bbtc_vv_quantity_metadata_t* quantities)
+{
+    if (quantities == NULL)
+        return false;
+
+    for (size_t q = 0u; q < BBTC_VV_REFERENCE_QUANTITIES; ++q)
+    {
+        if (quantities[q].quantity != s_quantity_metadata[q].quantity ||
+            quantities[q].unit != s_quantity_metadata[q].unit)
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
+ * @brief Recognize each required case/native-family pair exactly once.
+ *
+ * @details
+ * An aggregate count can be forged accidentally by repeating one case while
+ * omitting another. This bitmap records all twelve distinct combinations;
+ * duplicates and unknown identifiers are refused before changing the mask.
+ * The bitmap represents only bounded in-process evidence, not a serialized
+ * public report or an acceptance decision.
+ *
+ * @param index Canonical M-01 through M-04 index (zero based).
+ * @param precision Native family recorded by the evidence.
+ * @param seen_mask Caller-owned coverage bitmap, updated only on success.
+ * @return true if the pair was required and had not previously been recorded.
+ */
+static bool record_required_case(
+    size_t index,
+    bbtc_precision_e precision,
+    uint16_t* seen_mask
+)
+{
+    if (seen_mask == NULL || index >= BBTC_VV_REFERENCE_CASES)
+        return false;
+
+    if (precision != BBTC_PRECISION_FLOAT &&
+        precision != BBTC_PRECISION_DOUBLE &&
+        precision != BBTC_PRECISION_LONG_DOUBLE)
+    {
+        return false;
+    }
+
+    const unsigned bit_index = (unsigned)(index * 3u + ((unsigned)precision - 1u));
+    const uint16_t bit = (uint16_t)(1u << bit_index);
+
+    if ((*seen_mask & bit) != 0u)
+        return false;
+
+    *seen_mask = (uint16_t)(*seen_mask | bit);
+    return true;
+}
+
+/**
+ * @brief Validate both distinct required-case coverage and numerical counts.
+ *
+ * @param seen_mask Bitmap of actual accepted case/family pairs.
+ * @param case_count Number of completed case/family records.
+ * @param field_count Number of successful B1 numerical comparison decisions.
+ * @return true only when all twelve pairs and all 36 fields are present.
+ */
+static bool required_matrix_complete(
+    uint16_t seen_mask,
+    size_t case_count,
+    size_t field_count
+)
+{
+    return seen_mask == UINT16_C(0x0FFF) &&
+           case_count == BBTC_VV_REFERENCE_CASES * 3u &&
+           field_count == BBTC_VV_REFERENCE_CASES * BBTC_VV_REFERENCE_QUANTITIES * 3u;
+}
+
+/**
  * @brief Screen compiler/runtime scalar metadata against the production ABI.
  *
  * @details
@@ -315,6 +411,8 @@ typedef struct bbtc_vv_reference_fixture_float_t
     float temperature_k;
     const float* coefficients;
     size_t coefficient_count;
+    /** Three readable, ordered quantity/SI-unit declarations owned by the fixture. */
+    const bbtc_vv_quantity_metadata_t* quantities;
     uint8_t expected_present_mask; /** Bit q means reference quantity q is supplied. */
     float expected[BBTC_VV_REFERENCE_QUANTITIES];
 } bbtc_vv_reference_fixture_float_t;
@@ -342,15 +440,19 @@ static const bbtc_vv_reference_fixture_float_t s_float_fixtures[BBTC_VV_REFERENC
 {
     { .metadata = &s_case_metadata[0], .temperature_k = 384.0f,
       .coefficients = s_float_m01, .coefficient_count = 1u,
+      .quantities = s_quantity_metadata,
       .expected_present_mask = 0x07u, .expected = { 0.0f, 0.0f, 0.0f } },
     { .metadata = &s_case_metadata[1], .temperature_k = 384.0f,
       .coefficients = s_float_m02, .coefficient_count = 2u,
+      .quantities = s_quantity_metadata,
       .expected_present_mask = 0x07u, .expected = { 0x1p-10f, 0x1p-19f, 0.0f } },
     { .metadata = &s_case_metadata[2], .temperature_k = 384.0f,
       .coefficients = s_float_m03, .coefficient_count = 3u,
+      .quantities = s_quantity_metadata,
       .expected_present_mask = 0x07u, .expected = { -0x1p-12f, 0.0f, 0x1p-24f } },
     { .metadata = &s_case_metadata[3], .temperature_k = 320.0f,
       .coefficients = s_float_m04, .coefficient_count = 3u,
+      .quantities = s_quantity_metadata,
       .expected_present_mask = 0x07u, .expected = { -0x1p-13f, -0x1p-18f, 0x1p-24f } }
 };
 
@@ -366,11 +468,13 @@ static const bbtc_vv_reference_fixture_float_t s_float_fixtures[BBTC_VV_REFERENC
  *
  * @param index Index of a required M-01 through M-04 reference record.
  * @param profile_screened Whether basic ABI/rounding checks succeeded.
+ * @param fixture Valid in-process fixture, possibly deliberately mutated by a self-test.
  * @param out Caller-owned complete, typed evidence; cleared on entry.
  */
 static void run_reference_float(
     size_t index,
     bool profile_screened,
+    const bbtc_vv_reference_fixture_float_t* fixture,
     bbtc_vv_reference_evidence_float_t* out
 )
 {
@@ -379,13 +483,12 @@ static void run_reference_float(
 
     *out = (bbtc_vv_reference_evidence_float_t){0};
 
-    if (index >= BBTC_VV_REFERENCE_CASES)
+    if (index >= BBTC_VV_REFERENCE_CASES || fixture == NULL)
     {
         out->common.integrity = BBTC_VV_REFERENCE_INTEGRITY_INVALID;
         return;
     }
 
-    const bbtc_vv_reference_fixture_float_t* fixture = &s_float_fixtures[index];
     const bbtc_vv_case_metadata_t* metadata = fixture->metadata;
     out->common.precision = BBTC_PRECISION_FLOAT;
     out->common.profile = profile_screened
@@ -395,7 +498,11 @@ static void run_reference_float(
     if (!validate_case_metadata(index, metadata) ||
         fixture->coefficients == NULL ||
         fixture->coefficient_count != metadata->coefficient_count ||
-        fixture->expected_present_mask != 0x07u)
+        fixture->expected_present_mask != 0x07u ||
+        !validate_quantity_metadata(fixture->quantities) ||
+        !isfinite(fixture->expected[0]) ||
+        !isfinite(fixture->expected[1]) ||
+        !isfinite(fixture->expected[2]))
     {
         out->common.integrity = BBTC_VV_REFERENCE_INTEGRITY_INVALID;
         return;
@@ -411,8 +518,8 @@ static void run_reference_float(
     {
         out->expected[q] = fixture->expected[q];
         out->tolerances[q] = 0.0f;
-        out->common.fields[q].quantity = s_quantity_metadata[q].quantity;
-        out->common.fields[q].unit = s_quantity_metadata[q].unit;
+        out->common.fields[q].quantity = fixture->quantities[q].quantity;
+        out->common.fields[q].unit = fixture->quantities[q].unit;
         out->common.fields[q].method = BBTC_VV_COMPARISON_EXACT;
     }
 
@@ -474,6 +581,8 @@ typedef struct bbtc_vv_reference_fixture_double_t
     double temperature_k;
     const double* coefficients;
     size_t coefficient_count;
+    /** Three readable, ordered quantity/SI-unit declarations owned by the fixture. */
+    const bbtc_vv_quantity_metadata_t* quantities;
     uint8_t expected_present_mask; /** Bit q means reference quantity q is supplied. */
     double expected[BBTC_VV_REFERENCE_QUANTITIES];
 } bbtc_vv_reference_fixture_double_t;
@@ -501,15 +610,19 @@ static const bbtc_vv_reference_fixture_double_t s_double_fixtures[BBTC_VV_REFERE
 {
     { .metadata = &s_case_metadata[0], .temperature_k = 384.0,
       .coefficients = s_double_m01, .coefficient_count = 1u,
+      .quantities = s_quantity_metadata,
       .expected_present_mask = 0x07u, .expected = { 0.0, 0.0, 0.0 } },
     { .metadata = &s_case_metadata[1], .temperature_k = 384.0,
       .coefficients = s_double_m02, .coefficient_count = 2u,
+      .quantities = s_quantity_metadata,
       .expected_present_mask = 0x07u, .expected = { 0x1p-10, 0x1p-19, 0.0 } },
     { .metadata = &s_case_metadata[2], .temperature_k = 384.0,
       .coefficients = s_double_m03, .coefficient_count = 3u,
+      .quantities = s_quantity_metadata,
       .expected_present_mask = 0x07u, .expected = { -0x1p-12, 0.0, 0x1p-24 } },
     { .metadata = &s_case_metadata[3], .temperature_k = 320.0,
       .coefficients = s_double_m04, .coefficient_count = 3u,
+      .quantities = s_quantity_metadata,
       .expected_present_mask = 0x07u, .expected = { -0x1p-13, -0x1p-18, 0x1p-24 } }
 };
 
@@ -525,11 +638,13 @@ static const bbtc_vv_reference_fixture_double_t s_double_fixtures[BBTC_VV_REFERE
  *
  * @param index Index of a required M-01 through M-04 reference record.
  * @param profile_screened Whether basic ABI/rounding checks succeeded.
+ * @param fixture Valid in-process fixture, possibly deliberately mutated by a self-test.
  * @param out Caller-owned complete, typed evidence; cleared on entry.
  */
 static void run_reference_double(
     size_t index,
     bool profile_screened,
+    const bbtc_vv_reference_fixture_double_t* fixture,
     bbtc_vv_reference_evidence_double_t* out
 )
 {
@@ -538,13 +653,12 @@ static void run_reference_double(
 
     *out = (bbtc_vv_reference_evidence_double_t){0};
 
-    if (index >= BBTC_VV_REFERENCE_CASES)
+    if (index >= BBTC_VV_REFERENCE_CASES || fixture == NULL)
     {
         out->common.integrity = BBTC_VV_REFERENCE_INTEGRITY_INVALID;
         return;
     }
 
-    const bbtc_vv_reference_fixture_double_t* fixture = &s_double_fixtures[index];
     const bbtc_vv_case_metadata_t* metadata = fixture->metadata;
     out->common.precision = BBTC_PRECISION_DOUBLE;
     out->common.profile = profile_screened
@@ -554,7 +668,11 @@ static void run_reference_double(
     if (!validate_case_metadata(index, metadata) ||
         fixture->coefficients == NULL ||
         fixture->coefficient_count != metadata->coefficient_count ||
-        fixture->expected_present_mask != 0x07u)
+        fixture->expected_present_mask != 0x07u ||
+        !validate_quantity_metadata(fixture->quantities) ||
+        !isfinite(fixture->expected[0]) ||
+        !isfinite(fixture->expected[1]) ||
+        !isfinite(fixture->expected[2]))
     {
         out->common.integrity = BBTC_VV_REFERENCE_INTEGRITY_INVALID;
         return;
@@ -570,8 +688,8 @@ static void run_reference_double(
     {
         out->expected[q] = fixture->expected[q];
         out->tolerances[q] = 0.0;
-        out->common.fields[q].quantity = s_quantity_metadata[q].quantity;
-        out->common.fields[q].unit = s_quantity_metadata[q].unit;
+        out->common.fields[q].quantity = fixture->quantities[q].quantity;
+        out->common.fields[q].unit = fixture->quantities[q].unit;
         out->common.fields[q].method = BBTC_VV_COMPARISON_EXACT;
     }
 
@@ -633,6 +751,8 @@ typedef struct bbtc_vv_reference_fixture_long_double_t
     long double temperature_k;
     const long double* coefficients;
     size_t coefficient_count;
+    /** Three readable, ordered quantity/SI-unit declarations owned by the fixture. */
+    const bbtc_vv_quantity_metadata_t* quantities;
     uint8_t expected_present_mask; /** Bit q means reference quantity q is supplied. */
     long double expected[BBTC_VV_REFERENCE_QUANTITIES];
 } bbtc_vv_reference_fixture_long_double_t;
@@ -660,15 +780,19 @@ static const bbtc_vv_reference_fixture_long_double_t s_long_double_fixtures[BBTC
 {
     { .metadata = &s_case_metadata[0], .temperature_k = 384.0L,
       .coefficients = s_long_double_m01, .coefficient_count = 1u,
+      .quantities = s_quantity_metadata,
       .expected_present_mask = 0x07u, .expected = { 0.0L, 0.0L, 0.0L } },
     { .metadata = &s_case_metadata[1], .temperature_k = 384.0L,
       .coefficients = s_long_double_m02, .coefficient_count = 2u,
+      .quantities = s_quantity_metadata,
       .expected_present_mask = 0x07u, .expected = { 0x1p-10L, 0x1p-19L, 0.0L } },
     { .metadata = &s_case_metadata[2], .temperature_k = 384.0L,
       .coefficients = s_long_double_m03, .coefficient_count = 3u,
+      .quantities = s_quantity_metadata,
       .expected_present_mask = 0x07u, .expected = { -0x1p-12L, 0.0L, 0x1p-24L } },
     { .metadata = &s_case_metadata[3], .temperature_k = 320.0L,
       .coefficients = s_long_double_m04, .coefficient_count = 3u,
+      .quantities = s_quantity_metadata,
       .expected_present_mask = 0x07u, .expected = { -0x1p-13L, -0x1p-18L, 0x1p-24L } }
 };
 
@@ -684,11 +808,13 @@ static const bbtc_vv_reference_fixture_long_double_t s_long_double_fixtures[BBTC
  *
  * @param index Index of a required M-01 through M-04 reference record.
  * @param profile_screened Whether basic ABI/rounding checks succeeded.
+ * @param fixture Valid in-process fixture, possibly deliberately mutated by a self-test.
  * @param out Caller-owned complete, typed evidence; cleared on entry.
  */
 static void run_reference_long_double(
     size_t index,
     bool profile_screened,
+    const bbtc_vv_reference_fixture_long_double_t* fixture,
     bbtc_vv_reference_evidence_long_double_t* out
 )
 {
@@ -697,13 +823,12 @@ static void run_reference_long_double(
 
     *out = (bbtc_vv_reference_evidence_long_double_t){0};
 
-    if (index >= BBTC_VV_REFERENCE_CASES)
+    if (index >= BBTC_VV_REFERENCE_CASES || fixture == NULL)
     {
         out->common.integrity = BBTC_VV_REFERENCE_INTEGRITY_INVALID;
         return;
     }
 
-    const bbtc_vv_reference_fixture_long_double_t* fixture = &s_long_double_fixtures[index];
     const bbtc_vv_case_metadata_t* metadata = fixture->metadata;
     out->common.precision = BBTC_PRECISION_LONG_DOUBLE;
     out->common.profile = profile_screened
@@ -713,7 +838,11 @@ static void run_reference_long_double(
     if (!validate_case_metadata(index, metadata) ||
         fixture->coefficients == NULL ||
         fixture->coefficient_count != metadata->coefficient_count ||
-        fixture->expected_present_mask != 0x07u)
+        fixture->expected_present_mask != 0x07u ||
+        !validate_quantity_metadata(fixture->quantities) ||
+        !isfinite(fixture->expected[0]) ||
+        !isfinite(fixture->expected[1]) ||
+        !isfinite(fixture->expected[2]))
     {
         out->common.integrity = BBTC_VV_REFERENCE_INTEGRITY_INVALID;
         return;
@@ -729,8 +858,8 @@ static void run_reference_long_double(
     {
         out->expected[q] = fixture->expected[q];
         out->tolerances[q] = 0.0L;
-        out->common.fields[q].quantity = s_quantity_metadata[q].quantity;
-        out->common.fields[q].unit = s_quantity_metadata[q].unit;
+        out->common.fields[q].quantity = fixture->quantities[q].quantity;
+        out->common.fields[q].unit = fixture->quantities[q].unit;
         out->common.fields[q].method = BBTC_VV_COMPARISON_EXACT;
     }
 
@@ -798,6 +927,7 @@ static void test_complete_reference_matrix(void** state)
     const bool profile_screened = screen_native_profile();
     size_t completed_cases = 0u;
     size_t completed_fields = 0u;
+    uint16_t seen_mask = 0u;
 
     /* An unsupported environment must never generate a green test result. */
     assert_true(profile_screened);
@@ -808,22 +938,25 @@ static void test_complete_reference_matrix(void** state)
         bbtc_vv_reference_evidence_double_t result_double = {0};
         bbtc_vv_reference_evidence_long_double_t result_long_double = {0};
 
-        run_reference_float(i, profile_screened, &result_float);
+        run_reference_float(i, profile_screened, &s_float_fixtures[i], &result_float);
         assert_int_equal(result_float.common.precision, BBTC_PRECISION_FLOAT);
         assert_string_equal(result_float.common.id, s_case_metadata[i].id);
         completed_fields += check_complete_evidence(&result_float.common);
+        assert_true(record_required_case(i, BBTC_PRECISION_FLOAT, &seen_mask));
         ++completed_cases;
 
-        run_reference_double(i, profile_screened, &result_double);
+        run_reference_double(i, profile_screened, &s_double_fixtures[i], &result_double);
         assert_int_equal(result_double.common.precision, BBTC_PRECISION_DOUBLE);
         assert_string_equal(result_double.common.id, s_case_metadata[i].id);
         completed_fields += check_complete_evidence(&result_double.common);
+        assert_true(record_required_case(i, BBTC_PRECISION_DOUBLE, &seen_mask));
         ++completed_cases;
 
-        run_reference_long_double(i, profile_screened, &result_long_double);
+        run_reference_long_double(i, profile_screened, &s_long_double_fixtures[i], &result_long_double);
         assert_int_equal(result_long_double.common.precision, BBTC_PRECISION_LONG_DOUBLE);
         assert_string_equal(result_long_double.common.id, s_case_metadata[i].id);
         completed_fields += check_complete_evidence(&result_long_double.common);
+        assert_true(record_required_case(i, BBTC_PRECISION_LONG_DOUBLE, &seen_mask));
         ++completed_cases;
     }
 
@@ -831,6 +964,7 @@ static void test_complete_reference_matrix(void** state)
     assert_int_equal(completed_cases, BBTC_VV_REFERENCE_CASES * 3u);
     assert_int_equal(completed_fields,
                      BBTC_VV_REFERENCE_CASES * BBTC_VV_REFERENCE_QUANTITIES * 3u);
+    assert_true(required_matrix_complete(seen_mask, completed_cases, completed_fields));
 }
 
 /**
@@ -865,6 +999,396 @@ static void test_case_metadata_basics(void** state)
 }
 
 /**
+ * @brief Assert that invalid fixture evidence cannot look like a B1 finding.
+ *
+ * @details
+ * A rejection may leave the numerical enum fields in their zero-initialized
+ * NOT_EVALUATED state. That is intentional; it must never be confused with
+ * PASS or FAIL, even when the producer's uncalled status field is zero.
+ *
+ * @param evidence Evidence from a rejected or unexecuted reference fixture.
+ */
+static void assert_no_numerical_comparison(const bbtc_vv_case_evidence_t* evidence)
+{
+    assert_non_null(evidence);
+    assert_false(evidence->observation_valid);
+
+    for (size_t q = 0u; q < BBTC_VV_REFERENCE_QUANTITIES; ++q)
+    {
+        assert_false(evidence->fields[q].attempted);
+        assert_int_equal(evidence->fields[q].finding, BBTC_VV_FINDING_NOT_EVALUATED);
+    }
+}
+
+/**
+ * @brief Check that precisely one deliberately wrong field is caught as FAIL.
+ *
+ * @details
+ * A detected mismatch is a successful *negative-control test*, not a passing
+ * mathematical reference. The producer still ran successfully; the B1
+ * comparison operation also succeeded. Only the numerical finding differs.
+ *
+ * @param evidence Valid execution with exactly one corrupted expectation.
+ * @param wrong_field Index of the deliberately perturbed reference value.
+ */
+static void assert_one_expected_failure(
+    const bbtc_vv_case_evidence_t* evidence,
+    size_t wrong_field
+)
+{
+    assert_non_null(evidence);
+    assert_true(wrong_field < BBTC_VV_REFERENCE_QUANTITIES);
+    assert_int_equal(evidence->integrity, BBTC_VV_REFERENCE_INTEGRITY_ACCEPTED);
+    assert_true(evidence->producer_called);
+    assert_int_equal(evidence->producer_status, BBTC_STATUS_SUCCESS);
+    assert_true(evidence->observation_valid);
+
+    for (size_t q = 0u; q < BBTC_VV_REFERENCE_QUANTITIES; ++q)
+    {
+        assert_true(evidence->fields[q].attempted);
+        assert_int_equal(evidence->fields[q].method, BBTC_VV_COMPARISON_EXACT);
+        assert_int_equal(evidence->fields[q].operation_status, BBTC_VV_STATUS_SUCCESS);
+        assert_int_equal(evidence->fields[q].finding,
+                         q == wrong_field ? BBTC_VV_FINDING_FAIL : BBTC_VV_FINDING_PASS);
+    }
+}
+
+/**
+ * @brief Prove native-float EXACT comparison rejects wrong analytical values.
+ *
+ * @details
+ * For each of M-04's three nonzero outputs, modify only that expected
+ * value by exactly 2^-30 in the fixture copy. This remains representable in
+ * binary32 at all three original magnitudes. The actual observation comes
+ * through the unchanged production adapter; no value is fabricated or
+ * compared with a local equality shortcut.
+ *
+ * @param state Unused cmocka state.
+ */
+static void test_wrong_reference_float(void** state)
+{
+    (void)state;
+
+    for (size_t wrong = 0u; wrong < BBTC_VV_REFERENCE_QUANTITIES; ++wrong)
+    {
+        bbtc_vv_reference_fixture_float_t fixture = s_float_fixtures[3];
+        bbtc_vv_reference_evidence_float_t evidence = {0};
+        fixture.expected[wrong] += 0x1p-30f;
+        run_reference_float(3u, true, &fixture, &evidence);
+        assert_one_expected_failure(&evidence.common, wrong);
+    }
+}
+
+/**
+ * @brief Exercise all three wrong-expectation slots without double narrowing.
+ * @param state Unused cmocka state.
+ */
+static void test_wrong_reference_double(void** state)
+{
+    (void)state;
+
+    for (size_t wrong = 0u; wrong < BBTC_VV_REFERENCE_QUANTITIES; ++wrong)
+    {
+        bbtc_vv_reference_fixture_double_t fixture = s_double_fixtures[3];
+        bbtc_vv_reference_evidence_double_t evidence = {0};
+        fixture.expected[wrong] += 0x1p-30;
+        run_reference_double(3u, true, &fixture, &evidence);
+        assert_one_expected_failure(&evidence.common, wrong);
+    }
+}
+
+/**
+ * @brief Exercise all three wrong-expectation slots in native long double.
+ * @param state Unused cmocka state.
+ */
+static void test_wrong_reference_long_double(void** state)
+{
+    (void)state;
+
+    for (size_t wrong = 0u; wrong < BBTC_VV_REFERENCE_QUANTITIES; ++wrong)
+    {
+        bbtc_vv_reference_fixture_long_double_t fixture = s_long_double_fixtures[3];
+        bbtc_vv_reference_evidence_long_double_t evidence = {0};
+        fixture.expected[wrong] += 0x1p-30L;
+        run_reference_long_double(3u, true, &fixture, &evidence);
+        assert_one_expected_failure(&evidence.common, wrong);
+    }
+}
+
+/**
+ * @brief Reject missing required values and malformed fixture metadata.
+ *
+ * @details
+ * The negative fixtures are local copies; the twelve canonical records
+ * remain immutable. Every rejected record must be stopped before the B2
+ * producer and B1 comparator are called. This tests the same entry points
+ * used by the complete matrix instead of merely testing private predicates.
+ *
+ * @param state Unused cmocka state.
+ */
+static void test_reference_integrity_rejection(void** state)
+{
+    (void)state;
+
+    bbtc_vv_reference_fixture_float_t fixture = s_float_fixtures[1];
+    bbtc_vv_reference_evidence_float_t evidence = {0};
+    bbtc_vv_case_metadata_t wrong_case = s_case_metadata[1];
+    bbtc_vv_quantity_metadata_t wrong_units[BBTC_VV_REFERENCE_QUANTITIES] =
+    {
+        s_quantity_metadata[0], s_quantity_metadata[1], s_quantity_metadata[2]
+    };
+
+    /* A revision mismatch is an invalid reference, not a numerical FAIL. */
+    ++wrong_case.revision;
+    fixture.metadata = &wrong_case;
+    run_reference_float(1u, true, &fixture, &evidence);
+    assert_int_equal(evidence.common.integrity, BBTC_VV_REFERENCE_INTEGRITY_INVALID);
+    assert_false(evidence.common.producer_called);
+    assert_no_numerical_comparison(&evidence.common);
+
+    /* Every required case must actually be marked required in its fixture. */
+    wrong_case = s_case_metadata[1];
+    wrong_case.required = false;
+    run_reference_float(1u, true, &fixture, &evidence);
+    assert_int_equal(evidence.common.integrity, BBTC_VV_REFERENCE_INTEGRITY_INVALID);
+    assert_false(evidence.common.producer_called);
+    assert_no_numerical_comparison(&evidence.common);
+
+    /* A missing coefficient pointer must never be presented to production. */
+    fixture = s_float_fixtures[1];
+    fixture.coefficients = NULL;
+    run_reference_float(1u, true, &fixture, &evidence);
+    assert_int_equal(evidence.common.integrity, BBTC_VV_REFERENCE_INTEGRITY_INVALID);
+    assert_false(evidence.common.producer_called);
+    assert_no_numerical_comparison(&evidence.common);
+
+    /* A count inconsistent with the statically known allocation is invalid. */
+    fixture = s_float_fixtures[1];
+    ++fixture.coefficient_count;
+    run_reference_float(1u, true, &fixture, &evidence);
+    assert_int_equal(evidence.common.integrity, BBTC_VV_REFERENCE_INTEGRITY_INVALID);
+    assert_false(evidence.common.producer_called);
+    assert_no_numerical_comparison(&evidence.common);
+
+    /* No default zero may stand in for an absent mathematical expectation. */
+    fixture = s_float_fixtures[1];
+    fixture.expected_present_mask = 0x03u;
+    run_reference_float(1u, true, &fixture, &evidence);
+    assert_int_equal(evidence.common.integrity, BBTC_VV_REFERENCE_INTEGRITY_INVALID);
+    assert_false(evidence.common.producer_called);
+    assert_no_numerical_comparison(&evidence.common);
+
+    /* Nonfinite expected values are invalid references, not B1 mismatches. */
+    fixture = s_float_fixtures[1];
+    fixture.expected[1] = NAN;
+    run_reference_float(1u, true, &fixture, &evidence);
+    assert_int_equal(evidence.common.integrity, BBTC_VV_REFERENCE_INTEGRITY_INVALID);
+    assert_false(evidence.common.producer_called);
+    assert_no_numerical_comparison(&evidence.common);
+
+    /* A derivative mislabelled with coefficient units is inadmissible. */
+    fixture = s_float_fixtures[1];
+    wrong_units[1].unit = BBTC_VV_REFERENCE_UNIT_M3_PER_KG;
+    fixture.quantities = wrong_units;
+    run_reference_float(1u, true, &fixture, &evidence);
+    assert_int_equal(evidence.common.integrity, BBTC_VV_REFERENCE_INTEGRITY_INVALID);
+    assert_false(evidence.common.producer_called);
+    assert_no_numerical_comparison(&evidence.common);
+
+    /* Test native-double infinity as a distinct invalid reference input. */
+    bbtc_vv_reference_fixture_double_t double_fixture = s_double_fixtures[1];
+    bbtc_vv_reference_evidence_double_t double_evidence = {0};
+    double_fixture.expected[2] = INFINITY;
+    run_reference_double(1u, true, &double_fixture, &double_evidence);
+    assert_int_equal(double_evidence.common.integrity, BBTC_VV_REFERENCE_INTEGRITY_INVALID);
+    assert_false(double_evidence.common.producer_called);
+    assert_no_numerical_comparison(&double_evidence.common);
+
+    /* An unknown field identity cannot borrow a legitimate unit to pass. */
+    double_fixture = s_double_fixtures[1];
+    wrong_units[1] = s_quantity_metadata[1];
+    wrong_units[1].quantity = BBTC_VV_REFERENCE_QUANTITY_UNSPECIFIED;
+    double_fixture.quantities = wrong_units;
+    run_reference_double(1u, true, &double_fixture, &double_evidence);
+    assert_int_equal(double_evidence.common.integrity, BBTC_VV_REFERENCE_INTEGRITY_INVALID);
+    assert_false(double_evidence.common.producer_called);
+    assert_no_numerical_comparison(&double_evidence.common);
+
+    /* A completely missing quantity manifest is invalid in long double too. */
+    bbtc_vv_reference_fixture_long_double_t long_fixture = s_long_double_fixtures[1];
+    bbtc_vv_reference_evidence_long_double_t long_evidence = {0};
+    long_fixture.quantities = NULL;
+    run_reference_long_double(1u, true, &long_fixture, &long_evidence);
+    assert_int_equal(long_evidence.common.integrity, BBTC_VV_REFERENCE_INTEGRITY_INVALID);
+    assert_false(long_evidence.common.producer_called);
+    assert_no_numerical_comparison(&long_evidence.common);
+}
+
+/**
+ * @brief Preserve failed production status without manufacturing a B1 finding.
+ *
+ * @details
+ * The input law is structurally valid, but the selected temperature (640 K)
+ * is outside [256 K, 512 K]. Every native adapter must report the production
+ * OUTSIDE_DOMAIN result, mark the observation invalid, and leave ALL three
+ * B1 comparisons unattempted. Failure-cleared zeros are not observations.
+ *
+ * @param state Unused cmocka state.
+ */
+static void test_failed_observation_gates_comparison(void** state)
+{
+    (void)state;
+
+    bbtc_vv_reference_fixture_float_t fixture_f = s_float_fixtures[1];
+    bbtc_vv_reference_fixture_double_t fixture_d = s_double_fixtures[1];
+    bbtc_vv_reference_fixture_long_double_t fixture_l = s_long_double_fixtures[1];
+    bbtc_vv_reference_evidence_float_t evidence_f = {0};
+    bbtc_vv_reference_evidence_double_t evidence_d = {0};
+    bbtc_vv_reference_evidence_long_double_t evidence_l = {0};
+
+    fixture_f.temperature_k = 640.0f;
+    fixture_d.temperature_k = 640.0;
+    fixture_l.temperature_k = 640.0L;
+
+    run_reference_float(1u, true, &fixture_f, &evidence_f);
+    run_reference_double(1u, true, &fixture_d, &evidence_d);
+    run_reference_long_double(1u, true, &fixture_l, &evidence_l);
+
+    const bbtc_vv_case_evidence_t* all[] =
+    {
+        &evidence_f.common, &evidence_d.common, &evidence_l.common
+    };
+
+    for (size_t i = 0u; i < 3u; ++i)
+    {
+        assert_int_equal(all[i]->integrity, BBTC_VV_REFERENCE_INTEGRITY_ACCEPTED);
+        assert_true(all[i]->producer_called);
+        assert_int_equal(all[i]->producer_status, BBTC_STATUS_OUTSIDE_DOMAIN);
+        assert_no_numerical_comparison(all[i]);
+    }
+}
+
+/**
+ * @brief A screened-but-unsupported profile may not execute or compare.
+ *
+ * @details
+ * For this negative test, false simulates a rejected host profile; the
+ * actual host is unchanged. A valid fixture stays structurally acceptable,
+ * but the producer must not be called and all B1 findings remain absent.
+ *
+ * @param state Unused cmocka state.
+ */
+static void test_unsupported_profile_gates_execution(void** state)
+{
+    (void)state;
+
+    bbtc_vv_reference_evidence_float_t evidence = {0};
+    run_reference_float(0u, false, &s_float_fixtures[0], &evidence);
+    assert_int_equal(evidence.common.integrity, BBTC_VV_REFERENCE_INTEGRITY_ACCEPTED);
+    assert_int_equal(evidence.common.profile, BBTC_VV_REFERENCE_PROFILE_UNSUPPORTED);
+    assert_false(evidence.common.producer_called);
+    assert_no_numerical_comparison(&evidence.common);
+}
+
+/**
+ * @brief Test missing, duplicate, and invalid required case/family coverage.
+ *
+ * @details
+ * Twelve completed cases and 36 fields are insufficient without their
+ * identities: reporting M-01 twice cannot compensate for an absent M-04.
+ * The mask must be exact and repeat attempts must not mutate its contents.
+ *
+ * @param state Unused cmocka state.
+ */
+static void test_required_case_accounting(void** state)
+{
+    (void)state;
+
+    uint16_t seen = 0u;
+    for (size_t i = 0u; i < BBTC_VV_REFERENCE_CASES; ++i)
+    {
+        assert_true(record_required_case(i, BBTC_PRECISION_FLOAT, &seen));
+        assert_true(record_required_case(i, BBTC_PRECISION_DOUBLE, &seen));
+        assert_true(record_required_case(i, BBTC_PRECISION_LONG_DOUBLE, &seen));
+    }
+
+    assert_true(required_matrix_complete(seen, 12u, 36u));
+    assert_false(required_matrix_complete(seen, 11u, 36u));
+    assert_false(required_matrix_complete(seen, 12u, 35u));
+    assert_false(required_matrix_complete((uint16_t)(seen & ~UINT16_C(0x0800)), 12u, 36u));
+    assert_false(record_required_case(0u, BBTC_PRECISION_FLOAT, &seen));
+    assert_false(record_required_case(BBTC_VV_REFERENCE_CASES, BBTC_PRECISION_FLOAT, &seen));
+    assert_false(record_required_case(0u, (bbtc_precision_e)0, &seen));
+    assert_false(record_required_case(0u, BBTC_PRECISION_FLOAT, NULL));
+    assert_true(required_matrix_complete(seen, 12u, 36u));
+}
+
+/**
+ * @brief Reject invalid B1 policy methods without accepting stale PASS output.
+ *
+ * @details
+ * The reference runner always constructs EXACT-with-zero policies. These
+ * direct negative controls ensure that an invalid method is an operational
+ * error, not a numerical FAIL or a PASS based on a previously stored result.
+ * No policy fallback or automatic loosening is permitted.
+ *
+ * @param state Unused cmocka state.
+ */
+static void test_invalid_comparison_policy(void** state)
+{
+    (void)state;
+
+    const bbtc_vv_policy_float_t policy_f = { .method = (bbtc_vv_comparison_method_e)0,
+                                             .tolerance = 0.0f };
+    const bbtc_vv_policy_double_t policy_d = { .method = (bbtc_vv_comparison_method_e)0,
+                                              .tolerance = 0.0 };
+    const bbtc_vv_policy_long_double_t policy_l = {
+        .method = (bbtc_vv_comparison_method_e)0, .tolerance = 0.0L
+    };
+    bbtc_vv_result_float_t result_f = { .finding = BBTC_VV_FINDING_PASS };
+    bbtc_vv_result_double_t result_d = { .finding = BBTC_VV_FINDING_PASS };
+    bbtc_vv_result_long_double_t result_l = { .finding = BBTC_VV_FINDING_PASS };
+
+    assert_int_equal(bbtc_vv_compare_float(0.0f, 0.0f, &policy_f, &result_f),
+                     BBTC_VV_STATUS_INVALID_ARGUMENT);
+    assert_int_equal(bbtc_vv_compare_double(0.0, 0.0, &policy_d, &result_d),
+                     BBTC_VV_STATUS_INVALID_ARGUMENT);
+    assert_int_equal(bbtc_vv_compare_long_double(0.0L, 0.0L, &policy_l, &result_l),
+                     BBTC_VV_STATUS_INVALID_ARGUMENT);
+    assert_int_equal(result_f.finding, BBTC_VV_FINDING_NOT_EVALUATED);
+    assert_int_equal(result_d.finding, BBTC_VV_FINDING_NOT_EVALUATED);
+    assert_int_equal(result_l.finding, BBTC_VV_FINDING_NOT_EVALUATED);
+
+    /* EXACT must not silently tolerate *any* positive nonzero threshold. */
+    const bbtc_vv_policy_float_t invalid_exact_f =
+    {
+        .method = BBTC_VV_COMPARISON_EXACT, .tolerance = 0x1p-4f
+    };
+    const bbtc_vv_policy_double_t invalid_exact_d =
+    {
+        .method = BBTC_VV_COMPARISON_EXACT, .tolerance = 0x1p-4
+    };
+    const bbtc_vv_policy_long_double_t invalid_exact_l =
+    {
+        .method = BBTC_VV_COMPARISON_EXACT, .tolerance = 0x1p-4L
+    };
+
+    result_f.finding = BBTC_VV_FINDING_PASS;
+    result_d.finding = BBTC_VV_FINDING_PASS;
+    result_l.finding = BBTC_VV_FINDING_PASS;
+
+    assert_true(bbtc_vv_compare_float(0.0f, 0.0f, &invalid_exact_f, &result_f) !=
+                BBTC_VV_STATUS_SUCCESS);
+    assert_true(bbtc_vv_compare_double(0.0, 0.0, &invalid_exact_d, &result_d) !=
+                BBTC_VV_STATUS_SUCCESS);
+    assert_true(bbtc_vv_compare_long_double(0.0L, 0.0L, &invalid_exact_l, &result_l) !=
+                BBTC_VV_STATUS_SUCCESS);
+    assert_int_equal(result_f.finding, BBTC_VV_FINDING_NOT_EVALUATED);
+    assert_int_equal(result_d.finding, BBTC_VV_FINDING_NOT_EVALUATED);
+    assert_int_equal(result_l.finding, BBTC_VV_FINDING_NOT_EVALUATED);
+}
+
+/**
  * @brief Execute isolated developer-only cmocka tests.
  * @return Conventional nonzero process exit code when any test fails.
  */
@@ -873,7 +1397,15 @@ int main(void)
     const struct CMUnitTest tests[] =
     {
         cmocka_unit_test(test_case_metadata_basics),
-        cmocka_unit_test(test_complete_reference_matrix)
+        cmocka_unit_test(test_complete_reference_matrix),
+        cmocka_unit_test(test_wrong_reference_float),
+        cmocka_unit_test(test_wrong_reference_double),
+        cmocka_unit_test(test_wrong_reference_long_double),
+        cmocka_unit_test(test_reference_integrity_rejection),
+        cmocka_unit_test(test_failed_observation_gates_comparison),
+        cmocka_unit_test(test_unsupported_profile_gates_execution),
+        cmocka_unit_test(test_required_case_accounting),
+        cmocka_unit_test(test_invalid_comparison_policy)
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);
