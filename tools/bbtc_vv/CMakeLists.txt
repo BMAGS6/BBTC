@@ -29,6 +29,22 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
         -frounding-math -ffp-contract=off -fno-fast-math)
 endif()
 
+# VV0.1-B2b.3c.3a: private read-only x87/MXCSR control-state observation.
+# This library contains no producer code, public API, or mutable FP setup.
+# Its screen cannot return QUALIFIED and has no BBTC production dependency.
+add_library(bbtc_vv_virial_control STATIC virial_fp_control.c virial_fp_control.h)
+target_include_directories(bbtc_vv_virial_control PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+target_compile_features(bbtc_vv_virial_control PUBLIC c_std_23)
+set_target_properties(bbtc_vv_virial_control PROPERTIES
+    C_STANDARD 23 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(bbtc_vv_virial_control PRIVATE
+        -frounding-math -ffp-contract=off -fno-fast-math)
+endif()
+if(UNIX)
+    target_link_libraries(bbtc_vv_virial_control PUBLIC m)
+endif()
+
 add_library(bbtc_vv_exact_dyadic STATIC exact_dyadic.c exact_dyadic.h)
 
 target_include_directories(bbtc_vv_exact_dyadic PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")

@@ -44,6 +44,9 @@ SOURCES = {
     "b1_comparison": "tools/bbtc_vv/comparison_api.c",
     "reference_matrix": "tests/validation/test_virial_reference_matrix.c",
     "fp_preflight": "tools/bbtc_vv/virial_fp_profile.c",
+    # B2b.3c.3a: the register-observation module must also have a distinct
+    # compiler invocation and object identity in new qualification evidence.
+    "runtime_control": "tools/bbtc_vv/virial_fp_control.c",
 }
 
 # These are policy checks for *observed command arguments*. They deliberately
@@ -180,7 +183,7 @@ def source_git_identity(source_root: Path) -> dict:
 
 
 def capture(source_root: Path, build_root: Path) -> dict:
-    """Read five independent translation-unit commands without executing them.
+    """Read six independent translation-unit commands without executing them.
 
     Duplicate entries for one source are unresolved because the tool cannot
     infer which object belongs to the link under review. Missing entries are

@@ -9,7 +9,7 @@ pkg_check_modules(CMOCKA REQUIRED IMPORTED_TARGET cmocka)
 # No production target or public BBTC API depends on this runner.
 add_executable(bbtc_vv_test_virial_reference_matrix test_virial_reference_matrix.c)
 target_link_libraries(bbtc_vv_test_virial_reference_matrix PRIVATE
-    bbtc_vv_virial_adapter bbtc_vv_virial_profile
+    bbtc_vv_virial_adapter bbtc_vv_virial_profile bbtc_vv_virial_control
     bbtc_vv_comparison PkgConfig::CMOCKA)
 target_compile_features(bbtc_vv_test_virial_reference_matrix PRIVATE c_std_23)
 set_target_properties(bbtc_vv_test_virial_reference_matrix PROPERTIES
@@ -35,6 +35,21 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
         -frounding-math -ffp-contract=off -fno-fast-math)
 endif()
 add_test(NAME bbtc.vv.virial_fp_profile COMMAND bbtc_vv_test_virial_fp_profile)
+
+# VV0.1-B2b.3c.3a: actual x87/MXCSR control capture with adverse synthetic
+# register-word controls. This executable never mutates live FP registers.
+# A passing test is screening evidence and cannot qualify production code.
+add_executable(bbtc_vv_test_virial_fp_control test_virial_fp_control.c)
+target_link_libraries(bbtc_vv_test_virial_fp_control PRIVATE
+    bbtc_vv_virial_control PkgConfig::CMOCKA)
+target_compile_features(bbtc_vv_test_virial_fp_control PRIVATE c_std_23)
+set_target_properties(bbtc_vv_test_virial_fp_control PROPERTIES
+    C_STANDARD 23 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(bbtc_vv_test_virial_fp_control PRIVATE
+        -frounding-math -ffp-contract=off -fno-fast-math)
+endif()
+add_test(NAME bbtc.vv.virial_fp_control COMMAND bbtc_vv_test_virial_fp_control)
 
 # VV0.1-B2b: observation-adapter smoke tests, distinct from mathematical
 # reference qualification and deliberately independent of the B1 comparator.

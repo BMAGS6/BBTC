@@ -67,6 +67,7 @@
 #include "comparison.h"
 #include "virial_adapter.h"
 #include "virial_fp_profile.h"
+#include "virial_fp_control.h"
 
 #if defined(__FAST_MATH__)
     #error "B2b.3a reference comparisons prohibit fast-math"
@@ -894,12 +895,18 @@ static void test_complete_reference_matrix(void** state)
     (void)state;
 
     const bool profile_screened = screen_native_profile();
+    bbtc_vv_virial_control_observation_t control_before = {0};
+    bbtc_vv_virial_control_result_t control_result = {0};
+    const bbtc_vv_virial_control_state_e control_state =
+        bbtc_vv_virial_control_screen(&control_before, &control_result);
     size_t completed_cases = 0u;
     size_t completed_fields = 0u;
     uint16_t seen_mask = 0u;
 
-    /* An unsupported environment must never generate a green test result. */
+    /* An unsupported host MUST NOT issue any admissible M-01..M-04 PASS. */
     assert_true(profile_screened);
+    assert_int_equal(control_state, BBTC_VV_VIRIAL_CONTROL_SCREENED_UNQUALIFIED);
+    assert_int_equal(control_result.issue_mask, BBTC_VV_VIRIAL_CONTROL_ISSUE_NONE);
 
     for (size_t i = 0u; i < BBTC_VV_REFERENCE_CASES; ++i)
     {
@@ -934,6 +941,20 @@ static void test_complete_reference_matrix(void** state)
     assert_int_equal(completed_fields,
                      BBTC_VV_REFERENCE_CASES * BBTC_VV_REFERENCE_QUANTITIES * 3u);
     assert_true(required_matrix_complete(seen_mask, completed_cases, completed_fields));
+
+    /* Observe controls again *after* every required numerical comparison.
+     * MXCSR sticky status bits 0..5 may change, but the rounding, exception
+     * masks, FTZ and DAZ controls, and x87 control word must remain stable.
+     * This point-in-time check does not constitute continuous monitoring. */
+    bbtc_vv_virial_control_observation_t control_after = {0};
+    bbtc_vv_virial_control_result_t control_after_result = {0};
+    assert_int_equal(bbtc_vv_virial_control_screen(&control_after, &control_after_result),
+                     BBTC_VV_VIRIAL_CONTROL_SCREENED_UNQUALIFIED);
+    assert_int_equal(control_after_result.issue_mask, BBTC_VV_VIRIAL_CONTROL_ISSUE_NONE);
+    assert_int_equal(control_before.rounding_mode, control_after.rounding_mode);
+    assert_int_equal(control_before.x87_control, control_after.x87_control);
+    assert_int_equal(control_before.mxcsr & UINT32_C(0x0000ffc0),
+                     control_after.mxcsr & UINT32_C(0x0000ffc0));
 }
 
 /**
