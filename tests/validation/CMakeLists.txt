@@ -38,6 +38,24 @@ endif()
 add_test(NAME bbtc.vv.virial_exact_neighbors
     COMMAND bbtc_vv_test_virial_exact_neighbors)
 
+# VV0.1-B2b.4b Stage 2: real x87/MXCSR changes in isolated POSIX children.
+# The child restores both control words and communicates observations by pipe.
+# This is a developer-only host-specific test; bbtc::bbtc never links it.
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND
+   CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|AMD64)$" AND
+   CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    add_executable(bbtc_vv_test_virial_live_fp_rejection test_virial_live_fp_rejection.c)
+    target_link_libraries(bbtc_vv_test_virial_live_fp_rejection PRIVATE
+        bbtc_vv_virial_control bbtc_vv_virial_profile PkgConfig::CMOCKA)
+    target_compile_features(bbtc_vv_test_virial_live_fp_rejection PRIVATE c_std_23)
+    set_target_properties(bbtc_vv_test_virial_live_fp_rejection PROPERTIES
+        C_STANDARD 23 C_STANDARD_REQUIRED ON C_EXTENSIONS OFF)
+    target_compile_options(bbtc_vv_test_virial_live_fp_rejection PRIVATE
+        -frounding-math -ffp-contract=off -fno-fast-math)
+    add_test(NAME bbtc.vv.virial_live_fp_rejection
+        COMMAND bbtc_vv_test_virial_live_fp_rejection)
+endif()
+
 # VV0.1-B2b.3c.2: reject inconsistent host ABI, fenv, or production metadata.
 # The profile module can return only SCREENED_UNQUALIFIED or UNSUPPORTED.
 # These checks are separate from the 36 numerical reference findings.
