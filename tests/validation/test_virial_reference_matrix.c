@@ -60,6 +60,18 @@
 #include <fenv.h>
 #include <string.h>
 
+/* Only x86-64 Linux runs the real-control, fork-isolated integration tests. */
+#if defined(__linux__) && defined(__x86_64__) && \
+    (defined(__GNUC__) || defined(__clang__))
+    #define BBTC_VV_HAS_LIVE_GATE_TEST 1
+    #include <errno.h>
+    #include <sys/types.h>
+    #include <sys/wait.h>
+    #include <unistd.h>
+#else
+    #define BBTC_VV_HAS_LIVE_GATE_TEST 0
+#endif
+
 #include <cmocka.h>
 
 #include <bbtc/precision.h>
@@ -334,6 +346,34 @@ static bool screen_native_profile(void)
     return bbtc_vv_virial_profile_screen(&observation, &result) ==
                BBTC_VV_VIRIAL_PROFILE_SCREENED_UNQUALIFIED &&
            result.issue_mask == BBTC_VV_VIRIAL_ISSUE_NONE;
+}
+
+/**
+ * @brief Screen BOTH the native C profile and actual x87/MXCSR controls.
+ *
+ * @details
+ * This is the single admission decision used by the positive reference
+ * matrix and the real-hardware rejection challenges below. A passing screen
+ * still means SCREENED_UNQUALIFIED, not independently qualified. Always
+ * sample hardware even if the basic profile screen rejects the host so the
+ * cause is retained for audit. The caller must pass valid output storage.
+ *
+ * @param observation Live processor-control observation, never fabricated.
+ * @param result Live control-screen diagnosis and issue mask.
+ * @return true only if both independent precondition screens admit the host.
+ */
+static bool screen_reference_environment(
+    bbtc_vv_virial_control_observation_t* observation,
+    bbtc_vv_virial_control_result_t* result
+)
+{
+    const bool profile_screened = screen_native_profile();
+    const bbtc_vv_virial_control_state_e control_state =
+        bbtc_vv_virial_control_screen(observation, result);
+
+    return profile_screened &&
+           control_state == BBTC_VV_VIRIAL_CONTROL_SCREENED_UNQUALIFIED &&
+           result->issue_mask == BBTC_VV_VIRIAL_CONTROL_ISSUE_NONE;
 }
 
 /**
@@ -894,18 +934,18 @@ static void test_complete_reference_matrix(void** state)
 {
     (void)state;
 
-    const bool profile_screened = screen_native_profile();
     bbtc_vv_virial_control_observation_t control_before = {0};
     bbtc_vv_virial_control_result_t control_result = {0};
-    const bbtc_vv_virial_control_state_e control_state =
-        bbtc_vv_virial_control_screen(&control_before, &control_result);
+    const bool profile_screened =
+        screen_reference_environment(&control_before, &control_result);
     size_t completed_cases = 0u;
     size_t completed_fields = 0u;
     uint16_t seen_mask = 0u;
 
     /* An unsupported host MUST NOT issue any admissible M-01..M-04 PASS. */
     assert_true(profile_screened);
-    assert_int_equal(control_state, BBTC_VV_VIRIAL_CONTROL_SCREENED_UNQUALIFIED);
+    assert_int_equal(control_result.state,
+                     BBTC_VV_VIRIAL_CONTROL_SCREENED_UNQUALIFIED);
     assert_int_equal(control_result.issue_mask, BBTC_VV_VIRIAL_CONTROL_ISSUE_NONE);
 
     for (size_t i = 0u; i < BBTC_VV_REFERENCE_CASES; ++i)
@@ -1378,6 +1418,307 @@ static void test_invalid_comparison_policy(void** state)
     assert_int_equal(result_l.finding, BBTC_VV_FINDING_NOT_EVALUATED);
 }
 
+#if BBTC_VV_HAS_LIVE_GATE_TEST
+/** @brief Only previously screened, masked architectural control bits change. */
+enum
+{
+    BBTC_VV_LIVE_X87_ROUND_MASK = 0x0c00u,
+    BBTC_VV_LIVE_X87_ROUND_UP = 0x0800u,
+    BBTC_VV_LIVE_MXCSR_FTZ = 0x8000u,
+    BBTC_VV_LIVE_MXCSR_CONTROL_MASK = 0xffc0u
+};
+
+/** @brief Two disjoint challenges already screened individually by B2b.4b. */
+typedef enum bbtc_vv_live_gate_challenge_e
+{
+    BBTC_VV_LIVE_GATE_X87_ROUND_UP,
+    BBTC_VV_LIVE_GATE_MXCSR_FTZ
+} bbtc_vv_live_gate_challenge_e;
+
+/**
+ * @brief Pipe-safe evidence from a child that invokes the REAL runner gate.
+ *
+ * No enum, pointer, or padding bytes are interpreted as a serialized format;
+ * the parent reads the complete native record within the same executable.
+ */
+typedef struct bbtc_vv_live_gate_record_t
+{
+    uint16_t original_x87;
+    uint16_t changed_x87;
+    uint16_t restored_x87;
+    uint32_t original_mxcsr;
+    uint32_t changed_mxcsr;
+    uint32_t restored_mxcsr;
+    uint32_t issue_mask;
+    int control_state;
+    bool gate_admitted;
+    bool producer_called[3];
+    bool comparisons_attempted[3];
+    bool valid_observations[3];
+    bool unsupported_profiles[3];
+    bool intact_reference_metadata[3];
+    bool findings_not_evaluated[3];
+    bool mutation_effective;
+    bool restored;
+    bool child_preflight_ok;
+} bbtc_vv_live_gate_record_t;
+
+/** @brief Write only an x87 control word, keeping all exception masks. */
+static void bbtc_vv_write_x87_word(const uint16_t* word)
+{
+    __asm__ volatile("fldcw %0" : : "m"(*word) : "memory");
+}
+
+/** @brief Write an MXCSR control image without enabling exception traps. */
+static void bbtc_vv_write_mxcsr_word(const uint32_t* word)
+{
+    __asm__ volatile("ldmxcsr %0" : : "m"(*word) : "memory");
+}
+
+/**
+ * @brief Send or receive one complete fixed-size record across a pipe.
+ * @return false on a failed system call or unexpected EOF.
+ */
+static bool bbtc_vv_pipe_transfer(int fd, void* storage, size_t length, bool sending)
+{
+    unsigned char* next = storage;
+    while (length != 0u)
+    {
+        const ssize_t count = sending
+            ? write(fd, next, length)
+            : read(fd, next, length);
+        if (count < 0 && errno == EINTR)
+            continue;
+        if (count <= 0)
+            return false;
+        next += (size_t)count;
+        length -= (size_t)count;
+    }
+    return true;
+}
+
+/**
+ * @brief Check a rejected typed runner record without using cmocka in child.
+ *
+ * The producer and B1 comparator MUST both remain uninvoked. Valid reference
+ * metadata is retained, but the unsupported execution environment cannot
+ * yield an admissible scientific PASS or even a numerical comparison FAIL.
+ */
+static void bbtc_vv_record_rejected_case(
+    const bbtc_vv_case_evidence_t* evidence,
+    size_t family,
+    bbtc_vv_live_gate_record_t* record
+)
+{
+    record->producer_called[family] = evidence->producer_called;
+    record->valid_observations[family] = evidence->observation_valid;
+    record->unsupported_profiles[family] =
+        evidence->profile == BBTC_VV_REFERENCE_PROFILE_UNSUPPORTED;
+    record->intact_reference_metadata[family] =
+        evidence->integrity == BBTC_VV_REFERENCE_INTEGRITY_ACCEPTED &&
+        evidence->required && evidence->id != NULL;
+    record->findings_not_evaluated[family] = true;
+
+    for (size_t q = 0u; q < BBTC_VV_REFERENCE_QUANTITIES; ++q)
+    {
+        record->comparisons_attempted[family] |= evidence->fields[q].attempted;
+        if (evidence->fields[q].finding != BBTC_VV_FINDING_NOT_EVALUATED)
+            record->findings_not_evaluated[family] = false;
+    }
+}
+
+/**
+ * @brief Perturb one real hardware control and use the same runner admission.
+ *
+ * No numeric producer or B1 comparator call is intended under the modified
+ * environment. Both control words are restored BEFORE writing to the pipe.
+ * All parent-visible success/failure checks are performed in the parent.
+ */
+static void bbtc_vv_live_gate_child(
+    int fd, bbtc_vv_live_gate_challenge_e challenge
+)
+{
+    bbtc_vv_live_gate_record_t record = {0};
+    bbtc_vv_virial_control_observation_t baseline = {0};
+    bbtc_vv_virial_control_result_t baseline_result = {0};
+    const bool baseline_admitted =
+        screen_reference_environment(&baseline, &baseline_result);
+    record.child_preflight_ok = baseline_admitted;
+    record.original_x87 = baseline.x87_control;
+    record.original_mxcsr = baseline.mxcsr;
+
+    if (!baseline_admitted)
+    {
+        (void)bbtc_vv_pipe_transfer(fd, &record, sizeof(record), true);
+        _exit(0);
+    }
+
+    if (challenge == BBTC_VV_LIVE_GATE_X87_ROUND_UP)
+    {
+        const uint16_t changed = (uint16_t)
+            ((baseline.x87_control & ~BBTC_VV_LIVE_X87_ROUND_MASK) |
+             BBTC_VV_LIVE_X87_ROUND_UP);
+        bbtc_vv_write_x87_word(&changed);
+    }
+    else
+    {
+        const uint32_t changed = baseline.mxcsr | BBTC_VV_LIVE_MXCSR_FTZ;
+        bbtc_vv_write_mxcsr_word(&changed);
+    }
+
+    /* Capture the actual mutated processor state, not an injected Boolean. */
+    bbtc_vv_virial_control_observation_t changed = {0};
+    bbtc_vv_virial_control_result_t changed_result = {0};
+    const bool gate_admitted =
+        screen_reference_environment(&changed, &changed_result);
+    record.changed_x87 = changed.x87_control;
+    record.changed_mxcsr = changed.mxcsr;
+    record.control_state = (int)changed_result.state;
+    record.issue_mask = changed_result.issue_mask;
+    record.gate_admitted = gate_admitted;
+    record.mutation_effective = challenge == BBTC_VV_LIVE_GATE_X87_ROUND_UP
+        ? ((changed.x87_control & BBTC_VV_LIVE_X87_ROUND_MASK) ==
+           BBTC_VV_LIVE_X87_ROUND_UP)
+        : ((changed.mxcsr & BBTC_VV_LIVE_MXCSR_FTZ) != 0u);
+
+    /* M-02 is a valid mathematical fixture in all three native families. */
+    bbtc_vv_reference_evidence_float_t observed_f = {0};
+    bbtc_vv_reference_evidence_double_t observed_d = {0};
+    bbtc_vv_reference_evidence_long_double_t observed_l = {0};
+    run_reference_float(1u, gate_admitted, &s_float_fixtures[1], &observed_f);
+    run_reference_double(1u, gate_admitted, &s_double_fixtures[1], &observed_d);
+    run_reference_long_double(1u, gate_admitted,
+                              &s_long_double_fixtures[1], &observed_l);
+    bbtc_vv_record_rejected_case(&observed_f.common, 0u, &record);
+    bbtc_vv_record_rejected_case(&observed_d.common, 1u, &record);
+    bbtc_vv_record_rejected_case(&observed_l.common, 2u, &record);
+
+    bbtc_vv_write_x87_word(&baseline.x87_control);
+    bbtc_vv_write_mxcsr_word(&baseline.mxcsr);
+
+    bbtc_vv_virial_control_observation_t restored = {0};
+    bbtc_vv_virial_control_result_t restore_result = {0};
+    const bool restored_admitted =
+        screen_reference_environment(&restored, &restore_result);
+    record.restored_x87 = restored.x87_control;
+    record.restored_mxcsr = restored.mxcsr;
+    record.restored = restored_admitted &&
+        restored.x87_control == baseline.x87_control &&
+        (restored.mxcsr & BBTC_VV_LIVE_MXCSR_CONTROL_MASK) ==
+            (baseline.mxcsr & BBTC_VV_LIVE_MXCSR_CONTROL_MASK) &&
+        restored.rounding_mode == baseline.rounding_mode;
+
+    if (!bbtc_vv_pipe_transfer(fd, &record, sizeof(record), true))
+        _exit(2);
+    _exit(0);
+}
+
+/**
+ * @brief Require a true hardware preflight rejection and no B1/producer calls.
+ *
+ * Fork isolation prevents a changed control word from contaminating cmocka
+ * or the other test cases. A missing or partial child record is never a skip.
+ */
+static void bbtc_vv_assert_live_reference_gate(
+    bbtc_vv_live_gate_challenge_e challenge, uint32_t required_issue
+)
+{
+    bbtc_vv_virial_control_observation_t parent_before = {0};
+    bbtc_vv_virial_control_result_t parent_before_result = {0};
+    assert_true(screen_reference_environment(&parent_before,
+                                             &parent_before_result));
+    int pipes[2] = {-1, -1};
+    assert_int_equal(pipe(pipes), 0);
+    const pid_t pid = fork();
+    if (pid == 0)
+    {
+        (void)close(pipes[0]);
+        bbtc_vv_live_gate_child(pipes[1], challenge);
+        _exit(3);
+    }
+    if (pid < 0)
+    {
+        (void)close(pipes[0]);
+        (void)close(pipes[1]);
+        fail_msg("fork failed; live hardware gate was not tested");
+        return;
+    }
+    (void)close(pipes[1]);
+    bbtc_vv_live_gate_record_t record = {0};
+    const bool received =
+        bbtc_vv_pipe_transfer(pipes[0], &record, sizeof(record), false);
+    (void)close(pipes[0]);
+    int child_status = 0;
+    pid_t waited;
+    do
+    {
+        waited = waitpid(pid, &child_status, 0);
+    } while (waited < 0 && errno == EINTR);
+
+    bbtc_vv_virial_control_observation_t parent_after = {0};
+    bbtc_vv_virial_control_result_t parent_after_result = {0};
+    assert_true(screen_reference_environment(&parent_after,
+                                             &parent_after_result));
+    assert_int_equal(parent_before.x87_control, parent_after.x87_control);
+    assert_int_equal(parent_before.mxcsr & BBTC_VV_LIVE_MXCSR_CONTROL_MASK,
+                     parent_after.mxcsr & BBTC_VV_LIVE_MXCSR_CONTROL_MASK);
+    assert_int_equal(parent_before.rounding_mode, parent_after.rounding_mode);
+    assert_true(waited == pid);
+    assert_true(WIFEXITED(child_status));
+    assert_int_equal(WEXITSTATUS(child_status), 0);
+    assert_true(received);
+    assert_true(record.child_preflight_ok);
+    assert_true(record.mutation_effective);
+    if (challenge == BBTC_VV_LIVE_GATE_X87_ROUND_UP)
+    {
+        assert_int_equal(record.changed_x87 & BBTC_VV_LIVE_X87_ROUND_MASK,
+                         BBTC_VV_LIVE_X87_ROUND_UP);
+        assert_int_equal(record.changed_mxcsr & BBTC_VV_LIVE_MXCSR_CONTROL_MASK,
+                         record.original_mxcsr & BBTC_VV_LIVE_MXCSR_CONTROL_MASK);
+    }
+    else
+    {
+        assert_int_equal(record.changed_x87, record.original_x87);
+        assert_int_equal(record.changed_mxcsr &
+                         (BBTC_VV_LIVE_MXCSR_CONTROL_MASK ^ BBTC_VV_LIVE_MXCSR_FTZ),
+                         record.original_mxcsr &
+                         (BBTC_VV_LIVE_MXCSR_CONTROL_MASK ^ BBTC_VV_LIVE_MXCSR_FTZ));
+    }
+    assert_false(record.gate_admitted);
+    assert_int_equal(record.control_state, BBTC_VV_VIRIAL_CONTROL_UNSUPPORTED);
+    assert_true((record.issue_mask & required_issue) != 0u);
+    assert_true(record.restored);
+
+    for (size_t family = 0u; family < 3u; ++family)
+    {
+        assert_false(record.producer_called[family]);
+        assert_false(record.comparisons_attempted[family]);
+        assert_false(record.valid_observations[family]);
+        assert_true(record.unsupported_profiles[family]);
+        assert_true(record.intact_reference_metadata[family]);
+        assert_true(record.findings_not_evaluated[family]);
+    }
+}
+
+/** @brief Live x87 rounding rejection through the actual reference runner. */
+static void test_live_reference_gate_x87_round_up(void** state)
+{
+    (void)state;
+    bbtc_vv_assert_live_reference_gate(
+        BBTC_VV_LIVE_GATE_X87_ROUND_UP,
+        BBTC_VV_VIRIAL_CONTROL_ISSUE_X87_ROUND);
+}
+
+/** @brief Live MXCSR FTZ rejection through the actual reference runner. */
+static void test_live_reference_gate_mxcsr_ftz(void** state)
+{
+    (void)state;
+    bbtc_vv_assert_live_reference_gate(
+        BBTC_VV_LIVE_GATE_MXCSR_FTZ,
+        BBTC_VV_VIRIAL_CONTROL_ISSUE_MXCSR_FTZ);
+}
+#endif /* BBTC_VV_HAS_LIVE_GATE_TEST */
+
 /**
  * @brief Execute isolated developer-only cmocka tests.
  * @return Conventional nonzero process exit code when any test fails.
@@ -1395,7 +1736,11 @@ int main(void)
         cmocka_unit_test(test_failed_observation_gates_comparison),
         cmocka_unit_test(test_unsupported_profile_gates_execution),
         cmocka_unit_test(test_required_case_accounting),
-        cmocka_unit_test(test_invalid_comparison_policy)
+        cmocka_unit_test(test_invalid_comparison_policy),
+#if BBTC_VV_HAS_LIVE_GATE_TEST
+        cmocka_unit_test(test_live_reference_gate_x87_round_up),
+        cmocka_unit_test(test_live_reference_gate_mxcsr_ftz),
+#endif
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);
