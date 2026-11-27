@@ -1,14 +1,14 @@
 # BBTC External Ballistics Design Contract
 
-**Contract version:** 0.1.2
+**Contract version:** 0.1.3
 
-**Project phase:** EB0.1-B2
+**Project phase:** EB0.1-B3
 
-**Applies to:** `rewrite/eb0_1b2_math_validation_v1`
+**Applies to:** `rewrite/eb0_1b3_projectile_properties_v1`
 
 **Status:** Accepted
 
-**Date:** 2026-11-26
+**Date:** 2026-11-27
 
 ## 1. Purpose
 
@@ -1069,3 +1069,325 @@ EB0.1-B2 is complete when:
   pass; and
 - EB0.1-B2 introduces no projectile-properties, environment, aerodynamic,
   derivative, integrator, or Cubes of Honor adapter implementation.
+
+## 21. EB0.1-B3 projectile physical properties and inertia
+
+EB0.1-B3 freezes the public physical-property representation required to tell
+later six-degree-of-freedom dynamics what rigid projectile is being propagated.
+It introduces mass, diagonal principal-axis inertia, and aerodynamic reference
+geometry without introducing aerodynamic coefficients, environmental state,
+force or moment evaluation, state derivatives, or numerical integration.
+
+The purpose of this checkpoint is to separate immutable projectile identity from
+the time-varying rigid-body state defined in section 17.4. Projectile properties
+MUST NOT be embedded in each integrated state merely because later equations
+consume both.
+
+### 21.1 Scope and body-origin convention
+
+For EB0.1-B3, the origin of the canonical BBTC projectile body frame is the
+projectile center of mass.
+
+Consequently:
+
+- `position_m` in the rigid-body state remains the world/reference-frame
+  position of the center of mass;
+- the principal moments introduced by this checkpoint are taken about axes
+  through the center of mass;
+- no separate center-of-mass offset is stored in the projectile-properties
+  record; and
+- a future aerodynamic center, center of pressure, or other force-application
+  point is expressed as a body-frame offset from the center of mass if and when
+  the corresponding force/moment model is introduced.
+
+EB0.1-B3 MUST NOT introduce an aerodynamic-center offset merely to preserve the
+shape of the pre-rewrite `SixDOFSpecs` record. Such model-specific geometry is
+deferred until a force/moment checkpoint establishes its physical meaning.
+
+### 21.2 Public header and precision-qualified types
+
+EB0.1-B3 introduces:
+
+```text
+include/bbtc/external_ballistics/projectile.h
+```
+
+The external-ballistics umbrella header MUST expose that header after the
+implementation checkpoint is accepted.
+
+The public principal-inertia records are:
+
+```c
+bbtc_eb_principal_inertia_float_t
+bbtc_eb_principal_inertia_double_t
+bbtc_eb_principal_inertia_long_double_t
+```
+
+The public projectile-property records are:
+
+```c
+bbtc_eb_projectile_properties_float_t
+bbtc_eb_projectile_properties_double_t
+bbtc_eb_projectile_properties_long_double_t
+```
+
+All three families MUST use their native scalar type. No family may store or
+validate its public values by converting the record to another scalar family.
+
+### 21.3 Principal-inertia representation
+
+Each `bbtc_eb_principal_inertia_*_t` record contains exactly the following
+fields in this declaration order:
+
+```text
+moment_about_x_kg_m2
+moment_about_y_kg_m2
+moment_about_z_kg_m2
+```
+
+These are the diagonal principal moments of inertia about the canonical BBTC
+body axes through the center of mass:
+
+- `moment_about_x_kg_m2` is `Ixx`, the moment about body `+X`, the
+  longitudinal/roll axis;
+- `moment_about_y_kg_m2` is `Iyy`, the moment about body `+Y`, the pitch axis;
+  and
+- `moment_about_z_kg_m2` is `Izz`, the moment about body `+Z`, the yaw axis.
+
+The EB0.1-B3 diagonal representation therefore applies to projectiles for which
+the canonical BBTC body axes are principal axes at the center of mass. This is
+appropriate for the intended spin-stabilized projectile use case and still
+permits unequal `Ixx`, `Iyy`, and `Izz`.
+
+An axisymmetric projectile will ordinarily have equal transverse moments,
+`Iyy == Izz`, but public validation MUST NOT require that equality. Non-
+axisymmetric rigid bodies with diagonal inertia in the canonical body frame are
+valid EB0.1-B3 inputs.
+
+A later checkpoint MAY add a full symmetric inertia tensor or another more
+general representation. The B3 API MUST NOT claim that every future BBTC rigid
+body is diagonal or axisymmetric.
+
+### 21.4 Projectile-property record
+
+Each `bbtc_eb_projectile_properties_*_t` record contains exactly the following
+fields in this declaration order:
+
+```text
+principal_inertia
+mass_kg
+reference_diameter_m
+reference_area_m2
+```
+
+`principal_inertia` uses the matching precision-qualified
+`bbtc_eb_principal_inertia_*_t` record.
+
+`mass_kg` is the projectile mass in kilograms and is independent of the
+time-varying rigid-body state.
+
+`reference_diameter_m` is a positive aerodynamic/reference diameter in metres.
+For an ordinary round bullet this will normally be the physical bullet diameter,
+but the field is a model reference dimension rather than a complete shape
+description.
+
+`reference_area_m2` is a positive aerodynamic/reference area in square metres.
+It is the area to which future dimensionless aerodynamic coefficients may be
+normalized.
+
+EB0.1-B3 deliberately stores both reference diameter and reference area as
+explicit physical-model reference quantities. The library MUST NOT silently
+derive one from the other, MUST NOT assume a circular relation
+`area = pi * diameter^2 / 4`, and MUST NOT reject a positive finite pair merely
+because it does not satisfy that relation.
+
+The caller and any later aerodynamic model are responsible for using reference
+dimensions that are consistent with the coefficient convention being supplied.
+A future convenience constructor for ordinary circular bullets MAY derive one
+quantity from the other, but such a helper is outside B3 and MUST remain an
+explicit operation rather than hidden validation behavior.
+
+The B3 property record is not a complete projectile-shape model. Ogive, boat-
+tail, meplat, bearing-surface, length, center-of-pressure, and material-
+distribution descriptions remain deferred until a demonstrated physical model
+requires them.
+
+### 21.5 Physical validity requirements
+
+A valid projectile-property record MUST satisfy all of the following:
+
+- every scalar in the record is finite;
+- `mass_kg > 0`;
+- every principal moment of inertia is greater than zero;
+- `reference_diameter_m > 0`;
+- `reference_area_m2 > 0`; and
+- the three principal moments satisfy the rigid-body inertia triangle
+  inequalities:
+
+```text
+Ixx <= Iyy + Izz
+Iyy <= Ixx + Izz
+Izz <= Ixx + Iyy
+```
+
+Equality is permitted by the B3 contract. The validator MUST NOT add an
+axisymmetry requirement and MUST NOT infer missing moments from another moment.
+
+Implementations SHOULD evaluate the triangle inequalities in a manner that does
+not create a false validation result solely because adding two very large
+finite moments overflows the selected scalar family.
+
+A zero-initialized projectile-property record is deterministic storage but is
+invalid because its mass, reference dimensions, and principal moments are zero.
+
+### 21.6 Public projectile-property validation
+
+EB0.1-B3 introduces the following public functions:
+
+```c
+bbtc_status_e
+bbtc_eb_projectile_properties_validate_float(
+    const bbtc_eb_projectile_properties_float_t* properties
+);
+
+bbtc_status_e
+bbtc_eb_projectile_properties_validate_double(
+    const bbtc_eb_projectile_properties_double_t* properties
+);
+
+bbtc_status_e
+bbtc_eb_projectile_properties_validate_long_double(
+    const bbtc_eb_projectile_properties_long_double_t* properties
+);
+```
+
+These functions are read-only and validate the complete caller-owned property
+record.
+
+The validator MUST NOT clamp, repair, derive, normalize, substitute, or mutate
+any supplied property. In particular, it MUST NOT:
+
+- replace zero or invalid inertia with a default value;
+- force `Iyy` and `Izz` to equality;
+- derive reference area from reference diameter;
+- derive reference diameter from reference area; or
+- substitute a default projectile mass or geometry.
+
+### 21.7 Validation precedence
+
+When more than one invalid condition exists in one projectile-property record,
+validation MUST apply the following deterministic precedence:
+
+1. a null properties pointer returns `BBTC_STATUS_INVALID_ARGUMENT`;
+2. if any inspected scalar is NaN, return `BBTC_STATUS_NAN_INPUT`;
+3. otherwise, if any inspected scalar is positive or negative infinity, return
+   `BBTC_STATUS_NONFINITE_INPUT`;
+4. otherwise, if mass, any principal moment, reference diameter, or reference
+   area is not strictly greater than zero, return
+   `BBTC_STATUS_OUTSIDE_DOMAIN`;
+5. otherwise, if any principal-moment triangle inequality is violated, return
+   `BBTC_STATUS_OUTSIDE_DOMAIN`;
+6. otherwise return `BBTC_STATUS_SUCCESS`.
+
+The NaN and infinity scans MUST cover the complete property record before
+physical-domain checks are evaluated so declaration order cannot change the
+reported status for a multiply-invalid input.
+
+### 21.8 Ownership, ABI, and layout rules
+
+B3 records are plain caller-owned values. They contain no pointers, dynamic
+storage, allocator state, host handles, aerodynamic tables, callbacks, or
+Cubes of Honor types.
+
+No public alignment override is introduced. Natural ISO C object layout is used
+and no universal byte size or padding pattern is frozen.
+
+The `principal_inertia` composite is declared before the scalar members of the
+projectile-property record. This preserves the project's deliberate
+largest-composite-first declaration style while all scalar members within a
+precision family retain their native scalar representation.
+
+Callers MUST use the named members and documented semantics rather than
+depending on incidental padding, `sizeof` values from another implementation,
+or type-punning between precision families.
+
+### 21.9 Required tests
+
+EB0.1-B3 tests MUST verify at least:
+
+- native scalar-family field types for all three principal-inertia records;
+- native scalar-family field types and matching nested inertia type for all
+  three projectile-property records;
+- the exact field names and declaration order frozen by sections 21.3 and 21.4;
+- acceptance of representative valid axisymmetric projectile properties;
+- acceptance of representative valid non-axisymmetric diagonal inertia;
+- rejection of zero and negative mass;
+- rejection of zero and negative principal moments;
+- rejection of zero and negative reference diameter and area;
+- acceptance of principal moments that satisfy a triangle inequality at
+  equality;
+- rejection of each possible principal-moment triangle-inequality violation;
+- acceptance of positive finite reference diameter and area without imposing a
+  hidden circular-area relation;
+- deterministic NaN-before-infinity-before-domain validation precedence;
+- read-only validation behavior;
+- all three precision-qualified validation functions;
+- C and C++ public-header compatibility;
+- independent-consumer visibility through the existing BBTC public umbrella;
+  and
+- continued success of the existing strict compiler and sanitizer gates.
+
+### 21.10 Deliberately deferred behavior
+
+EB0.1-B3 does NOT define or implement:
+
+- aerodynamic coefficients such as `Cd`, `Cl`, or `Cm`;
+- drag, lift, Magnus, spin-damping, yaw-of-repose, or tilt models;
+- coefficient tables or Mach interpolation;
+- aerodynamic-center, center-of-pressure, or other force-application offsets;
+- a detailed projectile shape or material-distribution model;
+- environment samples or environment-provider callbacks;
+- gravity or rotating-reference-frame data;
+- force or moment accumulation;
+- rigid-body state derivatives;
+- quaternion orientation derivatives;
+- RK4 or another numerical integrator;
+- collision behavior; or
+- Cubes of Honor adapter source code.
+
+The pre-rewrite `SixDOFSpecs.areaOverMass` value MUST NOT be copied as stored
+public state. Any later area-to-mass ratio is a derived quantity from validated
+B3 properties and SHOULD be computed where the consuming model makes that
+derivation explicit.
+
+## 22. Acceptance criteria for EB0.1-B3
+
+EB0.1-B3 is complete when:
+
+- the contract version is 0.1.3 and this checkpoint is reviewed and changed
+  from `Draft` to `Accepted` before implementation is committed;
+- the body-frame origin is explicitly frozen at the projectile center of mass;
+- public native-float, native-double, and native-long-double principal-inertia
+  records exist with the exact section 21.3 field names and order;
+- public native-float, native-double, and native-long-double projectile-property
+  records exist with the exact section 21.4 field names and order;
+- the diagonal inertia semantics are explicitly about the canonical BBTC body
+  axes through the center of mass;
+- valid B3 inputs require positive finite mass, principal moments, reference
+  diameter, and reference area;
+- physically impossible principal moments are rejected by the section 21.5
+  triangle inequalities without imposing `Iyy == Izz`;
+- reference diameter and area remain explicit independent model-reference
+  quantities with no hidden circular-area derivation or validation constraint;
+- public precision-qualified projectile-property validation follows the exact
+  deterministic precedence in section 21.7 and never mutates caller data;
+- zero-initialized projectile properties are documented and tested as invalid
+  deterministic storage;
+- no public alignment override, dynamic ownership, host type, or Cubes of Honor
+  dependency is introduced;
+- C, C++, and independent-consumer tests cover the new public records and
+  validation API;
+- existing BBTC tests continue to pass under the repository's normal, strict,
+  and sanitizer configurations; and
+- EB0.1-B3 introduces no aerodynamic coefficient, environment, force/moment,
+  derivative, integrator, collision, or Cubes of Honor adapter implementation.
