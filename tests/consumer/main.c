@@ -2,6 +2,7 @@
  * @file
  * @brief Verifies BBTC use from an independent CMake consumer project.
  */
+
 #include <bbtc/bbtc.h>
 
 #include <stdint.h>
@@ -18,7 +19,7 @@
  */
 static int
 check_string(const char* const actual,
-    const char* const expected)
+             const char* const expected)
 {
     if (actual == NULL)
         return EXIT_FAILURE;
@@ -35,17 +36,20 @@ check_string(const char* const actual,
 static int
 check_precision_contract(void)
 {
-    bbtc_precision_info_t info = { 0 };
+    bbtc_precision_info_t info = {0};
 
     if (bbtc_precision_info(BBTC_PRECISION_DOUBLE, &info) != BBTC_STATUS_SUCCESS)
         return EXIT_FAILURE;
 
-    if (info.precision != BBTC_PRECISION_DOUBLE || info.radix < UINT32_C(2) || info.storage_bytes != (uint32_t)sizeof(double)) {
+    if (info.precision     != BBTC_PRECISION_DOUBLE     ||
+        info.radix         <  UINT32_C(2)               ||
+        info.storage_bytes != (uint32_t)sizeof(double))
+    {
         return EXIT_FAILURE;
     }
 
     return check_string(bbtc_precision_string(BBTC_PRECISION_DOUBLE),
-        "double");
+                        "double");
 }
 
 /**
@@ -64,25 +68,43 @@ check_precision_contract(void)
 static int
 check_external_ballistics_state_contract(void)
 {
-    const bbtc_eb_rigid_body_state_double_t state = {
-        .orientation_world_from_body = {
+    const bbtc_eb_rigid_body_state_double_t state =
+    {
+        .orientation_world_from_body =
+        {
             .x = 0.0,
             .y = 0.0,
             .z = 0.0,
-            .w = 1.0 },
-        .position_m = { .x = 1.0, .y = 2.0, .z = 3.0 },
-        .velocity_m_per_s = { .x = 4.0, .y = 5.0, .z = 6.0 },
-        .angular_velocity_body_rad_per_s = { .x = 7.0, .y = 8.0, .z = 9.0 },
+            .w = 1.0
+        },
+        .position_m =
+        {
+            .x = 1.0,
+            .y = 2.0,
+            .z = 3.0
+        },
+        .velocity_m_per_s =
+        {
+            .x = 4.0,
+            .y = 5.0,
+            .z = 6.0
+        },
+        .angular_velocity_body_rad_per_s =
+        {
+            .x = 7.0,
+            .y = 8.0,
+            .z = 9.0
+        },
         .time_s = 10.0
     };
 
     return bbtc_eb_rigid_body_state_validate_double(&state)
-                == BBTC_STATUS_SUCCESS
-            && state.orientation_world_from_body.w == 1.0
-            && state.position_m.x == 1.0
-            && state.velocity_m_per_s.y == 5.0
-            && state.angular_velocity_body_rad_per_s.z == 9.0
-            && state.time_s == 10.0
+            == BBTC_STATUS_SUCCESS
+        && state.orientation_world_from_body.w == 1.0
+        && state.position_m.x == 1.0
+        && state.velocity_m_per_s.y == 5.0
+        && state.angular_velocity_body_rad_per_s.z == 9.0
+        && state.time_s == 10.0
         ? EXIT_SUCCESS
         : EXIT_FAILURE;
 }
@@ -90,17 +112,25 @@ check_external_ballistics_state_contract(void)
 /**
  * @brief Verifies EB0.1-B3 projectile properties through a downstream consumer.
  *
+ * @details
+ * This independent-consumer check verifies that the public BBTC umbrella
+ * exposes the native-double EB projectile-property record and its validator
+ * without requiring private include paths or implementation details.
+ *
  * @return `EXIT_SUCCESS` when the public records and validator are visible and
  *         usable through `<bbtc/bbtc.h>`; otherwise `EXIT_FAILURE`.
  */
 static int
 check_external_ballistics_projectile_contract(void)
 {
-    const bbtc_eb_projectile_properties_double_t properties = {
-        .principal_inertia = {
+    const bbtc_eb_projectile_properties_double_t properties =
+    {
+        .principal_inertia =
+        {
             .moment_about_x_kg_m2 = 1.0,
             .moment_about_y_kg_m2 = 2.0,
-            .moment_about_z_kg_m2 = 2.0 },
+            .moment_about_z_kg_m2 = 2.0
+        },
         .mass_kg = 1.0,
         .reference_diameter_m = 2.0,
         .reference_area_m2 = 1.0
@@ -112,6 +142,7 @@ check_external_ballistics_projectile_contract(void)
         : EXIT_FAILURE;
 }
 
+
 /**
  * @brief Verifies precision-qualified geometry through the consumer target.
  *
@@ -121,17 +152,19 @@ check_external_ballistics_projectile_contract(void)
 static uint8_t
 check_geometry_contract(void)
 {
-    const bbtc_ib_geometry_double_t geometry = {
+    const bbtc_ib_geometry_double_t geometry =
+    {
         .initial_behind_projectile_volume_m3 = 4.0e-6,
-        .bore_cross_sectional_area_m2 = 5.0e-5,
-        .projectile_effective_base_area_m2 = 4.8e-5,
-        .projectile_travel_to_muzzle_m = 0.6
+        .bore_cross_sectional_area_m2        = 5.0e-5,
+        .projectile_effective_base_area_m2   = 4.8e-5,
+        .projectile_travel_to_muzzle_m       = 0.6
     };
 
     return bbtc_ib_geometry_validate_double(&geometry) == BBTC_STATUS_SUCCESS
         ? EXIT_SUCCESS
         : EXIT_FAILURE;
 }
+
 
 /**
  * @brief Verifies precision-qualified projectile data through the consumer.
@@ -142,7 +175,8 @@ check_geometry_contract(void)
 static int
 check_projectile_contract(void)
 {
-    const bbtc_ib_projectile_double_t projectile = {
+    const bbtc_ib_projectile_double_t projectile =
+    {
         .mass_kg = 0.01134
     };
 
@@ -150,6 +184,7 @@ check_projectile_contract(void)
         ? EXIT_SUCCESS
         : EXIT_FAILURE;
 }
+
 
 /**
  * @brief Verifies precision-qualified propellant-charge data through the consumer.
@@ -160,8 +195,9 @@ check_projectile_contract(void)
 static int
 check_propellant_charge_contract(void)
 {
-    const bbtc_ib_propellant_charge_double_t charge = {
-        .charge_mass_kg = 0.0030,
+    const bbtc_ib_propellant_charge_double_t charge =
+    {
+        .charge_mass_kg                    = 0.0030,
         .condensed_phase_density_kg_per_m3 = 1600.0
     };
 
@@ -179,30 +215,42 @@ check_propellant_charge_contract(void)
 static int
 check_loading_state_contract(void)
 {
-    const bbtc_ib_loading_state_double_t loading_state = {
-        .geometry = {
+    const bbtc_ib_loading_state_double_t loading_state =
+    {
+        .geometry =
+        {
             .initial_behind_projectile_volume_m3 = 8.0,
-            .bore_cross_sectional_area_m2 = 1.0,
-            .projectile_effective_base_area_m2 = 1.0,
-            .projectile_travel_to_muzzle_m = 1.0 },
+            .bore_cross_sectional_area_m2        = 1.0,
+            .projectile_effective_base_area_m2   = 1.0,
+            .projectile_travel_to_muzzle_m       = 1.0
+        },
 
-        .projectile = { .mass_kg = 1.0 },
+        .projectile =
+        {
+            .mass_kg = 1.0
+        },
 
-        .propellant_charge = { .charge_mass_kg = 6.0, .condensed_phase_density_kg_per_m3 = 2.0 }
+        .propellant_charge =
+        {
+            .charge_mass_kg                    = 6.0,
+            .condensed_phase_density_kg_per_m3 = 2.0
+        }
     };
 
-    bbtc_ib_loading_state_volumes_double_t volumes = { 0 };
+    bbtc_ib_loading_state_volumes_double_t volumes = {0};
 
     if (bbtc_ib_loading_state_evaluate_double(&loading_state, &volumes)
-        != BBTC_STATUS_SUCCESS) {
+        != BBTC_STATUS_SUCCESS)
+    {
         return EXIT_FAILURE;
     }
 
     return volumes.condensed_propellant_volume_m3 == 3.0
-            && volumes.initial_free_gas_volume_m3 == 5.0
-        ? EXIT_SUCCESS
-        : EXIT_FAILURE;
+        && volumes.initial_free_gas_volume_m3 == 5.0
+            ? EXIT_SUCCESS
+            : EXIT_FAILURE;
 }
+
 
 /**
  * @brief Verifies initial gas-state validation through the consumer.
@@ -213,15 +261,17 @@ check_loading_state_contract(void)
 static int
 check_initial_gas_state_contract(void)
 {
-    const bbtc_ib_initial_gas_state_double_t state = {
+    const bbtc_ib_initial_gas_state_double_t state =
+    {
         .absolute_pressure_pa = 101325.0,
-        .temperature_k = 293.15
+        .temperature_k        = 293.15
     };
 
     return bbtc_ib_initial_gas_state_validate_double(&state) == BBTC_STATUS_SUCCESS
         ? EXIT_SUCCESS
         : EXIT_FAILURE;
 }
+
 
 /**
  * @brief Verifies the initial propellant-condition API through an independent
@@ -230,7 +280,8 @@ check_initial_gas_state_contract(void)
 static int
 check_initial_propellant_condition_contract(void)
 {
-    const bbtc_ib_initial_propellant_condition_double_t condition = {
+    const bbtc_ib_initial_propellant_condition_double_t condition =
+    {
         .temperature_k = 293.15
     };
 
@@ -239,6 +290,7 @@ check_initial_propellant_condition_contract(void)
         ? EXIT_SUCCESS
         : EXIT_FAILURE;
 }
+
 
 /**
  * @brief Verifies Noble-Abel gas-model validation through the consumer.
@@ -249,10 +301,11 @@ check_initial_propellant_condition_contract(void)
 static int
 check_noble_abel_gas_model_contract(void)
 {
-    const bbtc_ib_noble_abel_gas_model_double_t model = {
-        .specific_gas_constant_j_per_kg_k = 287.0,
-        .constant_volume_specific_heat_j_per_kg_k = 718.0,
-        .covolume_m3_per_kg = 0.001
+    const bbtc_ib_noble_abel_gas_model_double_t model =
+    {
+        .specific_gas_constant_j_per_kg_k          = 287.0,
+        .constant_volume_specific_heat_j_per_kg_k  = 718.0,
+        .covolume_m3_per_kg                        = 0.001
     };
 
     return bbtc_ib_noble_abel_gas_model_validate_double(&model)
@@ -260,6 +313,7 @@ check_noble_abel_gas_model_contract(void)
         ? EXIT_SUCCESS
         : EXIT_FAILURE;
 }
+
 
 /**
  * @brief Verifies first-order virial validation and evaluation through the
@@ -271,38 +325,49 @@ check_noble_abel_gas_model_contract(void)
 static int
 check_first_order_virial_gas_model_contract(void)
 {
-    const double coefficients[] = { 0.0 };
+    const double coefficients[] ={0.0};
 
-    const bbtc_ib_first_order_virial_gas_model_double_t model = {
-        .specific_gas_constant_j_per_kg_k = 287.0,
+    const bbtc_ib_first_order_virial_gas_model_double_t model =
+    {
+        .specific_gas_constant_j_per_kg_k                   = 287.0,
         .ideal_gas_constant_volume_specific_heat_j_per_kg_k = 718.0,
-        .minimum_calibrated_density_kg_per_m3 = 0.0,
-        .maximum_calibrated_density_kg_per_m3 = 500.0,
-        .second_density_virial_coefficient_law = {
+        .minimum_calibrated_density_kg_per_m3               = 0.0,
+        .maximum_calibrated_density_kg_per_m3               = 500.0,
+        .second_density_virial_coefficient_law =
+        {
             .minimum_temperature_k = 250.0,
             .maximum_temperature_k = 4000.0,
-            .second_density_virial_chebyshev_coefficients_m3_per_kg = coefficients,
-            .coefficient_count = 1u }
+            .second_density_virial_chebyshev_coefficients_m3_per_kg =
+                coefficients,
+            .coefficient_count = 1u
+        }
     };
 
-    bbtc_ib_first_order_virial_temperature_terms_double_t terms = { 0 };
+    bbtc_ib_first_order_virial_temperature_terms_double_t terms = {0};
 
     if (bbtc_ib_first_order_virial_gas_model_validate_double(&model)
-        != BBTC_STATUS_SUCCESS) {
+        != BBTC_STATUS_SUCCESS)
+    {
         return EXIT_FAILURE;
     }
 
     if (bbtc_ib_first_order_virial_temperature_law_evaluate_double(&model.second_density_virial_coefficient_law,
-            1000.0,
-            &terms)
-        != BBTC_STATUS_SUCCESS) {
+                                                                   1000.0,
+                                                                   &terms)
+        != BBTC_STATUS_SUCCESS)
+    {
         return EXIT_FAILURE;
     }
 
-    return terms.second_density_virial_coefficient_m3_per_kg == 0.0 && terms.first_temperature_derivative_m3_per_kg_k == 0.0 && terms.second_temperature_derivative_m3_per_kg_k2 == 0.0
-        ? EXIT_SUCCESS
-        : EXIT_FAILURE;
+    return terms.second_density_virial_coefficient_m3_per_kg == 0.0 &&
+           terms.first_temperature_derivative_m3_per_kg_k    == 0.0 &&
+           terms.second_temperature_derivative_m3_per_kg_k2  == 0.0
+                ? EXIT_SUCCESS
+                : EXIT_FAILURE;
 }
+
+
+
 
 /**
  * @brief Verifies initial free-gas closure through the independent consumer.
@@ -320,61 +385,76 @@ check_first_order_virial_gas_model_contract(void)
 static int
 check_initial_gas_closure_contract(void)
 {
-    const double virial_coefficients[] = { 0.0 };
+    const double virial_coefficients[] ={0.0};
 
-    const bbtc_ib_initial_gas_state_double_t initial_gas_state = {
+    const bbtc_ib_initial_gas_state_double_t initial_gas_state =
+    {
         .absolute_pressure_pa = 600.0,
-        .temperature_k = 3.0
+        .temperature_k        = 3.0
     };
 
-    const bbtc_ib_noble_abel_gas_model_double_t noble_abel_model = {
-        .specific_gas_constant_j_per_kg_k = 100.0,
+    const bbtc_ib_noble_abel_gas_model_double_t noble_abel_model =
+    {
+        .specific_gas_constant_j_per_kg_k         = 100.0,
         .constant_volume_specific_heat_j_per_kg_k = 500.0,
-        .covolume_m3_per_kg = 0.0
+        .covolume_m3_per_kg                       = 0.0
     };
 
-    const bbtc_ib_first_order_virial_gas_model_double_t virial_model = {
-        .specific_gas_constant_j_per_kg_k = 100.0,
+    const bbtc_ib_first_order_virial_gas_model_double_t virial_model =
+    {
+        .specific_gas_constant_j_per_kg_k                   = 100.0,
         .ideal_gas_constant_volume_specific_heat_j_per_kg_k = 500.0,
-        .minimum_calibrated_density_kg_per_m3 = 0.0,
-        .maximum_calibrated_density_kg_per_m3 = 5.0,
-        .second_density_virial_coefficient_law = {
+        .minimum_calibrated_density_kg_per_m3               = 0.0,
+        .maximum_calibrated_density_kg_per_m3               = 5.0,
+        .second_density_virial_coefficient_law =
+        {
             .minimum_temperature_k = 1.0,
             .maximum_temperature_k = 5.0,
-            .second_density_virial_chebyshev_coefficients_m3_per_kg = virial_coefficients,
-            .coefficient_count = 1u }
+            .second_density_virial_chebyshev_coefficients_m3_per_kg =
+                virial_coefficients,
+            .coefficient_count = 1u
+        }
     };
 
-    bbtc_ib_initial_gas_solution_double_t noble_abel_solution = { 0 };
-    bbtc_ib_initial_gas_solution_double_t virial_solution = { 0 };
+    bbtc_ib_initial_gas_solution_double_t noble_abel_solution = {0};
+    bbtc_ib_initial_gas_solution_double_t virial_solution     = {0};
 
     if (bbtc_ib_noble_abel_initial_gas_solve_double(&noble_abel_model,
-            &initial_gas_state,
-            0.25,
-            &noble_abel_solution)
-        != BBTC_STATUS_SUCCESS) {
+                                                    &initial_gas_state,
+                                                    0.25,
+                                                    &noble_abel_solution)
+        != BBTC_STATUS_SUCCESS)
+    {
         return EXIT_FAILURE;
     }
 
     if (bbtc_ib_first_order_virial_initial_gas_solve_double(&virial_model,
-            &initial_gas_state,
-            0.25,
-            &virial_solution)
-        != BBTC_STATUS_SUCCESS) {
+                                                            &initial_gas_state,
+                                                            0.25,
+                                                            &virial_solution)
+        != BBTC_STATUS_SUCCESS)
+    {
         return EXIT_FAILURE;
     }
 
     if (noble_abel_solution.applicability_flags != BBTC_APPLICABILITY_NONE_REPORTED
-        || virial_solution.applicability_flags != BBTC_APPLICABILITY_NONE_REPORTED) {
+        ||
+        virial_solution.applicability_flags     != BBTC_APPLICABILITY_NONE_REPORTED)
+    {
         return EXIT_FAILURE;
     }
 
-    if (noble_abel_solution.density_kg_per_m3 != 2.0 || noble_abel_solution.gas_mass_kg != 0.5 || virial_solution.density_kg_per_m3 != 2.0 || virial_solution.gas_mass_kg != 0.5) {
+    if (noble_abel_solution.density_kg_per_m3 != 2.0  ||
+        noble_abel_solution.gas_mass_kg       != 0.5  ||
+        virial_solution.density_kg_per_m3     != 2.0  ||
+        virial_solution.gas_mass_kg           != 0.5)
+    {
         return EXIT_FAILURE;
     }
 
     return EXIT_SUCCESS;
 }
+
 
 /**
  * @brief Verifies the reduced-gas thermodynamic evaluators through the
@@ -393,81 +473,98 @@ check_initial_gas_closure_contract(void)
 static int
 check_reduced_gas_thermodynamics_contract(void)
 {
-    const double virial_coefficients[] = { 0.0 };
+    const double virial_coefficients[] = {0.0};
 
-    const bbtc_ib_caloric_reference_double_t caloric_reference = {
-        .reference_temperature_k = 300.0,
+    const bbtc_ib_caloric_reference_double_t caloric_reference =
+    {
+        .reference_temperature_k                     = 300.0,
         .reference_specific_internal_energy_j_per_kg = 1000.0
     };
 
-    const bbtc_ib_noble_abel_gas_model_double_t noble_abel_model = {
-        .specific_gas_constant_j_per_kg_k = 100.0,
+    const bbtc_ib_noble_abel_gas_model_double_t noble_abel_model =
+    {
+        .specific_gas_constant_j_per_kg_k         = 100.0,
         .constant_volume_specific_heat_j_per_kg_k = 500.0,
-        .covolume_m3_per_kg = 0.0
+        .covolume_m3_per_kg                       = 0.0
     };
 
-    const bbtc_ib_first_order_virial_gas_model_double_t virial_model = {
-        .specific_gas_constant_j_per_kg_k = 100.0,
+    const bbtc_ib_first_order_virial_gas_model_double_t virial_model =
+    {
+        .specific_gas_constant_j_per_kg_k                   = 100.0,
         .ideal_gas_constant_volume_specific_heat_j_per_kg_k = 500.0,
-        .minimum_calibrated_density_kg_per_m3 = 0.0,
-        .maximum_calibrated_density_kg_per_m3 = 5.0,
-        .second_density_virial_coefficient_law = {
+        .minimum_calibrated_density_kg_per_m3               = 0.0,
+        .maximum_calibrated_density_kg_per_m3               = 5.0,
+        .second_density_virial_coefficient_law =
+        {
             .minimum_temperature_k = 200.0,
             .maximum_temperature_k = 400.0,
-            .second_density_virial_chebyshev_coefficients_m3_per_kg = virial_coefficients,
-            .coefficient_count = 1U }
+            .second_density_virial_chebyshev_coefficients_m3_per_kg =
+                virial_coefficients,
+            .coefficient_count = 1U
+        }
     };
 
-    bbtc_ib_reduced_gas_thermodynamic_result_double_t noble_abel_result = { 0 };
-    bbtc_ib_reduced_gas_thermodynamic_result_double_t virial_result = { 0 };
+    bbtc_ib_reduced_gas_thermodynamic_result_double_t noble_abel_result = {0};
+    bbtc_ib_reduced_gas_thermodynamic_result_double_t virial_result     = {0};
 
     if (bbtc_ib_caloric_reference_validate_double(&caloric_reference)
-        != BBTC_STATUS_SUCCESS) {
+        != BBTC_STATUS_SUCCESS)
+    {
         return EXIT_FAILURE;
     }
 
     if (bbtc_ib_noble_abel_thermodynamics_evaluate_double(&noble_abel_model,
-            2.0,
-            300.0,
-            &caloric_reference,
-            &noble_abel_result)
-        != BBTC_STATUS_SUCCESS) {
+                                                          2.0,
+                                                          300.0,
+                                                          &caloric_reference,
+                                                          &noble_abel_result)
+        != BBTC_STATUS_SUCCESS)
+    {
         return EXIT_FAILURE;
     }
 
     if (bbtc_ib_first_order_virial_thermodynamics_evaluate_double(&virial_model,
-            2.0,
-            300.0,
-            &caloric_reference,
-            &virial_result)
-        != BBTC_STATUS_SUCCESS) {
+                                                                  2.0,
+                                                                  300.0,
+                                                                  &caloric_reference,
+                                                                  &virial_result)
+        != BBTC_STATUS_SUCCESS)
+    {
         return EXIT_FAILURE;
     }
 
     if (noble_abel_result.applicability_flags != BBTC_APPLICABILITY_NONE_REPORTED
-        || virial_result.applicability_flags != BBTC_APPLICABILITY_NONE_REPORTED) {
+        ||
+        virial_result.applicability_flags     != BBTC_APPLICABILITY_NONE_REPORTED)
+    {
         return EXIT_FAILURE;
     }
 
-    if (noble_abel_result.pressure_pa != 60000.0
-        || noble_abel_result.specific_internal_energy_j_per_kg != 1000.0
+    if (noble_abel_result.pressure_pa                                 != 60000.0
+        || noble_abel_result.specific_internal_energy_j_per_kg        != 1000.0
         || noble_abel_result.constant_volume_specific_heat_j_per_kg_k != 500.0
         || noble_abel_result.pressure_density_derivative_at_constant_temperature_pa_m3_per_kg
             != 30000.0
         || noble_abel_result.pressure_temperature_derivative_at_constant_density_pa_per_k
-            != 200.0) {
+            != 200.0)
+    {
         return EXIT_FAILURE;
     }
 
     if (virial_result.pressure_pa != noble_abel_result.pressure_pa
-        || virial_result.specific_internal_energy_j_per_kg
+        ||
+        virial_result.specific_internal_energy_j_per_kg
             != noble_abel_result.specific_internal_energy_j_per_kg
-        || virial_result.constant_volume_specific_heat_j_per_kg_k
+        ||
+        virial_result.constant_volume_specific_heat_j_per_kg_k
             != noble_abel_result.constant_volume_specific_heat_j_per_kg_k
-        || virial_result.pressure_density_derivative_at_constant_temperature_pa_m3_per_kg
+        ||
+        virial_result.pressure_density_derivative_at_constant_temperature_pa_m3_per_kg
             != noble_abel_result.pressure_density_derivative_at_constant_temperature_pa_m3_per_kg
-        || virial_result.pressure_temperature_derivative_at_constant_density_pa_per_k
-            != noble_abel_result.pressure_temperature_derivative_at_constant_density_pa_per_k) {
+        ||
+        virial_result.pressure_temperature_derivative_at_constant_density_pa_per_k
+            != noble_abel_result.pressure_temperature_derivative_at_constant_density_pa_per_k)
+    {
         return EXIT_FAILURE;
     }
 
@@ -489,32 +586,40 @@ check_reduced_gas_thermodynamics_contract(void)
 static int
 check_propellant_grain_geometry_contract(void)
 {
-    const bbtc_ib_rectangular_prismatic_grain_geometry_double_t geometry = {
-        .initial_length_m = 4.0,
-        .initial_width_m = 4.0,
+    const bbtc_ib_rectangular_prismatic_grain_geometry_double_t geometry =
+    {
+        .initial_length_m    = 4.0,
+        .initial_width_m     = 4.0,
         .initial_thickness_m = 4.0
     };
 
-    bbtc_ib_propellant_grain_state_double_t state = { 0 };
+    bbtc_ib_propellant_grain_state_double_t state = {0};
 
     if (bbtc_ib_rectangular_prismatic_grain_geometry_validate_double(&geometry)
-        != BBTC_STATUS_SUCCESS) {
+        != BBTC_STATUS_SUCCESS)
+    {
         return EXIT_FAILURE;
     }
 
     if (bbtc_ib_rectangular_prismatic_grain_evaluate_double(&geometry,
-            1.0,
-            &state)
-        != BBTC_STATUS_SUCCESS) {
+                                                            1.0,
+                                                            &state)
+        != BBTC_STATUS_SUCCESS)
+    {
         return EXIT_FAILURE;
     }
 
-    if (state.remaining_volume_m3 != 8.0 || state.burning_surface_area_m2 != 24.0 || state.remaining_regression_to_burnout_m != 1.0 || state.consumed_volume_fraction != 0.875) {
+    if (state.remaining_volume_m3               != 8.0  ||
+        state.burning_surface_area_m2           != 24.0 ||
+        state.remaining_regression_to_burnout_m != 1.0  ||
+        state.consumed_volume_fraction          != 0.875)
+    {
         return EXIT_FAILURE;
     }
 
     return EXIT_SUCCESS;
 }
+
 
 /**
  * @brief Verifies reduced propellant thermochemistry through the independent consumer.
@@ -532,31 +637,39 @@ check_propellant_grain_geometry_contract(void)
 static int
 check_propellant_thermochemistry_contract(void)
 {
-    const bbtc_ib_propellant_thermochemistry_double_t thermochemistry = {
+    const bbtc_ib_propellant_thermochemistry_double_t thermochemistry =
+    {
         .gas_product_mass_fraction = 0.75,
         .specific_reaction_internal_energy_release_j_per_kg = 4.0
     };
 
-    bbtc_ib_propellant_thermochemical_source_double_t source = { 0 };
+    bbtc_ib_propellant_thermochemical_source_double_t source = {0};
 
     if (bbtc_ib_propellant_thermochemistry_validate_double(&thermochemistry)
-        != BBTC_STATUS_SUCCESS) {
+        != BBTC_STATUS_SUCCESS)
+    {
         return EXIT_FAILURE;
     }
 
     if (bbtc_ib_propellant_thermochemical_source_evaluate_double(&thermochemistry,
-            2.0,
-            &source)
-        != BBTC_STATUS_SUCCESS) {
+                                                                 2.0,
+                                                                 &source)
+        != BBTC_STATUS_SUCCESS)
+    {
         return EXIT_FAILURE;
     }
 
-    if (source.gas_product_mass_kg != 1.5 || source.condensed_product_mass_kg != 0.5 || source.reaction_internal_energy_release_j != 8.0) {
+    if (source.gas_product_mass_kg                != 1.5 ||
+        source.condensed_product_mass_kg          != 0.5 ||
+        source.reaction_internal_energy_release_j != 8.0)
+    {
         return EXIT_FAILURE;
     }
 
     return EXIT_SUCCESS;
 }
+
+
 
 /**
  * @brief Verifies pressure-power burn kinetics through an independent consumer.
@@ -574,34 +687,40 @@ check_propellant_thermochemistry_contract(void)
 static int
 check_propellant_burn_kinetics_contract(void)
 {
-    const bbtc_ib_pressure_power_burn_kinetics_double_t model = {
-        .reference_burn_rate_m_per_s = 0.25,
-        .reference_pressure_pa = 100.0,
-        .pressure_exponent = 1.0,
+    const bbtc_ib_pressure_power_burn_kinetics_double_t model =
+    {
+        .reference_burn_rate_m_per_s    = 0.25,
+        .reference_pressure_pa          = 100.0,
+        .pressure_exponent              = 1.0,
         .minimum_calibrated_pressure_pa = 50.0,
         .maximum_calibrated_pressure_pa = 200.0
     };
 
-    bbtc_ib_propellant_burn_kinetics_result_double_t result = { 0 };
+    bbtc_ib_propellant_burn_kinetics_result_double_t result = {0};
 
     if (bbtc_ib_pressure_power_burn_kinetics_validate_double(&model)
-        != BBTC_STATUS_SUCCESS) {
+        != BBTC_STATUS_SUCCESS)
+    {
         return EXIT_FAILURE;
     }
 
     if (bbtc_ib_pressure_power_burn_kinetics_evaluate_double(&model,
-            model.reference_pressure_pa,
-            &result)
-        != BBTC_STATUS_SUCCESS) {
+                                                             model.reference_pressure_pa,
+                                                             &result)
+        != BBTC_STATUS_SUCCESS)
+    {
         return EXIT_FAILURE;
     }
 
-    if (result.applicability_flags != BBTC_APPLICABILITY_NONE_REPORTED || result.burn_rate_m_per_s != model.reference_burn_rate_m_per_s) {
+    if (result.applicability_flags != BBTC_APPLICABILITY_NONE_REPORTED ||
+        result.burn_rate_m_per_s   != model.reference_burn_rate_m_per_s)
+    {
         return EXIT_FAILURE;
     }
 
     return EXIT_SUCCESS;
 }
+
 
 /**
  * @brief Verifies the pressure-burn table through an independent consumer.
@@ -617,37 +736,44 @@ check_propellant_burn_kinetics_contract(void)
 static int
 check_pressure_burn_table_contract(void)
 {
-    const bbtc_ib_pressure_burn_point_double_t points[] = {
+    const bbtc_ib_pressure_burn_point_double_t points[] =
+    {
         { .pressure_pa = 1.0, .burn_rate_m_per_s = 1.0 },
         { .pressure_pa = 2.0, .burn_rate_m_per_s = 4.0 },
         { .pressure_pa = 4.0, .burn_rate_m_per_s = 16.0 }
     };
 
-    const bbtc_ib_pressure_burn_table_double_t model = {
+    const bbtc_ib_pressure_burn_table_double_t model =
+    {
         .points = points,
         .point_count = 3u
     };
 
-    bbtc_ib_propellant_burn_kinetics_result_double_t result = { 0 };
+    bbtc_ib_propellant_burn_kinetics_result_double_t result = {0};
 
     if (bbtc_ib_pressure_burn_table_validate_double(&model)
-        != BBTC_STATUS_SUCCESS) {
+        != BBTC_STATUS_SUCCESS)
+    {
         return EXIT_FAILURE;
     }
 
     if (bbtc_ib_pressure_burn_table_evaluate_double(&model,
-            points[1].pressure_pa,
-            &result)
-        != BBTC_STATUS_SUCCESS) {
+                                                    points[1].pressure_pa,
+                                                    &result)
+        != BBTC_STATUS_SUCCESS)
+    {
         return EXIT_FAILURE;
     }
 
-    if (result.applicability_flags != BBTC_APPLICABILITY_NONE_REPORTED || result.burn_rate_m_per_s != points[1].burn_rate_m_per_s) {
+    if (result.applicability_flags != BBTC_APPLICABILITY_NONE_REPORTED ||
+        result.burn_rate_m_per_s   != points[1].burn_rate_m_per_s)
+    {
         return EXIT_FAILURE;
     }
 
     return EXIT_SUCCESS;
 }
+
 
 /**
  * @brief Verifies whole-charge propellant mass coupling from a consumer.
@@ -663,40 +789,52 @@ check_pressure_burn_table_contract(void)
 static int
 check_propellant_mass_contract(void)
 {
-    const bbtc_ib_propellant_charge_double_t charge = {
+    const bbtc_ib_propellant_charge_double_t charge =
+    {
         .charge_mass_kg = 8.0,
         .condensed_phase_density_kg_per_m3 = 2.0
     };
 
-    const bbtc_ib_propellant_grain_state_double_t grain_state = {
+    const bbtc_ib_propellant_grain_state_double_t grain_state =
+    {
         .remaining_volume_m3 = 1.0,
         .burning_surface_area_m2 = 3.0,
         .remaining_regression_to_burnout_m = 0.5,
         .consumed_volume_fraction = 0.5
     };
 
-    const bbtc_ib_propellant_burn_kinetics_result_double_t kinetics = {
+    const bbtc_ib_propellant_burn_kinetics_result_double_t kinetics =
+    {
         .applicability_flags = BBTC_APPLICABILITY_NONE_REPORTED,
         .burn_rate_m_per_s = 0.25
     };
 
-    bbtc_ib_propellant_mass_result_double_t result = { 0 };
+    bbtc_ib_propellant_mass_result_double_t result = {0};
 
     if (bbtc_ib_propellant_mass_evaluate_double(&charge,
-            2.0,
-            &grain_state,
-            &kinetics,
-            &result)
-        != BBTC_STATUS_SUCCESS) {
+                                                2.0,
+                                                &grain_state,
+                                                &kinetics,
+                                                &result)
+        != BBTC_STATUS_SUCCESS)
+    {
         return EXIT_FAILURE;
     }
 
-    if (result.applicability_flags != BBTC_APPLICABILITY_NONE_REPORTED || result.equivalent_population_scale != 2.0 || result.remaining_volume_m3 != 2.0 || result.burning_surface_area_m2 != 6.0 || result.remaining_mass_kg != 4.0 || result.reacted_mass_kg != 4.0 || result.reacted_mass_rate_kg_per_s != 3.0) {
+    if (result.applicability_flags         != BBTC_APPLICABILITY_NONE_REPORTED||
+        result.equivalent_population_scale != 2.0                             ||
+        result.remaining_volume_m3         != 2.0                             ||
+        result.burning_surface_area_m2     != 6.0                             ||
+        result.remaining_mass_kg           != 4.0                             ||
+        result.reacted_mass_kg             != 4.0                             ||
+        result.reacted_mass_rate_kg_per_s  != 3.0)
+    {
         return EXIT_FAILURE;
     }
 
     return EXIT_SUCCESS;
 }
+
 
 /**
  * @brief Verifies thermochemical source-rate coupling from a consumer.
@@ -713,36 +851,46 @@ check_propellant_mass_contract(void)
 static int
 check_propellant_source_rate_contract(void)
 {
-    const bbtc_ib_propellant_thermochemistry_double_t thermochemistry = {
+    const bbtc_ib_propellant_thermochemistry_double_t thermochemistry =
+    {
         .gas_product_mass_fraction = 0.75,
         .specific_reaction_internal_energy_release_j_per_kg = 4.0
     };
 
-    const bbtc_ib_propellant_mass_result_double_t mass = {
-        .applicability_flags = BBTC_APPLICABILITY_OUTSIDE_CALIBRATION_DOMAIN,
+    const bbtc_ib_propellant_mass_result_double_t mass =
+    {
+        .applicability_flags =
+            BBTC_APPLICABILITY_OUTSIDE_CALIBRATION_DOMAIN,
         .equivalent_population_scale = 2.0,
-        .remaining_volume_m3 = 2.0,
-        .burning_surface_area_m2 = 6.0,
-        .remaining_mass_kg = 4.0,
-        .reacted_mass_kg = 4.0,
-        .reacted_mass_rate_kg_per_s = 2.0
+        .remaining_volume_m3         = 2.0,
+        .burning_surface_area_m2     = 6.0,
+        .remaining_mass_kg           = 4.0,
+        .reacted_mass_kg             = 4.0,
+        .reacted_mass_rate_kg_per_s  = 2.0
     };
 
-    bbtc_ib_propellant_source_rate_double_t result = { 0 };
+    bbtc_ib_propellant_source_rate_double_t result = {0};
 
     if (bbtc_ib_propellant_source_rate_evaluate_double(&thermochemistry,
-            &mass,
-            &result)
-        != BBTC_STATUS_SUCCESS) {
+                                                       &mass,
+                                                       &result)
+        != BBTC_STATUS_SUCCESS)
+    {
         return EXIT_FAILURE;
     }
 
-    if (result.applicability_flags != BBTC_APPLICABILITY_OUTSIDE_CALIBRATION_DOMAIN || result.gas_product_mass_rate_kg_per_s != 1.5 || result.condensed_product_mass_rate_kg_per_s != 0.5 || result.reaction_energy_release_rate_w != 8.0) {
+    if (result.applicability_flags !=
+            BBTC_APPLICABILITY_OUTSIDE_CALIBRATION_DOMAIN  ||
+        result.gas_product_mass_rate_kg_per_s       != 1.5 ||
+        result.condensed_product_mass_rate_kg_per_s != 0.5 ||
+        result.reaction_energy_release_rate_w       != 8.0)
+    {
         return EXIT_FAILURE;
     }
 
     return EXIT_SUCCESS;
 }
+
 
 /**
  * @brief Exercises public BBTC headers and linked diagnostic symbols.
@@ -771,9 +919,11 @@ int main(void)
     if (check_propellant_source_rate_contract() != EXIT_SUCCESS)
         return EXIT_FAILURE;
 
+
     if (check_string(bbtc_status_string(BBTC_STATUS_SUCCESS),
-            "success")
-        != EXIT_SUCCESS) {
+                     "success")
+        != EXIT_SUCCESS)
+    {
         return EXIT_FAILURE;
     }
 
@@ -817,17 +967,19 @@ int main(void)
         return EXIT_FAILURE;
 
     if (check_string(bbtc_ib_termination_string(BBTC_IB_TERMINATION_MUZZLE_EXIT),
-            "projectile reached muzzle exit")
-        != EXIT_SUCCESS) {
+                     "projectile reached muzzle exit")
+        != EXIT_SUCCESS)
+    {
         return EXIT_FAILURE;
     }
 
     if (check_string(bbtc_warning_flag_string(BBTC_WARNING_DATA_EXTRAPOLATED),
-            "data record extrapolated")
-        != EXIT_SUCCESS) {
+                     "data record extrapolated")
+        != EXIT_SUCCESS)
+    {
         return EXIT_FAILURE;
     }
 
     return check_string(bbtc_applicability_flag_string(BBTC_APPLICABILITY_OUTSIDE_CALIBRATION_DOMAIN),
-        "outside documented calibration domain");
+                        "outside documented calibration domain");
 }
