@@ -1,16 +1,16 @@
 /**
  * @file
- * @brief Tests EB0.1-B1 external-ballistics value and state representation.
+ * @brief Tests EB0.1-B1 representation and EB0.1-B2 state validation.
  *
- * EB0.1-B1 intentionally contains no arithmetic or validation API. These tests
- * therefore concentrate on compile-time type identity, declaration-order
- * relationships, designated initialization, umbrella-header visibility, and
- * the requirement that zero initialization remain plain storage rather than an
- * implicit identity-orientation operation.
+ * Representation tests preserve the B1 ABI/type contracts. Validation tests
+ * add the B2 fail-closed semantics, quaternion acceptance tolerance, and
+ * deterministic error precedence.
  */
 
 #include <bbtc/bbtc.h>
 
+#include <float.h>
+#include <math.h>
 #include <stddef.h>
 #include <stdlib.h>
 
@@ -219,6 +219,147 @@ test_long_double_state_and_zero_storage(void)
         : EXIT_FAILURE;
 }
 
+/**
+ * @brief Returns a valid native-double state suitable for mutation tests.
+ */
+static bbtc_eb_rigid_body_state_double_t
+valid_double_state(void)
+{
+    return (bbtc_eb_rigid_body_state_double_t)
+    {
+        .orientation_world_from_body = {0.0, 0.0, 0.0, 1.0},
+        .position_m = {-100.0, 50.0, -25.0},
+        .velocity_m_per_s = {800.0, -20.0, 10.0},
+        .angular_velocity_body_rad_per_s = {-5.0, 15.0, 1200.0},
+        .time_s = 0.25
+    };
+}
+
+/**
+ * @brief Verifies domain rules and the float-compatible unit-norm tolerance.
+ */
+static int
+test_double_validation_domains(void)
+{
+    bbtc_eb_rigid_body_state_double_t state = valid_double_state();
+
+    if (bbtc_eb_rigid_body_state_validate_double(NULL)
+        != BBTC_STATUS_INVALID_ARGUMENT)
+    {
+        return EXIT_FAILURE;
+    }
+
+    if (bbtc_eb_rigid_body_state_validate_double(&state)
+        != BBTC_STATUS_SUCCESS)
+    {
+        return EXIT_FAILURE;
+    }
+
+    state.time_s = -1.0;
+    if (bbtc_eb_rigid_body_state_validate_double(&state)
+        != BBTC_STATUS_OUTSIDE_DOMAIN)
+    {
+        return EXIT_FAILURE;
+    }
+
+    state = valid_double_state();
+    state.orientation_world_from_body = (bbtc_eb_quat_double_t){0};
+    if (bbtc_eb_rigid_body_state_validate_double(&state)
+        != BBTC_STATUS_OUTSIDE_DOMAIN)
+    {
+        return EXIT_FAILURE;
+    }
+
+    state = valid_double_state();
+    state.orientation_world_from_body.w = 2.0;
+    if (bbtc_eb_rigid_body_state_validate_double(&state)
+        != BBTC_STATUS_OUTSIDE_DOMAIN)
+    {
+        return EXIT_FAILURE;
+    }
+
+    state = valid_double_state();
+    state.orientation_world_from_body.w =
+        sqrt(1.0 + 32.0 * (double)FLT_EPSILON);
+    if (bbtc_eb_rigid_body_state_validate_double(&state)
+        != BBTC_STATUS_SUCCESS)
+    {
+        return EXIT_FAILURE;
+    }
+
+    state = valid_double_state();
+    state.orientation_world_from_body.w =
+        sqrt(1.0 + 128.0 * (double)FLT_EPSILON);
+    return bbtc_eb_rigid_body_state_validate_double(&state)
+            == BBTC_STATUS_OUTSIDE_DOMAIN
+        ? EXIT_SUCCESS
+        : EXIT_FAILURE;
+}
+
+/**
+ * @brief Verifies NaN/infinity/domain precedence across the complete state.
+ */
+static int
+test_validation_precedence(void)
+{
+    bbtc_eb_rigid_body_state_double_t state = valid_double_state();
+    state.position_m.x = NAN;
+    state.velocity_m_per_s.y = INFINITY;
+    state.time_s = -1.0;
+    state.orientation_world_from_body = (bbtc_eb_quat_double_t){0};
+
+    if (bbtc_eb_rigid_body_state_validate_double(&state)
+        != BBTC_STATUS_NAN_INPUT)
+    {
+        return EXIT_FAILURE;
+    }
+
+    state.position_m.x = 0.0;
+    if (bbtc_eb_rigid_body_state_validate_double(&state)
+        != BBTC_STATUS_NONFINITE_INPUT)
+    {
+        return EXIT_FAILURE;
+    }
+
+    state.velocity_m_per_s.y = 0.0;
+    return bbtc_eb_rigid_body_state_validate_double(&state)
+            == BBTC_STATUS_OUTSIDE_DOMAIN
+        ? EXIT_SUCCESS
+        : EXIT_FAILURE;
+}
+
+/**
+ * @brief Exercises public validation through native float and long double.
+ */
+static int
+test_other_validation_families(void)
+{
+    const bbtc_eb_rigid_body_state_float_t float_state =
+    {
+        .orientation_world_from_body = {0.0f, 0.0f, 0.0f, 1.0f},
+        .position_m = {-1.0f, 2.0f, -3.0f},
+        .velocity_m_per_s = {4.0f, -5.0f, 6.0f},
+        .angular_velocity_body_rad_per_s = {-7.0f, 8.0f, -9.0f},
+        .time_s = -0.0f
+    };
+
+    const bbtc_eb_rigid_body_state_long_double_t long_double_state =
+    {
+        .orientation_world_from_body = {0.0L, 0.0L, 0.0L, 1.0L},
+        .position_m = {-1.0L, 2.0L, -3.0L},
+        .velocity_m_per_s = {4.0L, -5.0L, 6.0L},
+        .angular_velocity_body_rad_per_s = {-7.0L, 8.0L, -9.0L},
+        .time_s = 1.0L
+    };
+
+    return bbtc_eb_rigid_body_state_validate_float(&float_state)
+            == BBTC_STATUS_SUCCESS
+        && bbtc_eb_rigid_body_state_validate_long_double(&long_double_state)
+            == BBTC_STATUS_SUCCESS
+        ? EXIT_SUCCESS
+        : EXIT_FAILURE;
+}
+
 
 int
 main(void)
@@ -229,5 +370,14 @@ main(void)
     if (test_double_state() != EXIT_SUCCESS)
         return EXIT_FAILURE;
 
-    return test_long_double_state_and_zero_storage();
+    if (test_long_double_state_and_zero_storage() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
+
+    if (test_double_validation_domains() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
+
+    if (test_validation_precedence() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
+
+    return test_other_validation_families();
 }

@@ -4,8 +4,8 @@
  *
  * The records in this header are the first public six-degree-of-freedom state
  * representation in the reconstructed BBTC external-ballistics subsystem.
- * They deliberately store state only; EB0.1-B1 adds no validation, equations
- * of motion, force model, environment provider, or numerical integrator.
+ * EB0.1-B2 adds fail-closed validation while still deliberately omitting
+ * equations of motion, force models, environment providers, and integration.
  *
  * Frame distinctions are part of the physical contract:
  *
@@ -24,6 +24,7 @@
 
 #include <bbtc/external_ballistics/quaternion.h>
 #include <bbtc/external_ballistics/vector.h>
+#include <bbtc/status.h>
 
 /**
  * @brief Native-float external-ballistics rigid-body state.
@@ -174,5 +175,84 @@ typedef struct bbtc_eb_rigid_body_state_long_double_t
     long double time_s;
 }
 bbtc_eb_rigid_body_state_long_double_t;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * @brief Validates one native-float external-ballistics rigid-body state.
+ *
+ * Validation is read-only and fail-closed. The state pointer must be nonnull;
+ * every quaternion, position, velocity, angular-velocity, and time component
+ * must be finite; time must be nonnegative; and the world-from-body
+ * orientation must be nonzero and sufficiently close to unit length.
+ *
+ * The orientation acceptance test is
+ *
+ * `abs(norm_squared - 1) <= 64 * FLT_EPSILON`.
+ *
+ * The common float-sized acceptance floor is intentional so a quaternion that
+ * was normalized in a float-oriented host such as Cubes of Honor can be
+ * converted component-by-component into another BBTC precision family without
+ * being rejected solely because the destination family has a smaller epsilon.
+ *
+ * When multiple invalid conditions exist, NaN takes precedence over infinity,
+ * and infinity takes precedence over domain failures. The function never
+ * normalizes, repairs, clamps, or otherwise modifies the caller-owned state.
+ *
+ * @param state State to validate.
+ *
+ * @return `BBTC_STATUS_SUCCESS` when the complete state is valid;
+ *         `BBTC_STATUS_INVALID_ARGUMENT` for a null pointer;
+ *         `BBTC_STATUS_NAN_INPUT` when any inspected scalar is NaN;
+ *         `BBTC_STATUS_NONFINITE_INPUT` when no NaN exists but an infinity
+ *         does; otherwise `BBTC_STATUS_OUTSIDE_DOMAIN` for negative time or an
+ *         invalid orientation.
+ */
+bbtc_status_e
+bbtc_eb_rigid_body_state_validate_float(
+    const bbtc_eb_rigid_body_state_float_t* state
+);
+
+/**
+ * @brief Validates one native-double external-ballistics rigid-body state.
+ *
+ * The physical requirements, validation precedence, orientation tolerance,
+ * ownership rules, and read-only behavior are identical to
+ * `bbtc_eb_rigid_body_state_validate_float()`. All arithmetic used to inspect
+ * the double state remains native `double` arithmetic.
+ *
+ * @param state State to validate.
+ *
+ * @return `BBTC_STATUS_SUCCESS` when valid; otherwise the deterministic
+ *         validation status described by the float-family function.
+ */
+bbtc_status_e
+bbtc_eb_rigid_body_state_validate_double(
+    const bbtc_eb_rigid_body_state_double_t* state
+);
+
+/**
+ * @brief Validates one native-long-double external-ballistics rigid-body state.
+ *
+ * The physical requirements, validation precedence, orientation tolerance,
+ * ownership rules, and read-only behavior are identical to
+ * `bbtc_eb_rigid_body_state_validate_float()`. All arithmetic used to inspect
+ * the long-double state remains native `long double` arithmetic.
+ *
+ * @param state State to validate.
+ *
+ * @return `BBTC_STATUS_SUCCESS` when valid; otherwise the deterministic
+ *         validation status described by the float-family function.
+ */
+bbtc_status_e
+bbtc_eb_rigid_body_state_validate_long_double(
+    const bbtc_eb_rigid_body_state_long_double_t* state
+);
+
+#ifdef __cplusplus
+}   /* extern "C" */
+#endif
 
 #endif /* BBTC_EXTERNAL_BALLISTICS_STATE_H */

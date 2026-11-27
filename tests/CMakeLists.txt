@@ -479,6 +479,36 @@ add_test(
     COMMAND bbtc_test_eb_state
 )
 
+add_executable(
+    bbtc_test_eb_math_internal
+    test_eb_math_internal.c
+)
+
+target_include_directories(
+    bbtc_test_eb_math_internal
+    PRIVATE
+        "${PROJECT_SOURCE_DIR}/src"
+)
+
+target_link_libraries(
+    bbtc_test_eb_math_internal
+    PRIVATE
+        bbtc::bbtc
+)
+
+set_target_properties(
+    bbtc_test_eb_math_internal
+    PROPERTIES
+        C_EXTENSIONS OFF
+        C_STANDARD 23
+        C_STANDARD_REQUIRED ON
+)
+
+add_test(
+    NAME bbtc.eb_math_internal
+    COMMAND bbtc_test_eb_math_internal
+)
+
 set(
     BBTC_CONSUMER_FIXTURE_SOURCE_DIR
     "${CMAKE_CURRENT_SOURCE_DIR}/consumer"

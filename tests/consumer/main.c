@@ -98,7 +98,9 @@ check_external_ballistics_state_contract(void)
         .time_s = 10.0
     };
 
-    return state.orientation_world_from_body.w == 1.0
+    return bbtc_eb_rigid_body_state_validate_double(&state)
+            == BBTC_STATUS_SUCCESS
+        && state.orientation_world_from_body.w == 1.0
         && state.position_m.x == 1.0
         && state.velocity_m_per_s.y == 5.0
         && state.angular_velocity_body_rad_per_s.z == 9.0

@@ -873,6 +873,25 @@ static_assert(
 
 int main()
 {
+    /*
+     * Exercise the EB0.1-B2 public validator through the C++ umbrella-header
+     * boundary. The state is intentionally populated by named assignment so
+     * this test does not introduce positional aggregate-layout assumptions.
+     */
+    bbtc_eb_rigid_body_state_double_t eb_state = {};
+    eb_state.orientation_world_from_body.w = 1.0;
+    eb_state.position_m.x = -1.0;
+    eb_state.position_m.y = 2.0;
+    eb_state.position_m.z = -3.0;
+    eb_state.velocity_m_per_s.x = 800.0;
+    eb_state.angular_velocity_body_rad_per_s.x = 1000.0;
+    eb_state.time_s = 0.0;
+
+    if (bbtc_eb_rigid_body_state_validate_double(&eb_state)
+        != BBTC_STATUS_SUCCESS)
+    {
+        return 1;
+    }
 
 
     bbtc_ib_rectangular_prismatic_grain_geometry_double_t grain_geometry = {};

@@ -52,6 +52,9 @@ add_library(
     include/bbtc/precision.h
     include/bbtc/status.h
     src/diagnostics.c
+    src/external/math.c
+    src/external/math_internal.h
+    src/external/state.c
     src/internal/caloric_reference.c
     src/internal/first_order_virial_gas_model.c
     src/internal/noble_abel_gas_model.c
