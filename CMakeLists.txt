@@ -29,6 +29,7 @@ add_library(
     include/bbtc/bbtc.h
     include/bbtc/diagnostics.h
     include/bbtc/external_ballistics.h
+    include/bbtc/external_ballistics/environment.h
     include/bbtc/external_ballistics/projectile.h
     include/bbtc/external_ballistics/quaternion.h
     include/bbtc/external_ballistics/state.h
@@ -53,6 +54,7 @@ add_library(
     include/bbtc/precision.h
     include/bbtc/status.h
     src/diagnostics.c
+    src/external/environment.c
     src/external/math.c
     src/external/math_internal.h
     src/external/projectile.c

@@ -198,6 +198,35 @@ static_assert(
 static_assert(
     std::is_same<
         decltype(
+            bbtc_eb_environment_sample_float_t{}.air_velocity_world_m_per_s
+        ),
+        bbtc_eb_vec3_float_t
+    >::value,
+    "float EB environment air velocity must use native float vector"
+);
+
+static_assert(
+    std::is_same<
+        decltype(bbtc_eb_environment_sample_double_t{}.temperature_k),
+        double
+    >::value,
+    "double EB environment temperature must use native double"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_eb_environment_sample_long_double_t{}
+                .speed_of_sound_m_per_s
+        ),
+        long double
+    >::value,
+    "long-double EB environment sound speed must use native long double"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
             bbtc_ib_geometry_float_t{}
                 .initial_behind_projectile_volume_m3
         ),
@@ -960,6 +989,25 @@ int main()
     eb_projectile.reference_area_m2 = 1.0;
 
     if (bbtc_eb_projectile_properties_validate_double(&eb_projectile)
+        != BBTC_STATUS_SUCCESS)
+    {
+        return 1;
+    }
+
+    /*
+     * Exercise EB0.1-B4 through the C++ umbrella-header boundary using named
+     * assignment so this compatibility test does not freeze aggregate
+     * initialization or incidental padding as part of the public ABI.
+     */
+    bbtc_eb_environment_sample_double_t eb_environment = {};
+    eb_environment.air_velocity_world_m_per_s.x = -5.0;
+    eb_environment.air_velocity_world_m_per_s.y = 1.0;
+    eb_environment.temperature_k = 288.15;
+    eb_environment.absolute_pressure_pa = 101325.0;
+    eb_environment.air_density_kg_per_m3 = 1.225;
+    eb_environment.speed_of_sound_m_per_s = 340.29;
+
+    if (bbtc_eb_environment_sample_validate_double(&eb_environment)
         != BBTC_STATUS_SUCCESS)
     {
         return 1;

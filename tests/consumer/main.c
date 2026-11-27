@@ -144,6 +144,41 @@ check_external_ballistics_projectile_contract(void)
 
 
 /**
+ * @brief Verifies EB0.1-B4 local environment samples through a consumer.
+ *
+ * @details
+ * This independent-consumer check proves that `<bbtc/bbtc.h>` exposes the
+ * native-double environment record and its public validator without private
+ * include paths, environment-provider machinery, or host-specific types.
+ *
+ * @return `EXIT_SUCCESS` when the public environment contract is usable;
+ *         otherwise `EXIT_FAILURE`.
+ */
+static int
+check_external_ballistics_environment_contract(void)
+{
+    const bbtc_eb_environment_sample_double_t sample =
+    {
+        .air_velocity_world_m_per_s =
+        {
+            .x = -5.0,
+            .y = 1.0,
+            .z = 0.0
+        },
+        .temperature_k = 288.15,
+        .absolute_pressure_pa = 101325.0,
+        .air_density_kg_per_m3 = 1.225,
+        .speed_of_sound_m_per_s = 340.29
+    };
+
+    return bbtc_eb_environment_sample_validate_double(&sample)
+            == BBTC_STATUS_SUCCESS
+        ? EXIT_SUCCESS
+        : EXIT_FAILURE;
+}
+
+
+/**
  * @brief Verifies precision-qualified geometry through the consumer target.
  *
  * @return `EXIT_SUCCESS` when the geometry contract works; otherwise
@@ -934,6 +969,9 @@ int main(void)
         return EXIT_FAILURE;
 
     if (check_external_ballistics_projectile_contract() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
+
+    if (check_external_ballistics_environment_contract() != EXIT_SUCCESS)
         return EXIT_FAILURE;
 
     if (check_geometry_contract() != EXIT_SUCCESS)

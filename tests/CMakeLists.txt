@@ -504,6 +504,30 @@ add_test(
 )
 
 add_executable(
+    bbtc_test_eb_environment
+    test_eb_environment.c
+)
+
+target_link_libraries(
+    bbtc_test_eb_environment
+    PRIVATE
+        bbtc::bbtc
+)
+
+set_target_properties(
+    bbtc_test_eb_environment
+    PROPERTIES
+        C_EXTENSIONS OFF
+        C_STANDARD 23
+        C_STANDARD_REQUIRED ON
+)
+
+add_test(
+    NAME bbtc.eb_environment
+    COMMAND bbtc_test_eb_environment
+)
+
+add_executable(
     bbtc_test_eb_math_internal
     test_eb_math_internal.c
 )
