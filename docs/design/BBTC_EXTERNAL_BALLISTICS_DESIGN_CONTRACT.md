@@ -1,10 +1,10 @@
 # BBTC External Ballistics Design Contract
 
-**Contract version:** 0.1.11
+**Contract version:** 0.2.0
 
-**Project phase:** EB0.1-B11
+**Project phase:** EB1.1
 
-**Applies to:** `rewrite/eb0_1b11_rk4_integrator_v1`
+**Applies to:** `rewrite/eb1_1_vacuum_6dof_eom_v1`
 
 **Status:** Accepted
 
@@ -4424,3 +4424,508 @@ EB0.1-B11 is complete when:
 - EB0.1-B11 introduces no physical equations of motion, aerodynamic model,
   rotating-frame acceleration evaluator, trajectory/collision system, or Cubes
   of Honor adapter implementation.
+
+## 40. EB1.1 inertial-vacuum six-degree-of-freedom derivative evaluation
+
+EB1.1 introduces the first physical rigid-body equations-of-motion evaluator in
+the reconstructed BBTC external-ballistics subsystem.
+
+The evaluator consumes one already-defined rigid-body state, projectile-property
+record, reference-frame sample, and applied force/moment record and produces one
+rigid-body state derivative.
+
+EB1.1 deliberately evaluates the physical equations independently of numerical
+integration. It does not advance simulation time or modify projectile state.
+
+### 40.1 Scope
+
+EB1.1 models rigid-projectile motion in vacuum in an inertial,
+nonaccelerating, nonrotating active BBTC reference frame.
+
+For EB1.1, "vacuum" means that no atmospheric or aerodynamic interaction is
+present. Vacuum does NOT imply zero gravitational acceleration.
+
+Therefore EB1.1 may include:
+
+- physical gravitational-field acceleration supplied through B6;
+- physical applied force supplied through B8; and
+- physical applied moment supplied through B8.
+
+EB1.1 does not include:
+
+- atmosphere;
+- wind;
+- relative-air velocity;
+- drag;
+- lift;
+- Magnus force or moment;
+- aerodynamic damping;
+- Coriolis acceleration;
+- centrifugal acceleration;
+- Euler reference-frame acceleration;
+- reference-frame-origin translational acceleration;
+- Eötvös-specific corrections;
+- collision/contact response; or
+- Cubes of Honor gameplay behavior.
+
+Those effects remain later reviewed work.
+
+### 40.2 Public header and evaluator families
+
+EB1.1 introduces:
+
+```text
+include/bbtc/external_ballistics/inertial_vacuum.h
+```
+
+The external-ballistics umbrella header MUST include this header after EB1.1 is
+implemented and accepted.
+
+The precision-qualified evaluator functions are:
+
+```c
+bbtc_eb_inertial_vacuum_derivative_evaluate_float
+bbtc_eb_inertial_vacuum_derivative_evaluate_double
+bbtc_eb_inertial_vacuum_derivative_evaluate_long_double
+```
+
+Conceptually, each native-family function has the form:
+
+```c
+bbtc_status_e bbtc_eb_inertial_vacuum_derivative_evaluate_*(
+    const bbtc_eb_rigid_body_state_*_t* state,
+    const bbtc_eb_projectile_properties_*_t* projectile,
+    const bbtc_eb_reference_frame_sample_*_t* reference_frame,
+    const bbtc_eb_force_moment_*_t* force_moment,
+    bbtc_eb_rigid_body_state_derivative_*_t* out_derivative
+);
+```
+
+The exact parameter order is:
+
+1. `state`;
+2. `projectile`;
+3. `reference_frame`;
+4. `force_moment`;
+5. `out_derivative`.
+
+All inputs are borrowed and read-only.
+
+The output is caller-owned writable storage.
+
+The evaluator MUST NOT retain any supplied pointer after returning.
+
+### 40.3 Input meanings
+
+`state` is one complete B1/B2 rigid-body state.
+
+`projectile` is one complete B3 rigid-projectile property record.
+
+`reference_frame` is one complete B6 already-sampled reference-frame value.
+
+`force_moment` is one complete B8 physical applied force/moment value.
+
+`out_derivative` receives one complete B9 rigid-body state derivative.
+
+EB1.1 performs no environment or reference-frame provider sampling itself.
+Provider composition is deferred to a later EB1 checkpoint.
+
+### 40.4 Inertial-reference restriction
+
+EB1.1 supports only an inertial, nonaccelerating, nonrotating active reference
+frame.
+
+Consequently, after successful B6 validation, all components of the following
+B6 vectors MUST compare equal to zero:
+
+```text
+reference_frame_origin_acceleration_reference_m_per_s2
+reference_frame_angular_velocity_reference_rad_per_s
+reference_frame_angular_acceleration_reference_rad_per_s2
+```
+
+Positive and negative floating zero both satisfy this requirement.
+
+The B6 gravitational-acceleration vector is NOT required to be zero. Any finite
+B6 gravitational-field acceleration remains physically valid for EB1.1.
+
+If a valid B6 sample contains any nonzero origin-acceleration,
+reference-frame-angular-velocity, or reference-frame-angular-acceleration
+component, EB1.1 MUST return:
+
+```text
+BBTC_STATUS_UNSUPPORTED_MODEL_OR_OPTION
+```
+
+This result does not declare the B6 sample physically invalid. It means only
+that the requested non-inertial reference-frame behavior belongs to a later
+BBTC model.
+
+EB1.1 MUST NOT silently ignore nonzero B6 frame kinematics.
+
+### 40.5 Translational equations
+
+Let:
+
+```text
+r_R = projectile center-of-mass position in active-reference coordinates
+v_R = projectile center-of-mass velocity in active-reference coordinates
+F_R = B8 applied physical force in active-reference coordinates
+m   = B3 projectile mass
+g_R = B6 physical gravitational-field acceleration
+```
+
+The translational position derivative is:
+
+```text
+dr_R/dt = v_R
+```
+
+The translational velocity derivative is:
+
+```text
+dv_R/dt = F_R / m + g_R
+```
+
+Gravity MUST remain separate from B8 applied force.
+
+The evaluator MUST NOT transform `m * g_R` into B8 force or otherwise duplicate
+gravity through the applied-force channel.
+
+Because EB1.1 supports only an inertial reference frame, no reference-frame
+origin, Coriolis, Euler, or centrifugal terms are added.
+
+### 40.6 Quaternion kinematics
+
+For EB1.1, `state->angular_velocity_body_rad_per_s` means projectile angular
+velocity relative to the inertial active reference frame, expressed in
+canonical BBTC projectile body coordinates.
+
+Let the validated world/reference-from-body orientation be:
+
+```text
+q_WB
+```
+
+and let the body-frame angular velocity be:
+
+```text
+omega_B = (omega_x, omega_y, omega_z)
+```
+
+Define the corresponding pure quaternion:
+
+```text
+omega_B_quat = (omega_x, omega_y, omega_z, 0)
+```
+
+using BBTC quaternion storage order `(x, y, z, w)`.
+
+The orientation derivative is:
+
+```text
+dq_WB/dt = 0.5 * q_WB * omega_B_quat
+```
+
+where `*` is the right-handed Hamilton quaternion product already frozen by the
+BBTC external-ballistics mathematics contract.
+
+The multiplication order is mandatory.
+
+EB1.1 MUST NOT use:
+
+```text
+0.5 * omega_B_quat * q_WB
+```
+
+The implementation and tests MUST include an asymmetric orientation/angular-
+velocity case for which these two products differ, so the historical legacy
+multiplication-order defect cannot pass accidentally.
+
+The B9 orientation derivative is a component-wise quaternion derivative and
+MUST NOT be normalized by the EB1.1 evaluator.
+
+### 40.7 Principal-axis Euler rotational dynamics
+
+B3 establishes that the canonical BBTC body axes are principal axes through the
+projectile center of mass for the current projectile representation.
+
+Let:
+
+```text
+Ixx = projectile->principal_inertia.moment_about_x_kg_m2
+Iyy = projectile->principal_inertia.moment_about_y_kg_m2
+Izz = projectile->principal_inertia.moment_about_z_kg_m2
+```
+
+Let:
+
+```text
+omega_B = state->angular_velocity_body_rad_per_s
+M_B     = force_moment->applied_moment_body_n_m
+```
+
+Then EB1.1 uses the rigid-body Euler equation:
+
+```text
+I * domega_B/dt + omega_B x (I * omega_B) = M_B
+```
+
+or equivalently:
+
+```text
+domega_B/dt =
+    inverse(I) * (M_B - omega_B x (I * omega_B))
+```
+
+Because the current B3 inertia representation is diagonal in principal body
+axes, the component equations are:
+
+```text
+domega_x/dt =
+    (M_x - (Izz - Iyy) * omega_y * omega_z) / Ixx
+
+domega_y/dt =
+    (M_y - (Ixx - Izz) * omega_z * omega_x) / Iyy
+
+domega_z/dt =
+    (M_z - (Iyy - Ixx) * omega_x * omega_y) / Izz
+```
+
+EB1.1 MUST NOT assume axisymmetry.
+
+In particular, `Iyy == Izz` is not required.
+
+No full inertia-matrix inversion is required by EB1.1 because B3 already
+guarantees strictly positive diagonal principal moments.
+
+### 40.8 Output construction and numerical failure
+
+EB1.1 MUST construct the complete derivative in local/internal storage before
+committing it to caller-owned `out_derivative`.
+
+The output fields are:
+
+```text
+orientation_world_from_body_derivative_per_s
+position_derivative_reference_m_per_s
+velocity_derivative_reference_m_per_s2
+angular_velocity_derivative_body_rad_per_s2
+```
+
+After valid inputs have been accepted, generated arithmetic that cannot produce
+a finite valid B9 derivative is an evaluator numerical failure.
+
+Examples include overflow or invalid generated arithmetic during:
+
+- applied-force division by mass;
+- force-acceleration plus gravity;
+- quaternion multiplication/scaling;
+- inertia/angular-velocity products;
+- gyroscopic cross-product evaluation; or
+- Euler-equation division.
+
+Before committing a generated derivative to caller-owned storage, EB1.1 MUST
+validate the complete local derivative with the matching B9
+`bbtc_eb_rigid_body_state_derivative_validate_*()` function.
+
+Any non-success B9 validation result for this locally generated derivative is
+an evaluator-generated numerical failure and MUST be mapped to
+`BBTC_STATUS_NUMERICAL_FAILURE` rather than propagated as a caller-input status.
+
+Such generated failures MUST return:
+
+```text
+BBTC_STATUS_NUMERICAL_FAILURE
+```
+
+and MUST leave `out_derivative` as the exact all-zero B9 derivative.
+
+Generated arithmetic failure MUST NOT be reported as caller
+`BBTC_STATUS_NAN_INPUT` or `BBTC_STATUS_NONFINITE_INPUT` after all public inputs
+have already passed their matching validators.
+
+### 40.9 Deterministic validation and failure precedence
+
+If `out_derivative` is null, EB1.1 returns
+`BBTC_STATUS_INVALID_ARGUMENT`.
+
+When `out_derivative` is nonnull, the evaluator MUST first overwrite it with the
+exact all-zero B9 derivative.
+
+It then applies this exact validation order:
+
+1. null `state`, `projectile`, `reference_frame`, or `force_moment` returns
+   `BBTC_STATUS_INVALID_ARGUMENT`;
+2. validate `state` with the matching B2 validator and propagate failure
+   unchanged;
+3. validate `projectile` with the matching B3 validator and propagate failure
+   unchanged;
+4. validate `reference_frame` with the matching B6 validator and propagate
+   failure unchanged;
+5. validate `force_moment` with the matching B8 validator and propagate failure
+   unchanged;
+6. reject valid but non-inertial B6 frame kinematics with
+   `BBTC_STATUS_UNSUPPORTED_MODEL_OR_OPTION`;
+7. evaluate the complete derivative in local/internal storage;
+8. validate the complete locally generated derivative with the matching B9
+   validator;
+9. if generated arithmetic fails or B9 validation returns any non-success
+   status, return `BBTC_STATUS_NUMERICAL_FAILURE`;
+10. otherwise commit the validated derivative to `out_derivative` and return
+    `BBTC_STATUS_SUCCESS`.
+
+Validation precedence is therefore record-ordered. EB1.1 does not perform an
+additional global NaN/infinity scan across otherwise independent public input
+records before invoking their already-frozen validators.
+
+Every failure after a nonnull output pointer is established leaves the exact
+all-zero B9 derivative in caller storage.
+
+### 40.10 Native precision, allocation, and determinism
+
+Each EB1.1 evaluator family MUST remain entirely native:
+
+- float inputs, operations, constants, and output remain native `float`;
+- double inputs, operations, constants, and output remain native `double`; and
+- long-double inputs, operations, constants, and output remain native
+  `long double`.
+
+One precision family MUST NOT route arithmetic through another.
+
+EB1.1 requires no dynamic allocation.
+
+It performs no file I/O, process termination, global mutable-state update,
+provider dispatch, trajectory allocation, collision query, Cubes of Honor
+conversion, or gameplay operation.
+
+For identical native-family inputs and the same floating-point environment, the
+evaluator has no hidden history and is deterministic.
+
+### 40.11 Relationship to B10 and B11
+
+EB1.1 is the physical equation evaluator below the generic B10 derivative-
+provider boundary.
+
+A later EB1 checkpoint may expose EB1.1 through a concrete B10 callback whose
+borrowed context supplies projectile properties, reference-frame sampling, and
+physical loading.
+
+That later composition layer may query B7 using each B10 candidate state's
+position and `state->time_s`, allowing RK4 K1-K4 evaluations to obtain the
+appropriate stage-local reference-frame sample.
+
+EB1.1 itself MUST NOT query B7.
+
+B11 remains unchanged and model-agnostic. EB1.1 MUST NOT hard-wire physical
+equations into the RK4 implementation.
+
+### 40.12 Required direct equation tests
+
+EB1.1 tests MUST verify at least:
+
+- exact public header and three native evaluator function names;
+- exact native function signatures and parameter order;
+- null output behavior;
+- exact all-zero output on every failure path with nonnull output;
+- null input precedence;
+- B2 state-validation failure propagation;
+- B3 projectile-validation failure propagation;
+- B6 reference-frame-validation failure propagation;
+- B8 force/moment-validation failure propagation;
+- positive and negative zero frame-kinematic components are accepted as zero;
+- nonzero B6 origin acceleration is rejected as unsupported;
+- nonzero B6 frame angular velocity is rejected as unsupported;
+- nonzero B6 frame angular acceleration is rejected as unsupported;
+- arbitrary finite gravitational acceleration remains allowed;
+- position derivative equals translational velocity exactly for
+  representable inputs;
+- translational acceleration follows `F / m + g`;
+- zero applied force with zero gravity yields zero translational acceleration;
+- zero applied force with nonzero gravity yields the supplied gravitational
+  acceleration;
+- quaternion derivative uses `0.5 * q_WB * omega_B_quat`;
+- an independent asymmetric quaternion/angular-velocity oracle distinguishes
+  the required multiplication order from the historical reversed order;
+- zero angular velocity yields an exact zero orientation derivative;
+- spherical inertia with zero applied moment yields zero angular acceleration;
+- pure principal-axis angular velocity with zero applied moment yields zero
+  angular acceleration;
+- constant applied moment about one principal axis with no gyroscopic coupling
+  yields the expected `M / I` angular acceleration;
+- unequal principal moments with multiaxis angular velocity produce the
+  expected independently calculated Euler gyroscopic coupling;
+- generated nonfinite translation, quaternion, or rotational arithmetic maps to
+  `BBTC_STATUS_NUMERICAL_FAILURE`;
+- locally generated derivative data is B9-validated before caller-owned output
+  is committed;
+- input records are never mutated;
+- float, double, and long-double families are exercised;
+- the public EB1.1 header remains usable from C++;
+- an independent CMake consumer can evaluate one native-double EB1.1 derivative
+  through the installed public interface; and
+- normal, strict-warning, AddressSanitizer, and UndefinedBehaviorSanitizer gates
+  remain green.
+
+Direct EB1.1 equation tests MUST NOT rely on B11 RK4 integration to establish
+equation correctness.
+
+### 40.13 Deliberately deferred behavior
+
+EB1.1 does NOT define:
+
+- a B10 vacuum-provider context or concrete B10 provider descriptor;
+- B7 sampling during derivative evaluation;
+- time-varying or position-varying force/moment providers;
+- analytic trajectory propagation tests through B11;
+- atmosphere or wind;
+- aerodynamic force or moment;
+- drag, lift, Magnus, damping, or ballistic coefficients;
+- rotating/reference-frame fictitious acceleration evaluation;
+- adaptive integration;
+- trajectory storage;
+- interpolation;
+- event detection;
+- collision/contact response; or
+- Cubes of Honor adapter source code.
+
+Those remain later EB1 or subsequent external-ballistics milestones.
+
+## 41. Acceptance criteria for EB1.1
+
+EB1.1 is contract-ready for implementation when:
+
+- contract version 0.2.0 is reviewed and changed from `Draft` to `Accepted`
+  before implementation is committed;
+- EB0 remains sealed and no B1-B11 contract is casually redefined;
+- the public header is frozen as
+  `include/bbtc/external_ballistics/inertial_vacuum.h`;
+- the three precision-qualified evaluator names and exact signatures are
+  frozen;
+- vacuum explicitly means absence of atmosphere/aerodynamics rather than
+  absence of physical gravity;
+- EB1.1 explicitly supports only an inertial, nonaccelerating, nonrotating
+  active reference frame;
+- valid non-inertial B6 frame kinematics are rejected with
+  `BBTC_STATUS_UNSUPPORTED_MODEL_OR_OPTION` rather than silently ignored;
+- translational kinematics are frozen as `dr/dt = v`;
+- translational dynamics are frozen as `dv/dt = F_applied / m + g`;
+- gravity remains separate from B8 applied force;
+- quaternion kinematics are frozen as
+  `dq_WB/dt = 0.5 * q_WB * omega_B_quat`;
+- the historical reversed quaternion multiplication order is explicitly
+  regression-tested;
+- rotational dynamics are frozen as the principal-axis rigid-body Euler
+  equations;
+- axisymmetry is not assumed;
+- every locally generated derivative is validated through B9 before output
+  commit;
+- generated invalid arithmetic maps to `BBTC_STATUS_NUMERICAL_FAILURE`;
+- failure output remains the exact all-zero B9 derivative;
+- all three precision families remain native;
+- direct equation tests are independent of B11 integration;
+- EB1.1 performs no B7 provider sampling and introduces no B10 composition
+  policy;
+- B11 remains unchanged and physics-agnostic; and
+- no aerodynamic, rotating-frame, collision, trajectory-storage, or Cubes of
+  Honor coupling is introduced.
