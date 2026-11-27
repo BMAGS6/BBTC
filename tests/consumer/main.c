@@ -53,6 +53,61 @@ check_precision_contract(void)
 }
 
 /**
+ * @brief Verifies the EB0.1-B1 representation through an independent consumer.
+ *
+ * @details
+ * The fixture intentionally performs no external-ballistics arithmetic because
+ * EB0.1-B1 introduces representation only. It proves that the umbrella header
+ * exposes the native-double vector, quaternion, and rigid-body state records to
+ * an ordinary downstream CMake consumer without any Cubes of Honor dependency
+ * or manually injected BBTC include path.
+ *
+ * @return `EXIT_SUCCESS` when nested values retain their assigned meanings;
+ *         otherwise `EXIT_FAILURE`.
+ */
+static int
+check_external_ballistics_state_contract(void)
+{
+    const bbtc_eb_rigid_body_state_double_t state =
+    {
+        .orientation_world_from_body =
+        {
+            .x = 0.0,
+            .y = 0.0,
+            .z = 0.0,
+            .w = 1.0
+        },
+        .position_m =
+        {
+            .x = 1.0,
+            .y = 2.0,
+            .z = 3.0
+        },
+        .velocity_m_per_s =
+        {
+            .x = 4.0,
+            .y = 5.0,
+            .z = 6.0
+        },
+        .angular_velocity_body_rad_per_s =
+        {
+            .x = 7.0,
+            .y = 8.0,
+            .z = 9.0
+        },
+        .time_s = 10.0
+    };
+
+    return state.orientation_world_from_body.w == 1.0
+        && state.position_m.x == 1.0
+        && state.velocity_m_per_s.y == 5.0
+        && state.angular_velocity_body_rad_per_s.z == 9.0
+        && state.time_s == 10.0
+        ? EXIT_SUCCESS
+        : EXIT_FAILURE;
+}
+
+/**
  * @brief Verifies precision-qualified geometry through the consumer target.
  *
  * @return `EXIT_SUCCESS` when the geometry contract works; otherwise
@@ -836,6 +891,9 @@ int main(void)
     }
 
     if (check_precision_contract() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
+
+    if (check_external_ballistics_state_contract() != EXIT_SUCCESS)
         return EXIT_FAILURE;
 
     if (check_geometry_contract() != EXIT_SUCCESS)

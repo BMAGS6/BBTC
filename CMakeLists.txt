@@ -28,6 +28,10 @@ add_library(
     STATIC
     include/bbtc/bbtc.h
     include/bbtc/diagnostics.h
+    include/bbtc/external_ballistics.h
+    include/bbtc/external_ballistics/quaternion.h
+    include/bbtc/external_ballistics/state.h
+    include/bbtc/external_ballistics/vector.h
     include/bbtc/internal_ballistics.h
     include/bbtc/internal_ballistics/caloric_reference.h
     include/bbtc/internal_ballistics/first_order_virial_gas_model.h

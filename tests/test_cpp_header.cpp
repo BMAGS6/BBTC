@@ -71,6 +71,73 @@ static_assert(
 );
 
 static_assert(
+    std::is_same<decltype(bbtc_eb_vec3_float_t{}.x), float>::value,
+    "float EB vector must use native float components"
+);
+
+static_assert(
+    std::is_same<decltype(bbtc_eb_vec3_double_t{}.z), double>::value,
+    "double EB vector must use native double components"
+);
+
+static_assert(
+    std::is_same<
+        decltype(bbtc_eb_vec3_long_double_t{}.y),
+        long double
+    >::value,
+    "long-double EB vector must use native long-double components"
+);
+
+static_assert(
+    std::is_same<decltype(bbtc_eb_quat_double_t{}.w), double>::value,
+    "double EB quaternion scalar component must use native double"
+);
+
+static_assert(
+    std::is_same<
+        decltype(bbtc_eb_rigid_body_state_float_t{}
+                     .orientation_world_from_body),
+        bbtc_eb_quat_float_t
+    >::value,
+    "float EB state orientation must use the native float quaternion"
+);
+
+static_assert(
+    std::is_same<
+        decltype(bbtc_eb_rigid_body_state_double_t{}.position_m),
+        bbtc_eb_vec3_double_t
+    >::value,
+    "double EB state position must use the native double vector"
+);
+
+static_assert(
+    std::is_same<
+        decltype(bbtc_eb_rigid_body_state_double_t{}.velocity_m_per_s),
+        bbtc_eb_vec3_double_t
+    >::value,
+    "double EB state velocity must use the native double vector"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_eb_rigid_body_state_long_double_t{}
+                .angular_velocity_body_rad_per_s
+        ),
+        bbtc_eb_vec3_long_double_t
+    >::value,
+    "long-double EB state angular velocity must use its native vector"
+);
+
+static_assert(
+    std::is_same<
+        decltype(bbtc_eb_rigid_body_state_long_double_t{}.time_s),
+        long double
+    >::value,
+    "long-double EB state time must use native long double"
+);
+
+static_assert(
     std::is_same<
         decltype(
             bbtc_ib_geometry_float_t{}
