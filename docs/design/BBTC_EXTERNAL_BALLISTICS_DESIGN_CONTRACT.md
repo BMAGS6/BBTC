@@ -1,10 +1,10 @@
 # BBTC External Ballistics Design Contract
 
-**Contract version:** 0.1.8
+**Contract version:** 0.1.9
 
-**Project phase:** EB0.1-B8
+**Project phase:** EB0.1-B9
 
-**Applies to:** `rewrite/eb0_1b8_force_moment_v1`
+**Applies to:** `rewrite/eb0_1b9_state_derivative_v1`
 
 **Status:** Accepted
 
@@ -434,7 +434,9 @@ model.
 Conceptually, state evolution follows:
 
 - translational position derivative from translational velocity;
-- translational velocity derivative from net force and mass;
+- translational velocity derivative from physical applied force divided by mass
+  plus separately represented acceleration contributions such as gravity and,
+  where applicable, reviewed non-inertial reference-frame effects;
 - rotational dynamics from applied moments and rigid-body inertia; and
 - quaternion evolution from the defined orientation and angular-velocity
   convention.
@@ -3128,3 +3130,353 @@ EB0.1-B8 is complete when:
 - EB0.1-B8 introduces no force model, derivative evaluator, equations of
   motion, numerical integrator, rotating-frame acceleration evaluator,
   collision response, or Cubes of Honor adapter implementation.
+
+
+## 33. EB0.1-B9 rigid-body state-derivative value boundary
+
+EB0.1-B9 establishes the public value representation for the derivative of the
+integrated external-ballistics rigid-body dependent variables.
+
+This checkpoint freezes representation, units, frame semantics, native scalar
+families, and validation behavior only. It does not define the physical
+equations that produce a derivative and does not numerically advance state.
+
+The high-level implementation sequence in section 15 reserves vacuum
+six-degree-of-freedom propagation and analytic validation for EB1. B9 therefore
+provides an integration-facing derivative value without prematurely moving EB1
+equations of motion into EB0.
+
+### 33.1 Dependent variables and independent time
+
+The B1 rigid-body state contains projectile orientation, position,
+translational velocity, body-frame angular velocity, and simulation time.
+
+For numerical integration, simulation time is the independent variable. The B9
+derivative record therefore represents derivatives of the four physical
+dependent-variable groups:
+
+- world/reference-from-body orientation;
+- reference-frame position;
+- reference-frame translational velocity; and
+- body-frame angular velocity.
+
+B9 intentionally contains no `time_derivative` member.
+
+A future integrator MUST advance the state's `time_s` explicitly from the
+requested time step and MUST assign the appropriate stage time to intermediate
+states before invoking a derivative evaluator. It MUST NOT require a stored
+`dt/dt` value merely to advance time.
+
+For ordinary integration, the mathematical identity `dt/dt = 1` is implicit in
+the integrator's treatment of time as the independent variable rather than a
+caller-supplied derivative component.
+
+### 33.2 Public header and precision-qualified derivative records
+
+EB0.1-B9 introduces:
+
+```text
+include/bbtc/external_ballistics/state_derivative.h
+```
+
+The external-ballistics umbrella header MUST include this public header once B9
+is implemented.
+
+The precision-qualified derivative records are:
+
+```c
+bbtc_eb_rigid_body_state_derivative_float_t
+bbtc_eb_rigid_body_state_derivative_double_t
+bbtc_eb_rigid_body_state_derivative_long_double_t
+```
+
+Each record contains the following members in this exact declaration order:
+
+```text
+orientation_world_from_body_derivative_per_s
+position_derivative_reference_m_per_s
+velocity_derivative_reference_m_per_s2
+angular_velocity_derivative_body_rad_per_s2
+```
+
+The orientation-derivative member uses the matching native BBTC quaternion
+record. Each remaining member uses the matching native BBTC three-dimensional
+vector record.
+
+No public alignment override is introduced.
+
+### 33.3 Orientation-derivative semantics
+
+`orientation_world_from_body_derivative_per_s` is the component-wise time
+derivative of the frozen active world/reference-from-body orientation
+quaternion. Its four components have reciprocal-second semantics because the
+orientation quaternion itself is dimensionless.
+
+A quaternion derivative is NOT an orientation quaternion.
+
+Accordingly:
+
+- it is not required to have unit norm;
+- it is not required to have nonzero norm;
+- it MUST NOT be normalized merely to make it look like an orientation; and
+- the exact all-zero quaternion derivative is valid derivative storage.
+
+Section 12 already freezes the future physical orientation-kinematics relation
+
+```text
+dq_WB/dt = 0.5 * q_WB * omega_B_quat
+```
+
+for the world/reference-from-body orientation and body-frame angular velocity.
+B9 preserves a value capable of storing that result but does NOT evaluate the
+equation.
+
+The legacy pre-rewrite multiplication-order discrepancy recorded in section
+19.1 remains a required EB1 test concern and is not resolved merely by storing
+a B9 derivative value.
+
+### 33.4 Translational derivative semantics
+
+`position_derivative_reference_m_per_s` is the time derivative of projectile
+center-of-mass position, expressed in active-reference axes, in metres per
+second.
+
+For a physically evaluated rigid-body state derivative, section 12 requires
+this quantity to equal the projectile translational velocity in the active
+reference frame.
+
+B9 validation does NOT enforce that relationship because the derivative record
+does not contain the state from which it was derived. The equality belongs to a
+future equations-of-motion evaluator and its tests.
+
+`velocity_derivative_reference_m_per_s2` is the time derivative of
+translational velocity, expressed in active-reference axes, in metres per
+second squared.
+
+The B9 value contract does not prescribe which physical contributions are
+present in that acceleration. A later reviewed equations-of-motion checkpoint
+will define how B8 applied force, projectile mass, gravity, and later
+reference-frame effects enter it.
+
+### 33.5 Angular-velocity derivative semantics
+
+`angular_velocity_derivative_body_rad_per_s2` is the time derivative of the
+projectile angular-velocity components stored by the rigid-body state,
+expressed in the canonical BBTC projectile body frame, in radians per second
+squared.
+
+B9 does not compute this value.
+
+A later EB1 equations-of-motion implementation is expected to derive it from
+body-frame applied moment, body-frame angular velocity, and the B3 principal
+moments of inertia through the reviewed rigid-body Euler equations.
+
+The B9 validator does not require any relationship between the angular-velocity
+derivative and projectile inertia, applied moment, orientation, or any other
+record.
+
+### 33.6 Zero and arbitrary finite derivative values
+
+The exact all-zero B9 derivative record is valid.
+
+It represents a mathematically representable instantaneous zero derivative of
+all four dependent-variable groups. B9 validation does not decide whether such
+a derivative is physically consistent with a separately supplied state or
+loading condition.
+
+Arbitrary finite positive, negative, and zero components are valid in every
+member.
+
+B9 validation imposes no:
+
+- quaternion norm requirement;
+- direction or magnitude restriction;
+- equality between position derivative and any external state velocity;
+- relationship between velocity derivative and force, mass, or gravity;
+- relationship between angular-velocity derivative and moment or inertia; or
+- cross-member physical consistency rule.
+
+Those are equations-of-motion concerns rather than value-representation
+concerns.
+
+### 33.7 Validation API and deterministic precedence
+
+EB0.1-B9 introduces:
+
+```c
+bbtc_eb_rigid_body_state_derivative_validate_float
+bbtc_eb_rigid_body_state_derivative_validate_double
+bbtc_eb_rigid_body_state_derivative_validate_long_double
+```
+
+Conceptually, each validator has the native-family form:
+
+```c
+bbtc_status_e bbtc_eb_rigid_body_state_derivative_validate_*(
+    const bbtc_eb_rigid_body_state_derivative_*_t* derivative
+);
+```
+
+Validation is read-only. A validator MUST NOT normalize, rotate, clamp, derive,
+repair, or otherwise modify caller-owned storage.
+
+The derivative contains thirteen scalar components:
+
+- four orientation-derivative components;
+- three position-derivative components;
+- three velocity-derivative components; and
+- three angular-velocity-derivative components.
+
+Validation MUST use this exact precedence:
+
+1. a null pointer returns `BBTC_STATUS_INVALID_ARGUMENT`;
+2. otherwise, if any of the thirteen scalar components is NaN, return
+   `BBTC_STATUS_NAN_INPUT`;
+3. otherwise, if any component is positive or negative infinity, return
+   `BBTC_STATUS_NONFINITE_INPUT`; and
+4. otherwise return `BBTC_STATUS_SUCCESS`.
+
+The validator MUST perform a complete NaN scan across all thirteen stored
+scalars before deciding whether any infinity is present.
+
+No additional domain failure is defined by B9.
+
+### 33.8 Precision and ABI rules
+
+Each B9 family operates entirely in its native scalar family:
+
+- float derivative members and validation remain native `float`;
+- double derivative members and validation remain native `double`; and
+- long-double derivative members and validation remain native `long double`.
+
+Validation MUST NOT convert through another precision family.
+
+EB0.1-B9 freezes only:
+
+- the public header name;
+- the three derivative record type names;
+- the four member names;
+- their exact declaration order;
+- their native quaternion/vector type identities;
+- their units and frame meanings;
+- the absence of a stored time-derivative member; and
+- the three validator names and validation semantics.
+
+Padding, byte size, alignment, and other implementation-specific ABI details
+remain implementation properties.
+
+### 33.9 Relationship to future derivative evaluation and integration
+
+B9 is a value boundary between future physical derivative evaluation and future
+numerical integration.
+
+Conceptually:
+
+```text
+rigid-body state + physical/model inputs
+                  |
+                  v
+       future EB1 derivative evaluator
+                  |
+                  v
+        B9 state derivative value
+                  |
+                  v
+       future numerical integrator
+                  |
+                  v
+          advanced rigid-body state
+```
+
+The numerical integrator MUST remain separable from the physical equations that
+produce a B9 derivative.
+
+A future derivative callback/provider contract MAY permit a generic integrator
+to request B9 derivatives at intermediate stage states and times. B9 itself
+does not introduce that callback boundary.
+
+A future integrator may require internal arithmetic that scales and combines
+state derivatives. Such internal arithmetic does not need to become public API
+merely because an integration algorithm uses it.
+
+### 33.10 Required tests
+
+EB0.1-B9 tests MUST verify at least:
+
+- the exact three public derivative record type names;
+- exact member names and declaration order;
+- exact native precision-qualified quaternion/vector member types;
+- the exact all-zero derivative is valid;
+- an all-zero orientation derivative is valid;
+- a non-unit finite orientation derivative is valid;
+- arbitrary finite signed components are valid throughout the record;
+- validation imposes no hidden equation relating position derivative to state
+  velocity;
+- validation imposes no force/mass/gravity relationship on velocity derivative;
+- validation imposes no moment/inertia relationship on angular-velocity
+  derivative;
+- no public time-derivative member exists in the frozen B9 representation;
+- null input returns `BBTC_STATUS_INVALID_ARGUMENT`;
+- any NaN anywhere in the complete thirteen-scalar record returns
+  `BBTC_STATUS_NAN_INPUT`;
+- NaN takes precedence over infinity even when infinity occurs in an
+  earlier-declared member;
+- infinity returns `BBTC_STATUS_NONFINITE_INPUT` when no NaN exists;
+- validation is read-only;
+- float, double, and long-double validators are exercised;
+- the public B9 header remains usable from C++;
+- an independent CMake consumer can construct and validate a native-double B9
+  derivative solely through `<bbtc/bbtc.h>`; and
+- normal, strict-warning, AddressSanitizer, and UndefinedBehaviorSanitizer gates
+  remain green.
+
+### 33.11 Deliberately deferred behavior
+
+EB0.1-B9 does NOT define:
+
+- an equations-of-motion evaluator;
+- the implementation of `dq_WB/dt = 0.5 * q_WB * omega_B_quat`;
+- translational force/mass acceleration evaluation;
+- gravitational acceleration coupling into a derivative;
+- rigid-body Euler rotational-dynamics evaluation;
+- Coriolis, centrifugal, Euler, or Eötvös acceleration evaluation;
+- a derivative callback/provider interface;
+- state-derivative arithmetic as public API;
+- quaternion renormalization during integration;
+- an Euler, midpoint, Runge-Kutta, adaptive, or other numerical integrator;
+- an integration step-size policy;
+- analytic vacuum propagation validation; or
+- Cubes of Honor adapter source code.
+
+Those behaviors remain later reviewed checkpoints.
+
+## 34. Acceptance criteria for EB0.1-B9
+
+EB0.1-B9 is complete when:
+
+- contract version 0.1.9 is reviewed and changed from `Draft` to `Accepted`
+  before implementation is committed;
+- the public header is frozen as
+  `include/bbtc/external_ballistics/state_derivative.h`;
+- the three public derivative record names are frozen;
+- the exact member declaration order is frozen as orientation derivative,
+  position derivative, velocity derivative, then body angular-velocity
+  derivative;
+- the orientation derivative is explicitly distinguished from a unit
+  orientation quaternion and may validly be zero or non-unit;
+- translational derivative vectors are explicitly in active-reference axes;
+- angular-velocity derivative is explicitly in canonical projectile body axes;
+- simulation time is explicitly treated as the independent variable and B9
+  contains no stored time-derivative member;
+- the exact all-zero derivative record is valid;
+- validation is read-only and uses null, complete-record NaN,
+  complete-record infinity, then success precedence;
+- validation scans all thirteen scalars for NaN before considering infinity;
+- validation imposes no hidden equation-of-motion or cross-record consistency
+  law;
+- all three scalar families remain native throughout;
+- C, C++, and independent-consumer tests cover the public B9 value boundary;
+- normal, strict, and sanitizer gates remain green; and
+- EB0.1-B9 introduces no derivative evaluator, equations of motion, numerical
+  integrator, rotating-frame acceleration evaluator, analytic vacuum
+  propagation, collision response, or Cubes of Honor adapter implementation.
