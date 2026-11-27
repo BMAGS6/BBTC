@@ -1,10 +1,10 @@
 # BBTC External Ballistics Design Contract
 
-**Contract version:** 0.1.10
+**Contract version:** 0.1.11
 
-**Project phase:** EB0.1-B10
+**Project phase:** EB0.1-B11
 
-**Applies to:** `rewrite/eb0_1b10_state_derivative_provider_v1`
+**Applies to:** `rewrite/eb0_1b11_rk4_integrator_v1`
 
 **Status:** Accepted
 
@@ -3883,3 +3883,544 @@ EB0.1-B10 is complete when:
 - EB0.1-B10 introduces no physical derivative evaluator, equations of motion,
   numerical integrator, rotating-frame acceleration evaluator, analytic vacuum
   propagation, collision response, or Cubes of Honor adapter implementation.
+
+
+## 37. EB0.1-B11 fixed-step RK4 integration boundary
+
+EB0.1-B11 establishes the first public numerical-integration operation for the
+external-ballistics rigid-body state and completes the EB0 integration
+architecture.
+
+B11 consumes the B10 rigid-body state-derivative provider boundary and advances
+one B1 rigid-body state through one positive fixed time step using a
+correctness-oriented classical fourth-order Runge-Kutta construction for the
+stored dependent-variable components.
+
+Quaternion orientation requires an explicit constraint-control policy because
+B10 accepts only callback-visible states satisfying the B2 orientation
+contract. B11 therefore uses RK4 with quaternion projection by normalization on
+internally generated stage orientations and on the final orientation.
+
+B11 remains completely agnostic to the physical equations that produce the B9
+derivative. It does NOT implement vacuum or aerodynamic equations of motion.
+
+### 37.1 Public header and step API
+
+EB0.1-B11 introduces:
+
+```text
+include/bbtc/external_ballistics/integrator.h
+```
+
+and the public native-family functions:
+
+```c
+bbtc_eb_rk4_step_float
+bbtc_eb_rk4_step_double
+bbtc_eb_rk4_step_long_double
+```
+
+Conceptually, each has the form:
+
+```c
+bbtc_status_e bbtc_eb_rk4_step_*(
+    const bbtc_eb_state_derivative_provider_*_t* provider,
+    SCALAR step_s,
+    bbtc_eb_rigid_body_state_*_t* state
+);
+```
+
+`state` is an in/out object.
+
+On success, it is replaced with the advanced state at
+`old_state.time_s + step_s`.
+
+On failure, the caller-owned state object MUST remain bit-for-bit unchanged.
+
+This transactional in-place design intentionally avoids a public input/output
+aliasing problem and makes a failed integration attempt safe to inspect, retry,
+or report.
+
+Before the first provider dispatch, B11 MUST copy the complete caller-owned
+state into local/internal storage. Every callback-visible state, including the
+K1 state, MUST be supplied from local/internal storage rather than by passing
+the caller's `state` pointer directly. The K1 snapshot preserves the exact
+field values of the validated entry state.
+
+Provider context and any external side effects performed by provider callbacks
+are outside this transactional guarantee. For B11 use, provider context MUST
+NOT be used as a writable alias to the caller-owned state being stepped, and a
+callback MUST NOT mutate that state through any other alias. Such external
+aliasing would violate the B11 provider-use contract because BBTC cannot roll
+back mutations performed independently through caller-owned context.
+
+### 37.2 Fixed forward-step domain
+
+B11 supports one finite, strictly positive forward integration step.
+
+`step_s` is expressed in seconds and MUST satisfy:
+
+```text
+isfinite(step_s) && step_s > 0
+```
+
+Zero, negative zero, negative finite steps, positive infinity, negative
+infinity, and NaN are not valid B11 step requests.
+
+B11 introduces no backward integration, adaptive step-size selection, minimum
+step-size policy, maximum step-size policy, or model-specific accuracy policy.
+
+The caller owns the choice of physically and numerically appropriate step size.
+
+### 37.3 Request validation and deterministic input precedence
+
+Before any provider callback is invoked, B11 MUST establish a valid request.
+
+The pointer/descriptor checks occur first:
+
+1. if `state` is null, return `BBTC_STATUS_INVALID_ARGUMENT`;
+2. if `provider` is null or `provider->evaluate` is null, return
+   `BBTC_STATUS_INVALID_ARGUMENT`.
+
+For the floating request values, NaN and infinity precedence is global across
+the initial B1 state and `step_s`.
+
+B11 MUST determine the matching B2 state-validation result without modifying
+`state`, then apply this precedence:
+
+1. if the initial state validation result is `BBTC_STATUS_NAN_INPUT` OR
+   `step_s` is NaN, return `BBTC_STATUS_NAN_INPUT`;
+2. otherwise, if the initial state validation result is
+   `BBTC_STATUS_NONFINITE_INPUT` OR `step_s` is positive or negative infinity,
+   return `BBTC_STATUS_NONFINITE_INPUT`;
+3. otherwise, if initial-state validation failed for another reason, propagate
+   that B2 status unchanged;
+4. otherwise, if `step_s <= 0`, return `BBTC_STATUS_OUTSIDE_DOMAIN`;
+5. otherwise the request is valid for numerical stepping.
+
+No provider callback occurs for any invalid request.
+
+In particular, an invalid caller-supplied orientation MUST be rejected by the
+ordinary B2 state contract and MUST NOT be normalized or otherwise repaired by
+B11.
+
+### 37.4 Independent time treatment
+
+As frozen by B9 and B10, simulation time is the independent integration
+variable and is not a stored derivative component.
+
+Let:
+
+```text
+t = initial_state.time_s
+h = step_s
+```
+
+B11 stage times are:
+
+```text
+K1: t
+K2: t + h/2
+K3: t + h/2
+K4: t + h
+```
+
+The successful final state's time is exactly the native-family result of:
+
+```text
+t + h
+```
+
+B11 MUST NOT infer stage time from a derivative record.
+
+Before each B10 provider request, the candidate stage state's `time_s` MUST be
+set to the corresponding stage time.
+
+Because `h > 0`, the final time must be finite and must compare strictly greater
+than the initial time in the active native scalar family.
+
+If native floating-point arithmetic cannot produce a finite strictly later
+`t + h`, B11 MUST return `BBTC_STATUS_NUMERICAL_FAILURE` without invoking any
+provider callback and without modifying the caller state.
+
+A half-step stage time that rounds to `t` is not by itself an error provided
+the final `t + h` remains finite and strictly later than `t`.
+
+### 37.5 Classical RK4 dependent-variable construction
+
+Let `Y0` denote the four physical dependent-variable groups in the initial B1
+state:
+
+- orientation quaternion components;
+- reference-frame position;
+- reference-frame translational velocity; and
+- body-frame angular velocity.
+
+Let `F(Y, t)` denote one successful B10 provider evaluation returning a B9
+derivative.
+
+Ignoring quaternion projection for the moment, B11 uses:
+
+```text
+K1 = F(Y0,                 t)
+K2 = F(Y0 + (h/2) * K1,    t + h/2)
+K3 = F(Y0 + (h/2) * K2,    t + h/2)
+K4 = F(Y0 + h * K3,        t + h)
+
+Y1 = Y0 + (h/6) * (K1 + 2*K2 + 2*K3 + K4)
+```
+
+Every addition and multiplication is performed directly in the matching native
+scalar family.
+
+The K4 state MUST use the full-step construction:
+
+```text
+Y0 + h * K3
+```
+
+and MUST NOT use:
+
+```text
+Y0 + (h/2) * K3
+```
+
+The latter was a known defect in legacy pre-rewrite code and is a mandatory B11
+regression-test target.
+
+State-derivative scaling/combination required by RK4 is private integrator
+arithmetic and does not become a public B9 arithmetic API.
+
+### 37.6 Quaternion stage projection and final normalization
+
+The orientation component of an RK4 stage is formed component-wise exactly like
+the other dependent variables before constraint control.
+
+For internally generated K2, K3, and K4 candidate states, B11 MUST normalize the
+candidate world/reference-from-body quaternion before presenting that state to
+the B10 provider.
+
+The K1 callback receives the caller's initial orientation exactly as supplied,
+after B2 validation; B11 MUST NOT normalize the caller's initial state before
+K1.
+
+After the weighted RK4 final orientation is formed, B11 MUST normalize that
+internally generated final quaternion before committing the successful state.
+
+Quaternion normalization MUST use the existing native-family private BBTC
+normalization operation or an exactly equivalent reviewed native-family
+implementation.
+
+If an internally generated stage or final quaternion is zero, NaN, infinite, or
+otherwise cannot be normalized into a valid finite unit quaternion, the step
+fails with:
+
+```text
+BBTC_STATUS_NUMERICAL_FAILURE
+```
+
+The caller-owned state remains unchanged.
+
+This projection policy is constraint control for integrator-generated
+orientation drift. It MUST NOT be used to accept an invalid initial public
+orientation.
+
+### 37.7 Internal stage validity
+
+After constructing and projecting each internally generated K2, K3, or K4
+candidate state, B11 MUST ensure the complete candidate satisfies the B2 state
+contract before invoking the B10 provider.
+
+If an internally generated candidate fails B2 validation, B11 MUST classify the
+condition as:
+
+```text
+BBTC_STATUS_NUMERICAL_FAILURE
+```
+
+rather than exposing the generated-state validation code as though the caller
+had supplied that bad state.
+
+No provider callback is invoked for an internally generated stage that fails
+this check.
+
+The final candidate state MUST likewise satisfy B2 validation after final
+orientation normalization and before it is committed to caller storage.
+
+Any failure of that final generated-state validation is
+`BBTC_STATUS_NUMERICAL_FAILURE`.
+
+Finite underflow or ordinary rounding that still produces a B2-valid state is
+not by itself a numerical failure.
+
+### 37.8 Provider dispatch and failure propagation
+
+Every derivative request MUST go through the matching public B10 dispatch
+function.
+
+For a successful B11 step, the provider callback is therefore invoked exactly
+four times.
+
+If K1 provider dispatch fails, B11 MUST immediately propagate that status
+unchanged and perform no K2/K3/K4 request.
+
+If K2 dispatch fails, B11 MUST propagate that status unchanged and perform no
+K3/K4 request.
+
+If K3 dispatch fails, B11 MUST propagate that status unchanged and perform no
+K4 request.
+
+If K4 dispatch fails, B11 MUST propagate that status unchanged.
+
+In every such failure case, the caller-owned `state` remains unchanged.
+
+B11 does not roll back or otherwise undo mutations inside caller-owned provider
+context that the callback itself may have performed before returning. Such
+context may contain mutable model state, diagnostics, counters, or other
+caller-owned data, but during a B11 step it MUST NOT provide writable aliasing
+access to the caller-owned rigid-body state being advanced.
+
+### 37.9 Transactional state commit
+
+B11 MUST perform all stage construction, derivative storage, quaternion
+projection, and final-state construction in local/internal storage.
+
+The caller-owned `state` MUST NOT be incrementally updated during K1-K4.
+
+Only after:
+
+- all four provider dispatches succeed;
+- the weighted RK4 final dependent variables are constructed;
+- final orientation normalization succeeds;
+- final time is assigned; and
+- the complete final state satisfies B2 validation
+
+may B11 replace `*state` with the final state.
+
+Therefore any B11 failure leaves every scalar component of the caller's state
+unchanged from its entry value.
+
+### 37.10 Native precision and arithmetic
+
+The float B11 family operates entirely in native `float`.
+
+The double family operates entirely in native `double`.
+
+The long-double family operates entirely in native `long double`.
+
+B11 MUST NOT route one family through another family for derivative scaling,
+stage construction, time arithmetic, quaternion normalization, or final
+combination.
+
+Integer RK4 coefficients such as `2` and `6` are converted to the active native
+scalar family as part of ordinary native arithmetic.
+
+### 37.11 Allocation, determinism, and host independence
+
+One B11 RK4 step requires no dynamic allocation.
+
+It performs no file I/O, process termination, global mutable-state update,
+trajectory allocation, collision query, host-engine conversion, or Cubes of
+Honor operation.
+
+For deterministic providers and identical native-family inputs, B11 itself has
+no hidden history and produces deterministic stage requests and output under
+the active floating-point environment.
+
+B11 does not cache provider results across calls.
+
+### 37.12 Synthetic numerical validation
+
+B11 MUST be validated independently of EB1 ballistic physics.
+
+At minimum, tests MUST include synthetic B10 providers whose mathematical
+behavior is simple enough to determine the expected RK4 stages or result
+directly.
+
+A mandatory regression oracle is the scalar test equation embedded in one B1
+state component:
+
+```text
+dx/dt = x
+x(0) = 1
+h = 1
+```
+
+using, for example, one position component while all unrelated derivative
+components remain zero.
+
+Classical RK4 MUST request stage x-values:
+
+```text
+K1 state: 1
+K2 state: 1.5
+K3 state: 1.75
+K4 state: 2.75
+```
+
+and produce:
+
+```text
+x(1) = 65/24 = 2.708333333333...
+```
+
+The required K4 stage value `2.75` independently catches the historical
+half-step K4 defect, which would produce a different stage.
+
+Tests MUST also directly verify the callback-visible stage times:
+
+```text
+t
+t + h/2
+t + h/2
+t + h
+```
+
+rather than inferring time correctness only from a final result.
+
+### 37.13 Required tests
+
+EB0.1-B11 tests MUST verify at least:
+
+- exact three public RK4 step function names and native signatures;
+- null state returns `BBTC_STATUS_INVALID_ARGUMENT`;
+- null provider or null provider callback returns
+  `BBTC_STATUS_INVALID_ARGUMENT`;
+- request-level NaN precedence across initial state and `step_s`;
+- request-level infinity precedence after NaN;
+- invalid initial B2 orientation is rejected and is not normalized/repaired;
+- zero, negative-zero, and negative finite steps return
+  `BBTC_STATUS_OUTSIDE_DOMAIN`;
+- infinite steps return `BBTC_STATUS_NONFINITE_INPUT`;
+- a positive finite step that cannot produce a finite strictly later final time
+  returns `BBTC_STATUS_NUMERICAL_FAILURE` before callback invocation;
+- a successful zero-derivative provider advances only time except for the
+  documented final quaternion projection behavior;
+- successful RK4 invokes the B10 provider exactly four times;
+- callback-visible stage times are exactly the native-family RK4 stage times;
+- the synthetic `dx/dt = x` stage values include the exact full-step K4 state
+  `2.75` for `x(0)=1`, `h=1`;
+- the same synthetic case produces `65/24` in the double family within an
+  explicitly justified floating tolerance;
+- internally generated K2/K3/K4 callback-visible orientations satisfy B2
+  validation after quaternion projection;
+- the final successful orientation satisfies B2 validation;
+- an internally generated zero/nonfinite quaternion produces
+  `BBTC_STATUS_NUMERICAL_FAILURE`;
+- nonfinite internally generated translational or angular state produces
+  `BBTC_STATUS_NUMERICAL_FAILURE`;
+- K1/K2/K3/K4 provider failures are each propagated unchanged;
+- no provider call after the failing stage occurs;
+- every callback-visible state, including K1, resides in local/internal storage
+  rather than aliasing the caller-owned state;
+- the K1 callback-visible snapshot preserves the exact validated entry-state
+  field values;
+- every failure path leaves the caller-owned state unchanged when the provider
+  obeys the no-writable-state-alias rule;
+- provider-context side effects are not promised to roll back, and provider
+  context used during B11 stepping does not provide writable aliasing access to
+  the caller-owned state;
+- float, double, and long-double families are exercised;
+- the public B11 header remains usable from C++;
+- an independent CMake consumer can perform one native-double synthetic B11 step
+  solely through `<bbtc/bbtc.h>`; and
+- normal, strict-warning, AddressSanitizer, and UndefinedBehaviorSanitizer gates
+  remain green.
+
+### 37.14 Deliberately deferred behavior
+
+EB0.1-B11 does NOT define:
+
+- vacuum rigid-body equations of motion;
+- the physical implementation of
+  `dq_WB/dt = 0.5 * q_WB * omega_B_quat`;
+- applied-force/mass translational acceleration;
+- gravity coupling into the physical derivative;
+- Euler rigid-body rotational dynamics;
+- atmospheric relative-air calculations;
+- drag, lift, Magnus, or aerodynamic moments;
+- Coriolis, centrifugal, Euler, or Eötvös acceleration evaluation;
+- adaptive integration;
+- embedded error estimation;
+- automatic step-size selection;
+- dense output or interpolation;
+- trajectory storage;
+- event detection;
+- collision/contact response;
+- analytic vacuum ballistic validation; or
+- Cubes of Honor adapter source code.
+
+Those belong to EB1 or later reviewed external-ballistics milestones.
+
+## 38. EB0 completion after EB0.1-B11
+
+EB0 is complete when B11 is accepted and implemented with all normal, strict,
+and sanitizer gates green.
+
+At that point the reconstructed external-ballistics subsystem has independently
+reviewed contracts for:
+
+- mathematical vectors/quaternions and private native-family math;
+- rigid-body state representation and validation;
+- projectile physical properties;
+- environment sample and provider boundaries;
+- reference-frame/gravity sample and provider boundaries;
+- applied force/moment representation;
+- rigid-body state-derivative representation and validation;
+- rigid-body state-derivative provider dispatch; and
+- one correctness-oriented numerical integration operation.
+
+EB0 completion does NOT mean the external-ballistics solver already implements
+physical projectile motion. It means the mathematical, state, environmental,
+frame, loading, derivative, and numerical-integration seams required by EB1 are
+frozen and independently tested.
+
+The next milestone after sealed B11 is EB1: vacuum six-degree-of-freedom
+derivative evaluation and analytic validation.
+
+## 39. Acceptance criteria for EB0.1-B11
+
+EB0.1-B11 is complete when:
+
+- contract version 0.1.11 is reviewed and changed from `Draft` to `Accepted`
+  before implementation is committed;
+- the public header is frozen as
+  `include/bbtc/external_ballistics/integrator.h`;
+- the three public fixed-step function names are frozen as
+  `bbtc_eb_rk4_step_float`, `bbtc_eb_rk4_step_double`, and
+  `bbtc_eb_rk4_step_long_double`;
+- the public API is transactional in-place state advancement;
+- B11 snapshots the entry state into local/internal storage before provider
+  evaluation and never passes the caller-owned state object itself to a B10
+  callback;
+- provider context used during B11 stepping does not provide writable aliasing
+  access to the caller-owned state;
+- caller state is never modified by B11 on failure;
+- only finite strictly positive forward `step_s` values are accepted;
+- request-level NaN then infinity precedence covers both the initial B1 state
+  and `step_s`;
+- an invalid initial public orientation is rejected rather than normalized;
+- final time is exactly native `t + h`, must be finite, and must compare
+  strictly greater than initial `t`;
+- RK4 stage times are frozen as `t`, `t+h/2`, `t+h/2`, `t+h`;
+- the classical K2/K3 half-step and K4 full-step constructions are frozen;
+- the weighted final derivative combination is frozen as
+  `(K1 + 2*K2 + 2*K3 + K4) / 6`;
+- K2/K3/K4 internally generated orientation stages are normalized before B10
+  provider exposure;
+- the final internally generated orientation is normalized before commit;
+- internally generated invalid stage/final states map to
+  `BBTC_STATUS_NUMERICAL_FAILURE`;
+- all derivative requests use B10 provider dispatch;
+- successful stepping performs exactly four provider calls;
+- provider failure is propagated unchanged and stops subsequent stages;
+- no provider-context rollback guarantee is made;
+- all three scalar families remain native throughout;
+- the historical half-step K4 defect is independently regression-tested;
+- C, C++, synthetic numerical, and independent-consumer tests cover B11;
+- normal, strict, AddressSanitizer, and UndefinedBehaviorSanitizer gates remain
+  green;
+- no dynamic allocation is required; and
+- EB0.1-B11 introduces no physical equations of motion, aerodynamic model,
+  rotating-frame acceleration evaluator, trajectory/collision system, or Cubes
+  of Honor adapter implementation.
