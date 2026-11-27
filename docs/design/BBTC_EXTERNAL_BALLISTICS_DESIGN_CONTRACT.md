@@ -1,10 +1,10 @@
 # BBTC External Ballistics Design Contract
 
-**Contract version:** 0.1.6
+**Contract version:** 0.1.7
 
-**Project phase:** EB0.1-B6
+**Project phase:** EB0.1-B7
 
-**Applies to:** `rewrite/eb0_1b6_reference_frame_v1`
+**Applies to:** `rewrite/eb0_1b7_reference_frame_provider_v1`
 
 **Status:** Accepted
 
@@ -2416,3 +2416,388 @@ EB0.1-B6 is complete when:
 - EB0.1-B6 introduces no reference-frame provider, non-inertial-acceleration
   evaluator, atmosphere model, aerodynamic model, derivative, integrator,
   collision, or Cubes of Honor adapter implementation.
+
+
+## 29. EB0.1-B7 reference-frame provider interface
+
+EB0.1-B7 establishes the caller-controlled mechanism that obtains the B6
+reference-frame sample at an arbitrary projectile center-of-mass position and
+simulation time.
+
+The provider boundary mirrors the architectural role of the EB0.1-B5
+environment provider while remaining a distinct public interface. A provider
+may represent constant gravity and frame kinematics, an analytic planetary
+model, a table, an externally maintained navigation/reference-frame solution, a
+Cubes of Honor world model, or another caller-owned source.
+
+The generic BBTC provider layer does not implement Earth geometry, gravity
+models, Coriolis acceleration, centrifugal acceleration, Euler acceleration,
+Eötvös behavior, or numerical integration. It only validates a sampling
+request, dispatches the callback, and revalidates the returned B6 value.
+
+### 29.1 Sampling inputs
+
+A B7 reference-frame-provider request is defined by:
+
+- projectile center-of-mass position in metres, measured from the active BBTC
+  reference-frame origin and expressed in active-reference coordinates; and
+- simulation time in seconds measured from the external-ballistics initial
+  state.
+
+For the currently frozen rigid-body state contract, the position input has the
+same physical meaning as the translational `position_m` state vector.
+
+Position components MUST be finite. Sampling time MUST be finite and greater
+than or equal to zero.
+
+The provider callback MUST NOT require projectile velocity merely to evaluate
+the B6 value. Velocity-dependent non-inertial effects such as Coriolis
+acceleration belong to the later non-inertial-acceleration evaluator, which
+will consume projectile velocity separately.
+
+Likewise, the B7 callback MUST NOT require projectile orientation, body angular
+velocity, mass, inertia, aerodynamic coefficients, atmosphere values, force or
+moment accumulators, collision state, rendering state, or gameplay state merely
+to obtain one B6 sample.
+
+A caller-owned context may refer to configuration or to an externally managed
+deterministic frame-model snapshot. Such context does not change the explicit
+meaning of the provider inputs and MUST NOT make callback results depend on the
+result of a previous provider invocation.
+
+A future specialized architecture for a trajectory-following coordinate frame
+whose own kinematics are dynamically coupled to projectile velocity or other
+projectile state is outside EB0.1-B7. Such a model MUST NOT be smuggled into
+this provider through hidden call-order dependence.
+
+### 29.2 Public header and precision-qualified callback types
+
+EB0.1-B7 introduces:
+
+```text
+include/bbtc/external_ballistics/reference_frame_provider.h
+```
+
+The external-ballistics umbrella header MUST include this public header once B7
+is implemented.
+
+The precision-qualified callback types are:
+
+```c
+bbtc_eb_reference_frame_provider_float_fn
+bbtc_eb_reference_frame_provider_double_fn
+bbtc_eb_reference_frame_provider_long_double_fn
+```
+
+Conceptually, each callback has the native-family form:
+
+```c
+bbtc_status_e callback(
+    const void* context,
+    const bbtc_eb_vec3_*_t* position_reference_m,
+    SCALAR time_s,
+    bbtc_eb_reference_frame_sample_*_t* out_sample
+);
+```
+
+The exact callback parameter order above is frozen by EB0.1-B7.
+
+`position_reference_m` is the projectile center-of-mass position measured from
+the active reference-frame origin and expressed in active-reference axes.
+
+`time_s` is simulation time measured from the external-ballistics initial state.
+
+`out_sample` is caller-owned storage for one complete B6 reference-frame
+sample.
+
+The matching provider descriptor types are:
+
+```c
+bbtc_eb_reference_frame_provider_float_t
+bbtc_eb_reference_frame_provider_double_t
+bbtc_eb_reference_frame_provider_long_double_t
+```
+
+Each descriptor contains the following fields in this exact declaration order:
+
+```text
+sample
+context
+```
+
+`sample` is the matching precision-qualified callback pointer.
+
+`context` is a borrowed `const void*` supplied unchanged to the callback. A
+null context pointer is valid. BBTC does not allocate, free, retain, clone,
+mutate, or interpret the pointed-to storage.
+
+No public alignment override is introduced.
+
+### 29.3 Provider dispatch functions
+
+BBTC exposes the following precision-qualified dispatch functions:
+
+```c
+bbtc_eb_reference_frame_provider_sample_float
+bbtc_eb_reference_frame_provider_sample_double
+bbtc_eb_reference_frame_provider_sample_long_double
+```
+
+Conceptually, each function has the native-family form:
+
+```c
+bbtc_status_e bbtc_eb_reference_frame_provider_sample_*(
+    const bbtc_eb_reference_frame_provider_*_t* provider,
+    const bbtc_eb_vec3_*_t* position_reference_m,
+    SCALAR time_s,
+    bbtc_eb_reference_frame_sample_*_t* out_sample
+);
+```
+
+The dispatch layer owns common request validation and successful B6 sample
+revalidation so future derivative or solver code does not duplicate provider
+boundary rules.
+
+### 29.4 Callback contract
+
+A provider callback returning `BBTC_STATUS_SUCCESS` MUST have fully initialized
+every named field of `out_sample` with one complete B6 reference-frame sample.
+
+The callback output MUST obey all B6 semantic rules. In particular:
+
+- the gravitational-acceleration member contains physical gravitational-field
+  acceleration rather than effective/apparent gravity with non-inertial terms
+  already added;
+- the origin-acceleration member contains the complete inertial translational
+  acceleration of the active reference-frame origin required by the selected
+  frame model;
+- angular velocity is the active frame's total angular velocity relative to
+  inertial space, expressed in active-reference axes; and
+- angular acceleration has the B6 meaning required by the future Euler term.
+
+Dispatch MUST revalidate callback success through the matching B6 validator.
+Validation does not prove that a physically mislabeled effective-gravity value
+has the correct semantics; the provider implementation remains responsible for
+the physical meaning of finite values.
+
+A callback returning any non-success BBTC status communicates sampling failure.
+Dispatch MUST propagate that status unchanged after restoring the deterministic
+failure output described in section 29.5.
+
+Callbacks MUST tolerate repeated requests, intermediate numerical-stage
+requests, and deliberately out-of-order positions or times. They MUST NOT
+assume one call per integration step, one call per render frame, or monotonically
+increasing time.
+
+Within one deterministic simulation snapshot, provider behavior MUST be a
+function of explicit position, explicit time, and context rather than mutable
+sampling history. Internal caching MAY be used only when it is observationally
+equivalent to that rule.
+
+BBTC does not serialize callbacks. If context refers to mutable or shared data,
+the caller/provider owns synchronization and deterministic snapshot semantics.
+
+### 29.5 Dispatch validation, deterministic output, and precedence
+
+`out_sample` is a required caller-owned output pointer.
+
+If `out_sample` is null, dispatch MUST return `BBTC_STATUS_INVALID_ARGUMENT`.
+No output-state guarantee is possible because no output object exists.
+
+When `out_sample` is non-null, dispatch MUST write the exact all-zero B6 sample
+to `*out_sample` before validating any remaining request input or invoking the
+callback.
+
+For every subsequent dispatch failure, including invalid request data, callback
+failure, or invalid callback output, `*out_sample` MUST contain the exact
+all-zero B6 sample on return.
+
+Unlike the B4 environment-provider failure state, the all-zero B6 sample is
+itself a valid physical B6 value representing inertial, nonaccelerating,
+nonrotating, zero-gravity conditions. Therefore **the returned status is the
+authoritative indicator of provider-dispatch success or failure**. Callers MUST
+NOT infer dispatch success by validating or inspecting `out_sample` alone after
+a non-success return.
+
+This zero-on-failure rule is a deterministic storage policy, not an invalid
+sentinel convention.
+
+Dispatch MUST use this exact validation and failure order:
+
+1. a null output pointer returns `BBTC_STATUS_INVALID_ARGUMENT`;
+2. otherwise dispatch first establishes the all-zero B6 output state;
+3. null provider, null provider callback, or null position pointer returns
+   `BBTC_STATUS_INVALID_ARGUMENT`;
+4. otherwise, if any position component or `time_s` is NaN, return
+   `BBTC_STATUS_NAN_INPUT`;
+5. otherwise, if any position component or `time_s` is infinite, return
+   `BBTC_STATUS_NONFINITE_INPUT`;
+6. otherwise, if `time_s` is negative, return `BBTC_STATUS_OUTSIDE_DOMAIN`;
+7. otherwise invoke the provider callback exactly once;
+8. if the callback returns a non-success status, restore the all-zero B6 sample
+   and return that status unchanged;
+9. otherwise validate the callback-produced sample with the matching B6
+   validator;
+10. if B6 validation fails, restore the all-zero B6 sample and return the B6
+    validator status; and
+11. otherwise return `BBTC_STATUS_SUCCESS` and preserve the validated callback
+    output.
+
+The callback MUST NOT be invoked when dispatch rejects the request before step
+7.
+
+The precedence above intentionally makes null-pointer diagnostics dominate
+numeric request diagnostics and makes NaN dominate infinity across the complete
+request vector/time set.
+
+### 29.6 Precision and ABI rules
+
+Each provider family operates entirely in its native scalar family:
+
+- float position, time, callback, provider descriptor, and B6 sample;
+- double position, time, callback, provider descriptor, and B6 sample; and
+- long-double position, time, callback, provider descriptor, and B6 sample.
+
+Dispatch MUST NOT convert through another precision family.
+
+Provider descriptors are plain borrowed-interface values. They contain no
+owned allocation, reference count, BBTC-owned host handle, Cubes of Honor type,
+or hidden lifetime management.
+
+Function-pointer representation, object-pointer representation, padding,
+alignment, and universal byte size remain implementation properties. EB0.1-B7
+freezes only the named member order and C type identities explicitly stated by
+this contract.
+
+### 29.7 Earth-like and host-provider responsibilities
+
+An Earth-specific provider MAY use latitude, longitude, ellipsoid geometry,
+planetary radius, Earth rotation, time, gravity models, or another physically
+reviewed model to construct the B6 sample.
+
+Such a provider MUST preserve the B6 separation between gravitational-field
+acceleration and non-inertial frame kinematics. It MUST NOT hide centrifugal,
+Coriolis, Euler, or duplicate Eötvös acceleration inside the gravitational
+member merely because an external source labels the combined value "gravity".
+
+Cubes of Honor MAY implement a B7 provider whose context refers to
+caller-owned world/reference-frame state. The adapter may convert BBTC
+reference coordinates and simulation time into whatever world queries are
+required, then convert the resulting quantities into one B6 sample.
+
+BBTC MUST NOT include Cubes of Honor headers or assume a particular host
+context representation.
+
+### 29.8 Relationship to future non-inertial acceleration
+
+B7 provides the B6 inputs required by a later reviewed non-inertial
+translational-acceleration evaluator. B7 itself MUST NOT evaluate:
+
+```text
+-a_origin_R
+-2 * omega_R x v_R
+-alpha_R x r_R
+-omega_R x (omega_R x r_R)
+```
+
+In particular, projectile velocity is deliberately absent from the B7 provider
+callback because Coriolis acceleration is a consumer-side result of combining
+projectile velocity with the sampled frame angular velocity.
+
+For applicable Earth models, later Eötvös validation remains mandatory and must
+arise from the complete frame formulation without a separately duplicated
+empirical correction.
+
+### 29.9 Required tests
+
+EB0.1-B7 tests MUST verify at least:
+
+- exact native callback signatures for float, double, and long double;
+- exact provider descriptor member names and declaration order;
+- native precision is preserved across position, time, callback, descriptor,
+  and output sample;
+- a null context is valid;
+- null provider, callback, position, and output pointers are rejected;
+- a non-null output is zeroed before callback entry;
+- NaN position or time is rejected before callback invocation;
+- infinite position or time is rejected before callback invocation;
+- negative time is rejected before callback invocation;
+- request-validation precedence is deterministic;
+- a valid request invokes the callback exactly once;
+- the callback receives the exact context pointer, position components, and
+  time supplied to dispatch;
+- callback failure status is propagated unchanged;
+- every failure with a non-null output leaves the exact all-zero B6 sample;
+- tests explicitly recognize that this zero failure output is also a valid B6
+  value and therefore cannot substitute for checking the returned status;
+- callback success with a B6-invalid sample returns the corresponding B6
+  validation status and restores all-zero output;
+- callback success with a valid nonzero B6 sample preserves that sample;
+- callback success with the exact all-zero B6 sample is accepted and returns
+  `BBTC_STATUS_SUCCESS`;
+- repeated and deliberately out-of-order requests work with a provider that
+  does not depend on call history;
+- float, double, and long-double dispatch entry points are exercised;
+- the public header remains usable from C++;
+- an independent CMake consumer can define and dispatch a native-double B7
+  provider through `<bbtc/bbtc.h>`; and
+- normal, strict-warning, AddressSanitizer, and UndefinedBehaviorSanitizer gates
+  remain green.
+
+### 29.10 Deliberately deferred behavior
+
+EB0.1-B7 does NOT define:
+
+- Earth constants or one mandatory Earth gravity model;
+- WGS-84 or another mandatory ellipsoid;
+- latitude/longitude convenience APIs;
+- trajectory-following frame dynamics coupled to projectile velocity;
+- Coriolis acceleration evaluation;
+- centrifugal acceleration evaluation;
+- Euler acceleration evaluation;
+- a separately added Eötvös correction;
+- atmosphere models;
+- relative-air velocity;
+- aerodynamic forces or moments;
+- rigid-body derivative evaluation;
+- numerical integration;
+- collision behavior; or
+- Cubes of Honor adapter source code.
+
+Those behaviors remain later reviewed checkpoints.
+
+## 30. Acceptance criteria for EB0.1-B7
+
+EB0.1-B7 is complete when:
+
+- contract version 0.1.7 is reviewed and changed from `Draft` to `Accepted`
+  before implementation is committed;
+- the B7 public header, callback type names, provider descriptor type names,
+  callback parameter order, descriptor member order, and dispatch function
+  names are frozen;
+- the B7 request is explicitly projectile reference-frame position plus
+  simulation time and borrowed context;
+- projectile velocity remains outside the provider request so Coriolis
+  acceleration remains a later consumer-side calculation;
+- callbacks cannot rely on one call per step, monotonic call order, or mutable
+  sampling history;
+- provider context is borrowed, opaque to BBTC, and may be null;
+- dispatch validation follows the exact precedence in section 29.5;
+- invalid request data prevents callback invocation;
+- callback non-success status propagates unchanged;
+- callback-produced successful samples are revalidated through B6;
+- every dispatch failure with non-null output returns the exact all-zero B6
+  storage state;
+- the contract explicitly states that the all-zero failure state is also a
+  valid B6 physical sample and that returned status is authoritative;
+- callback success with an exact zero B6 sample remains valid and distinguishable
+  from failure by the returned status;
+- no precision family routes through another precision family;
+- C, C++, and independent-consumer tests cover the public B7 provider boundary;
+- Coriolis, centrifugal, Euler, and applicable Earth/Eötvös behavior remain
+  mandatory later work;
+- existing BBTC tests remain green under normal, strict, and sanitizer gates;
+  and
+- EB0.1-B7 introduces no non-inertial-acceleration evaluator, Earth model,
+  atmosphere model, aerodynamic model, derivative, integrator, collision, or
+  Cubes of Honor adapter implementation.
