@@ -429,6 +429,49 @@ static_assert(
     "long-double EB state-derivative provider must use native callback type"
 );
 
+
+using bbtc_test_rk4_float_fn = bbtc_status_e (*)(
+    const bbtc_eb_state_derivative_provider_float_t*,
+    float,
+    bbtc_eb_rigid_body_state_float_t*
+);
+
+using bbtc_test_rk4_double_fn = bbtc_status_e (*)(
+    const bbtc_eb_state_derivative_provider_double_t*,
+    double,
+    bbtc_eb_rigid_body_state_double_t*
+);
+
+using bbtc_test_rk4_long_double_fn = bbtc_status_e (*)(
+    const bbtc_eb_state_derivative_provider_long_double_t*,
+    long double,
+    bbtc_eb_rigid_body_state_long_double_t*
+);
+
+static_assert(
+    std::is_same<
+        decltype(&bbtc_eb_rk4_step_float),
+        bbtc_test_rk4_float_fn
+    >::value,
+    "float EB RK4 step must use the frozen native B11 signature"
+);
+
+static_assert(
+    std::is_same<
+        decltype(&bbtc_eb_rk4_step_double),
+        bbtc_test_rk4_double_fn
+    >::value,
+    "double EB RK4 step must use the frozen native B11 signature"
+);
+
+static_assert(
+    std::is_same<
+        decltype(&bbtc_eb_rk4_step_long_double),
+        bbtc_test_rk4_long_double_fn
+    >::value,
+    "long-double EB RK4 step must use the frozen native B11 signature"
+);
+
 static_assert(
     std::is_same<
         decltype(
@@ -1408,6 +1451,45 @@ int main()
         ) != BBTC_STATUS_SUCCESS
         || eb_provider_derivative.position_derivative_reference_m_per_s.x
             != 100.0)
+    {
+        return 1;
+    }
+
+
+    /*
+     * Exercise EB0.1-B11 through the C++ umbrella-header boundary. The B10
+     * callback supplies constant translational velocity derivative data, so
+     * RK4 advances position exactly for this synthetic case.
+     */
+    const bbtc_eb_state_derivative_provider_double_t eb_rk4_provider =
+    {
+        [](const void*,
+           const bbtc_eb_rigid_body_state_double_t* state,
+           bbtc_eb_rigid_body_state_derivative_double_t* out_derivative)
+            -> bbtc_status_e
+        {
+            out_derivative->position_derivative_reference_m_per_s =
+                state->velocity_m_per_s;
+            return BBTC_STATUS_SUCCESS;
+        },
+        nullptr
+    };
+
+    bbtc_eb_rigid_body_state_double_t eb_rk4_state =
+    {
+        {0.0, 0.0, 0.0, 1.0},
+        {0.0, 0.0, 0.0},
+        {100.0, 2.0, -3.0},
+        {0.0, 0.0, 0.0},
+        0.0
+    };
+
+    if (bbtc_eb_rk4_step_double(&eb_rk4_provider, 0.5, &eb_rk4_state)
+            != BBTC_STATUS_SUCCESS
+        || eb_rk4_state.position_m.x != 50.0
+        || eb_rk4_state.position_m.y != 1.0
+        || eb_rk4_state.position_m.z != -1.5
+        || eb_rk4_state.time_s != 0.5)
     {
         return 1;
     }

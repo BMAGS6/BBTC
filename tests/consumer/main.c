@@ -488,6 +488,52 @@ check_external_ballistics_state_derivative_provider_contract(void)
 }
 
 
+static bbtc_status_e
+consumer_zero_state_derivative_provider(
+    const void* context,
+    const bbtc_eb_rigid_body_state_double_t* state,
+    bbtc_eb_rigid_body_state_derivative_double_t* out_derivative
+)
+{
+    (void)context;
+    (void)state;
+    (void)out_derivative;
+    return BBTC_STATUS_SUCCESS;
+}
+
+
+/**
+ * @brief Verifies EB0.1-B11 RK4 stepping through the downstream umbrella API.
+ *
+ * @return `EXIT_SUCCESS` when one synthetic native-double RK4 step succeeds;
+ *         otherwise `EXIT_FAILURE`.
+ */
+static int
+check_external_ballistics_integrator_contract(void)
+{
+    const bbtc_eb_state_derivative_provider_double_t provider =
+    {
+        .evaluate = consumer_zero_state_derivative_provider,
+        .context = NULL
+    };
+
+    bbtc_eb_rigid_body_state_double_t state =
+    {
+        .orientation_world_from_body = {.w = 1.0},
+        .position_m = {.x = 12.0, .y = -3.0, .z = 8.0},
+        .velocity_m_per_s = {.x = 700.0},
+        .time_s = 2.0
+    };
+
+    return bbtc_eb_rk4_step_double(&provider, 0.25, &state)
+            == BBTC_STATUS_SUCCESS
+            && state.time_s == 2.25
+            && state.position_m.x == 12.0
+        ? EXIT_SUCCESS
+        : EXIT_FAILURE;
+}
+
+
 
 /**
  * @brief Verifies precision-qualified geometry through the consumer target.
@@ -1311,6 +1357,9 @@ int main(void)
     {
         return EXIT_FAILURE;
     }
+
+    if (check_external_ballistics_integrator_contract() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
 
     if (check_geometry_contract() != EXIT_SUCCESS)
         return EXIT_FAILURE;
