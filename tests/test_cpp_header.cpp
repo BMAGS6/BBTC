@@ -335,6 +335,75 @@ static_assert(
     "long-double EB applied force must use native long-double vector"
 );
 
+
+template<typename...>
+using bbtc_test_void_t = void;
+
+template<typename T, typename = void>
+struct bbtc_test_has_time_derivative : std::false_type
+{
+};
+
+template<typename T>
+struct bbtc_test_has_time_derivative<
+    T,
+    bbtc_test_void_t<decltype(((T*)0)->time_derivative)>
+> : std::true_type
+{
+};
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_eb_rigid_body_state_derivative_float_t{}
+                .orientation_world_from_body_derivative_per_s
+        ),
+        bbtc_eb_quat_float_t
+    >::value,
+    "float EB orientation derivative must use native float quaternion"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_eb_rigid_body_state_derivative_double_t{}
+                .velocity_derivative_reference_m_per_s2
+        ),
+        bbtc_eb_vec3_double_t
+    >::value,
+    "double EB velocity derivative must use native double vector"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_eb_rigid_body_state_derivative_long_double_t{}
+                .angular_velocity_derivative_body_rad_per_s2
+        ),
+        bbtc_eb_vec3_long_double_t
+    >::value,
+    "long-double EB angular-velocity derivative must use native vector"
+);
+
+static_assert(
+    !bbtc_test_has_time_derivative<
+        bbtc_eb_rigid_body_state_derivative_float_t
+    >::value,
+    "B9 derivative must not contain a time_derivative member"
+);
+static_assert(
+    !bbtc_test_has_time_derivative<
+        bbtc_eb_rigid_body_state_derivative_double_t
+    >::value,
+    "B9 double derivative must not contain a time_derivative member"
+);
+static_assert(
+    !bbtc_test_has_time_derivative<
+        bbtc_eb_rigid_body_state_derivative_long_double_t
+    >::value,
+    "B9 long-double derivative must not contain a time_derivative member"
+);
+
 static_assert(
     std::is_same<
         decltype(
@@ -1254,6 +1323,25 @@ int main()
     eb_force_moment.applied_moment_body_n_m.z = 42.0;
 
     if (bbtc_eb_force_moment_validate_double(&eb_force_moment)
+        != BBTC_STATUS_SUCCESS)
+    {
+        return 1;
+    }
+
+
+    /*
+     * Exercise EB0.1-B9 through the C++ umbrella-header boundary. The
+     * quaternion derivative is deliberately non-unit to prove that B9 does not
+     * apply orientation-state normalization rules to derivative storage.
+     */
+    bbtc_eb_rigid_body_state_derivative_double_t eb_derivative = {};
+    eb_derivative.orientation_world_from_body_derivative_per_s.x = 2.0;
+    eb_derivative.orientation_world_from_body_derivative_per_s.w = -5.0;
+    eb_derivative.position_derivative_reference_m_per_s.x = 700.0;
+    eb_derivative.velocity_derivative_reference_m_per_s2.z = -9.81;
+    eb_derivative.angular_velocity_derivative_body_rad_per_s2.y = 4.0;
+
+    if (bbtc_eb_rigid_body_state_derivative_validate_double(&eb_derivative)
         != BBTC_STATUS_SUCCESS)
     {
         return 1;

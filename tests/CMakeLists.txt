@@ -624,6 +624,30 @@ add_test(
 )
 
 add_executable(
+    bbtc_test_eb_state_derivative
+    test_eb_state_derivative.c
+)
+
+target_link_libraries(
+    bbtc_test_eb_state_derivative
+    PRIVATE
+        bbtc::bbtc
+)
+
+set_target_properties(
+    bbtc_test_eb_state_derivative
+    PROPERTIES
+        C_EXTENSIONS OFF
+        C_STANDARD 23
+        C_STANDARD_REQUIRED ON
+)
+
+add_test(
+    NAME bbtc.eb_state_derivative
+    COMMAND bbtc_test_eb_state_derivative
+)
+
+add_executable(
     bbtc_test_eb_math_internal
     test_eb_math_internal.c
 )

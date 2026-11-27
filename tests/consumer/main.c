@@ -392,6 +392,56 @@ check_external_ballistics_force_moment_contract(void)
 
 
 /**
+ * @brief Verifies EB0.1-B9 state derivatives through a downstream consumer.
+ *
+ * @details
+ * This independent-consumer check proves that `<bbtc/bbtc.h>` exposes the
+ * native-double derivative record and validator without private headers,
+ * equations of motion, or numerical-integration machinery.
+ *
+ * @return `EXIT_SUCCESS` when the public B9 derivative boundary is usable;
+ *         otherwise `EXIT_FAILURE`.
+ */
+static int
+check_external_ballistics_state_derivative_contract(void)
+{
+    const bbtc_eb_rigid_body_state_derivative_double_t derivative =
+    {
+        .orientation_world_from_body_derivative_per_s =
+        {
+            .x = 2.0,
+            .y = -3.0,
+            .z = 4.0,
+            .w = -5.0
+        },
+        .position_derivative_reference_m_per_s =
+        {
+            .x = 700.0,
+            .y = -2.0,
+            .z = 1.0
+        },
+        .velocity_derivative_reference_m_per_s2 =
+        {
+            .x = -9.0,
+            .y = 8.0,
+            .z = -7.0
+        },
+        .angular_velocity_derivative_body_rad_per_s2 =
+        {
+            .x = 6.0,
+            .y = -5.0,
+            .z = 4.0
+        }
+    };
+
+    return bbtc_eb_rigid_body_state_derivative_validate_double(&derivative)
+            == BBTC_STATUS_SUCCESS
+        ? EXIT_SUCCESS
+        : EXIT_FAILURE;
+}
+
+
+/**
  * @brief Verifies precision-qualified geometry through the consumer target.
  *
  * @return `EXIT_SUCCESS` when the geometry contract works; otherwise
@@ -1203,6 +1253,9 @@ int main(void)
     }
 
     if (check_external_ballistics_force_moment_contract() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
+
+    if (check_external_ballistics_state_derivative_contract() != EXIT_SUCCESS)
         return EXIT_FAILURE;
 
     if (check_geometry_contract() != EXIT_SUCCESS)
