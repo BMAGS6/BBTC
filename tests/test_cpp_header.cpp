@@ -480,6 +480,109 @@ static_assert(
 );
 
 
+
+using bbtc_test_vacuum_provider_validate_float_fn = bbtc_status_e (*)(
+    const bbtc_eb_inertial_vacuum_provider_config_float_t*
+);
+using bbtc_test_vacuum_provider_validate_double_fn = bbtc_status_e (*)(
+    const bbtc_eb_inertial_vacuum_provider_config_double_t*
+);
+using bbtc_test_vacuum_provider_validate_long_double_fn = bbtc_status_e (*)(
+    const bbtc_eb_inertial_vacuum_provider_config_long_double_t*
+);
+
+using bbtc_test_vacuum_provider_bind_float_fn = bbtc_status_e (*)(
+    const bbtc_eb_inertial_vacuum_provider_config_float_t*,
+    bbtc_eb_state_derivative_provider_float_t*
+);
+using bbtc_test_vacuum_provider_bind_double_fn = bbtc_status_e (*)(
+    const bbtc_eb_inertial_vacuum_provider_config_double_t*,
+    bbtc_eb_state_derivative_provider_double_t*
+);
+using bbtc_test_vacuum_provider_bind_long_double_fn = bbtc_status_e (*)(
+    const bbtc_eb_inertial_vacuum_provider_config_long_double_t*,
+    bbtc_eb_state_derivative_provider_long_double_t*
+);
+
+static_assert(
+    std::is_same<
+        decltype(&bbtc_eb_inertial_vacuum_provider_config_validate_float),
+        bbtc_test_vacuum_provider_validate_float_fn
+    >::value,
+    "float EB1.2 config validator must use the frozen signature"
+);
+
+static_assert(
+    std::is_same<
+        decltype(&bbtc_eb_inertial_vacuum_provider_config_validate_double),
+        bbtc_test_vacuum_provider_validate_double_fn
+    >::value,
+    "double EB1.2 config validator must use the frozen signature"
+);
+
+static_assert(
+    std::is_same<
+        decltype(&bbtc_eb_inertial_vacuum_provider_config_validate_long_double),
+        bbtc_test_vacuum_provider_validate_long_double_fn
+    >::value,
+    "long-double EB1.2 config validator must use the frozen signature"
+);
+
+static_assert(
+    std::is_same<
+        decltype(&bbtc_eb_inertial_vacuum_provider_bind_float),
+        bbtc_test_vacuum_provider_bind_float_fn
+    >::value,
+    "float EB1.2 binder must use the frozen signature"
+);
+
+static_assert(
+    std::is_same<
+        decltype(&bbtc_eb_inertial_vacuum_provider_bind_double),
+        bbtc_test_vacuum_provider_bind_double_fn
+    >::value,
+    "double EB1.2 binder must use the frozen signature"
+);
+
+static_assert(
+    std::is_same<
+        decltype(&bbtc_eb_inertial_vacuum_provider_bind_long_double),
+        bbtc_test_vacuum_provider_bind_long_double_fn
+    >::value,
+    "long-double EB1.2 binder must use the frozen signature"
+);
+
+static_assert(
+    std::is_same<
+        decltype(bbtc_eb_inertial_vacuum_provider_config_double_t{}.projectile),
+        bbtc_eb_projectile_properties_double_t
+    >::value,
+    "EB1.2 projectile configuration must be stored by value"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_eb_inertial_vacuum_provider_config_double_t{}
+                .constant_force_moment
+        ),
+        bbtc_eb_force_moment_double_t
+    >::value,
+    "EB1.2 constant force/moment configuration must be stored by value"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_eb_inertial_vacuum_provider_config_double_t{}
+                .reference_frame_provider
+        ),
+        bbtc_eb_reference_frame_provider_double_t
+    >::value,
+    "EB1.2 B7 provider descriptor must be stored by value"
+);
+
+
 using bbtc_test_rk4_float_fn = bbtc_status_e (*)(
     const bbtc_eb_state_derivative_provider_float_t*,
     float,
@@ -1589,6 +1692,53 @@ int main()
             != 1.0
         || eb_vacuum_derivative.angular_velocity_derivative_body_rad_per_s2.x
             != 2.0)
+    {
+        return 1;
+    }
+
+
+    /*
+     * Exercise EB1.2 provider binding and derivative dispatch through the C++
+     * umbrella-header boundary.
+     */
+    bbtc_eb_inertial_vacuum_provider_config_double_t eb_vacuum_config = {};
+    eb_vacuum_config.projectile.principal_inertia.moment_about_x_kg_m2 = 3.0;
+    eb_vacuum_config.projectile.principal_inertia.moment_about_y_kg_m2 = 3.0;
+    eb_vacuum_config.projectile.principal_inertia.moment_about_z_kg_m2 = 3.0;
+    eb_vacuum_config.projectile.mass_kg = 2.0;
+    eb_vacuum_config.projectile.reference_diameter_m = 1.0;
+    eb_vacuum_config.projectile.reference_area_m2 = 1.0;
+    eb_vacuum_config.constant_force_moment.applied_force_reference_n.x = 4.0;
+    eb_vacuum_config.reference_frame_provider.sample =
+        [](const void*,
+           const bbtc_eb_vec3_double_t*,
+           double,
+           bbtc_eb_reference_frame_sample_double_t* out_sample)
+            -> bbtc_status_e
+        {
+            *out_sample = {};
+            out_sample->gravitational_acceleration_reference_m_per_s2.z = -8.0;
+            return BBTC_STATUS_SUCCESS;
+        };
+
+    bbtc_eb_state_derivative_provider_double_t eb_vacuum_provider = {};
+    bbtc_eb_rigid_body_state_derivative_double_t eb_bound_derivative = {};
+
+    if (bbtc_eb_inertial_vacuum_provider_config_validate_double(
+            &eb_vacuum_config
+        ) != BBTC_STATUS_SUCCESS
+        || bbtc_eb_inertial_vacuum_provider_bind_double(
+            &eb_vacuum_config,
+            &eb_vacuum_provider
+        ) != BBTC_STATUS_SUCCESS
+        || eb_vacuum_provider.context != &eb_vacuum_config
+        || bbtc_eb_state_derivative_provider_evaluate_double(
+            &eb_vacuum_provider,
+            &eb_vacuum_state,
+            &eb_bound_derivative
+        ) != BBTC_STATUS_SUCCESS
+        || eb_bound_derivative.velocity_derivative_reference_m_per_s2.x != 2.0
+        || eb_bound_derivative.velocity_derivative_reference_m_per_s2.z != -8.0)
     {
         return 1;
     }

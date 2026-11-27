@@ -602,6 +602,91 @@ check_external_ballistics_inertial_vacuum_contract(void)
 }
 
 
+
+static bbtc_status_e
+consumer_inertial_vacuum_frame_provider(
+    const void* context,
+    const bbtc_eb_vec3_double_t* position_reference_m,
+    double time_s,
+    bbtc_eb_reference_frame_sample_double_t* out_sample
+)
+{
+    (void)context;
+    (void)position_reference_m;
+    (void)time_s;
+
+    *out_sample = (bbtc_eb_reference_frame_sample_double_t)
+    {
+        .gravitational_acceleration_reference_m_per_s2 = {.z = -8.0}
+    };
+    return BBTC_STATUS_SUCCESS;
+}
+
+
+/**
+ * @brief Verifies EB1.2 provider binding through the downstream public API.
+ *
+ * @return `EXIT_SUCCESS` when one bound native-double derivative is correct;
+ *         otherwise `EXIT_FAILURE`.
+ */
+static int
+check_external_ballistics_inertial_vacuum_provider_contract(void)
+{
+    const bbtc_eb_inertial_vacuum_provider_config_double_t config =
+    {
+        .projectile =
+        {
+            .principal_inertia =
+            {
+                .moment_about_x_kg_m2 = 3.0,
+                .moment_about_y_kg_m2 = 3.0,
+                .moment_about_z_kg_m2 = 3.0
+            },
+            .mass_kg = 2.0,
+            .reference_diameter_m = 1.0,
+            .reference_area_m2 = 1.0
+        },
+        .constant_force_moment =
+        {
+            .applied_force_reference_n = {.x = 4.0}
+        },
+        .reference_frame_provider =
+        {
+            .sample = consumer_inertial_vacuum_frame_provider,
+            .context = NULL
+        }
+    };
+
+    const bbtc_eb_rigid_body_state_double_t state =
+    {
+        .orientation_world_from_body = {.w = 1.0},
+        .velocity_m_per_s = {.x = 10.0},
+        .time_s = 0.0
+    };
+
+    bbtc_eb_state_derivative_provider_double_t provider = {0};
+    bbtc_eb_rigid_body_state_derivative_double_t derivative = {0};
+
+    return bbtc_eb_inertial_vacuum_provider_config_validate_double(&config)
+                == BBTC_STATUS_SUCCESS
+            && bbtc_eb_inertial_vacuum_provider_bind_double(
+                &config,
+                &provider
+            ) == BBTC_STATUS_SUCCESS
+            && provider.context == &config
+            && bbtc_eb_state_derivative_provider_evaluate_double(
+                &provider,
+                &state,
+                &derivative
+            ) == BBTC_STATUS_SUCCESS
+            && derivative.position_derivative_reference_m_per_s.x == 10.0
+            && derivative.velocity_derivative_reference_m_per_s2.x == 2.0
+            && derivative.velocity_derivative_reference_m_per_s2.z == -8.0
+        ? EXIT_SUCCESS
+        : EXIT_FAILURE;
+}
+
+
 /**
  * @brief Verifies precision-qualified geometry through the consumer target.
  *
@@ -1430,6 +1515,12 @@ int main(void)
 
     if (check_external_ballistics_inertial_vacuum_contract() != EXIT_SUCCESS)
         return EXIT_FAILURE;
+
+    if (check_external_ballistics_inertial_vacuum_provider_contract()
+        != EXIT_SUCCESS)
+    {
+        return EXIT_FAILURE;
+    }
 
     if (check_geometry_contract() != EXIT_SUCCESS)
         return EXIT_FAILURE;

@@ -720,6 +720,30 @@ add_test(
 )
 
 add_executable(
+    bbtc_test_eb_inertial_vacuum_provider
+    test_eb_inertial_vacuum_provider.c
+)
+
+target_link_libraries(
+    bbtc_test_eb_inertial_vacuum_provider
+    PRIVATE
+        bbtc::bbtc
+)
+
+set_target_properties(
+    bbtc_test_eb_inertial_vacuum_provider
+    PROPERTIES
+        C_EXTENSIONS OFF
+        C_STANDARD 23
+        C_STANDARD_REQUIRED ON
+)
+
+add_test(
+    NAME bbtc.eb_inertial_vacuum_provider
+    COMMAND bbtc_test_eb_inertial_vacuum_provider
+)
+
+add_executable(
     bbtc_test_eb_math_internal
     test_eb_math_internal.c
 )
