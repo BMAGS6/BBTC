@@ -1,10 +1,10 @@
 # BBTC External Ballistics Design Contract
 
-**Contract version:** 0.1.7
+**Contract version:** 0.1.8
 
-**Project phase:** EB0.1-B7
+**Project phase:** EB0.1-B8
 
-**Applies to:** `rewrite/eb0_1b7_reference_frame_provider_v1`
+**Applies to:** `rewrite/eb0_1b8_force_moment_v1`
 
 **Status:** Accepted
 
@@ -2801,3 +2801,330 @@ EB0.1-B7 is complete when:
 - EB0.1-B7 introduces no non-inertial-acceleration evaluator, Earth model,
   atmosphere model, aerodynamic model, derivative, integrator, collision, or
   Cubes of Honor adapter implementation.
+
+
+## 31. EB0.1-B8 applied force and moment value boundary
+
+EB0.1-B8 establishes the first public external-ballistics value record for
+resultant applied mechanical force and applied moment.
+
+The checkpoint is intentionally representation-focused. It defines frames,
+units, physical inclusion/exclusion rules, native precision families, and
+validation behavior before a later equations-of-motion checkpoint consumes the
+values.
+
+EB0.1-B8 does NOT evaluate forces or moments, sample an aerodynamic model,
+perform rigid-body derivative evaluation, or integrate state.
+
+### 31.1 Physical role and separation from acceleration inputs
+
+The B8 force/moment record represents physical applied mechanical loading that
+is intended to enter later rigid-body equations of motion.
+
+For translational dynamics, B8 applied force is deliberately separate from
+accelerations already represented by the B6 reference-frame sample.
+
+In particular, the B8 applied-force member MUST NOT contain a force-equivalent
+duplicate of:
+
+- the B6 physical gravitational-field acceleration;
+- reference-frame-origin translational acceleration;
+- Coriolis acceleration;
+- Euler acceleration; or
+- centrifugal acceleration.
+
+A future equations-of-motion evaluator is expected to combine applied force
+through `F / m` with gravitational and, where applicable, non-inertial
+acceleration terms exactly once.
+
+This separation prevents a caller from supplying `m * g` as B8 force while
+also supplying the same gravitational field through B6.
+
+Physical forces not otherwise represented by another BBTC acceleration
+contract MAY be reduced into B8 applied force. Future examples may include
+aerodynamic, propulsion, electromagnetic, or other explicitly modeled physical
+forces, provided they are not duplicated elsewhere.
+
+The B8 moment member represents physical applied moment about the projectile
+center of mass. A future model that independently computes a physical torque
+such as aerodynamic or gravity-gradient moment MAY represent that torque in
+B8 when it is not otherwise modeled elsewhere.
+
+The B8 applied-moment member MUST contain physical applied torque only. It MUST
+NOT contain a fictitious or kinematic correction moment introduced solely by
+expressing rotational motion in an accelerating or rotating reference frame.
+Any such non-inertial rotational terms belong to a later reviewed
+equations-of-motion/reference-frame checkpoint and MUST NOT be double counted
+through B8.
+
+EB0.1-B8 itself introduces no gravity-gradient model, aerodynamic model,
+propulsion model, or contact model.
+
+### 31.2 Frames, reference point, and units
+
+All B8 forces and moments use SI units.
+
+The applied-force vector is expressed in the active BBTC reference frame used by
+the rigid-body state's translational position and translational velocity.
+
+The applied-moment vector is expressed in the canonical BBTC projectile body
+frame and is taken about the projectile center of mass.
+
+This mixed-frame representation is deliberate:
+
+- translational acceleration is evolved in active-reference axes; and
+- rotational dynamics consume the body-frame angular velocity and the
+  body-principal inertia representation frozen by B3.
+
+A model that naturally computes force in body axes MUST rotate that force into
+active-reference axes before storing it in B8.
+
+A model that naturally computes moment in reference axes MUST rotate that
+moment into body axes before storing it in B8.
+
+For the frozen world/reference-from-body unit orientation quaternion `q_WB`,
+body-to-reference conversion follows the active Hamilton convention already
+frozen by sections 5.1 and 7. Reference-to-body conversion is the corresponding
+inverse/conjugate rotation.
+
+The B8 record does not contain a force application point. Any distributed load
+or off-center force model that contributes to B8 is responsible for reducing
+its effect to:
+
+- one resultant applied force; and
+- one resultant applied moment about the center of mass.
+
+### 31.3 Public header and precision-qualified value records
+
+EB0.1-B8 introduces:
+
+```text
+include/bbtc/external_ballistics/force_moment.h
+```
+
+The external-ballistics umbrella header MUST include this public header once B8
+is implemented.
+
+The precision-qualified public records are:
+
+```c
+bbtc_eb_force_moment_float_t
+bbtc_eb_force_moment_double_t
+bbtc_eb_force_moment_long_double_t
+```
+
+Each record contains the following members in this exact declaration order:
+
+```text
+applied_force_reference_n
+applied_moment_body_n_m
+```
+
+The member types are:
+
+- `bbtc_eb_vec3_float_t` for the float-family record;
+- `bbtc_eb_vec3_double_t` for the double-family record; and
+- `bbtc_eb_vec3_long_double_t` for the long-double-family record.
+
+`applied_force_reference_n` is the resultant B8 applied physical force in
+newtons, expressed in active-reference axes.
+
+`applied_moment_body_n_m` is the resultant B8 applied physical moment about the
+projectile center of mass in newton-metres, expressed in canonical projectile
+body axes.
+
+No public alignment override is introduced.
+
+The all-zero B8 record is valid and represents no applied force and no applied
+moment.
+
+### 31.4 Contribution and accumulation semantics
+
+A B8 record may represent either:
+
+- one independently computed physical contribution; or
+- the algebraic resultant of multiple compatible contributions.
+
+Independent B8 contributions combine component-wise only after each force is
+expressed in active-reference axes and each moment is expressed in body axes
+about the center of mass.
+
+Mathematically, the resultant is the vector sum of the participating force
+vectors and the vector sum of the participating moment vectors.
+
+EB0.1-B8 does not expose a public accumulator API and does not freeze one
+floating-point accumulation order. A later force-model architecture may define
+an explicit accumulation strategy if deterministic ordering, compensated
+summation, or another numerical policy becomes necessary.
+
+No contribution may be added twice under different names. In particular,
+gravity and reference-frame kinematic accelerations remain outside B8 applied
+force as stated in section 31.1.
+
+### 31.5 Validation API
+
+EB0.1-B8 introduces:
+
+```c
+bbtc_eb_force_moment_validate_float
+bbtc_eb_force_moment_validate_double
+bbtc_eb_force_moment_validate_long_double
+```
+
+Conceptually, each validator has the native-family form:
+
+```c
+bbtc_status_e bbtc_eb_force_moment_validate_*(
+    const bbtc_eb_force_moment_*_t* force_moment
+);
+```
+
+Validation is read-only. Validators MUST NOT rotate, normalize, clamp, derive,
+accumulate, repair, or otherwise modify the caller-owned record.
+
+Validation MUST use this exact precedence:
+
+1. a null pointer returns `BBTC_STATUS_INVALID_ARGUMENT`;
+2. otherwise, if any component of either vector is NaN, return
+   `BBTC_STATUS_NAN_INPUT`;
+3. otherwise, if any component of either vector is positive or negative
+   infinity, return `BBTC_STATUS_NONFINITE_INPUT`; and
+4. otherwise return `BBTC_STATUS_SUCCESS`.
+
+The validator MUST perform a complete NaN scan across all six stored scalar
+components before deciding whether any infinity is present.
+
+No magnitude, sign, direction, orthogonality, symmetry, mass, inertia,
+reference-area, or relationship constraint is imposed by B8 validation.
+
+Arbitrary finite positive, negative, and zero force/moment components are valid.
+
+### 31.6 Precision and ABI rules
+
+Each B8 family is native throughout:
+
+- float record members and float-family validation remain native `float`;
+- double record members and double-family validation remain native `double`;
+  and
+- long-double record members and long-double-family validation remain native
+  `long double`.
+
+Validation MUST NOT convert through another precision family.
+
+EB0.1-B8 freezes only:
+
+- the three public record type names;
+- the two member names;
+- their declaration order;
+- their matching native vector types;
+- their units and frame meanings; and
+- the three validator names and validation semantics.
+
+Padding, byte size, alignment, and other implementation-specific ABI details
+remain implementation properties.
+
+### 31.7 Relationship to future equations of motion
+
+A later reviewed derivative/equations-of-motion checkpoint is expected to
+consume B8 together with the already frozen rigid-body state and projectile
+properties.
+
+For translation, the future evaluator is expected to use B8 applied force as:
+
+```text
+a_applied_R = applied_force_reference_n / mass_kg
+```
+
+and combine that physical applied-force acceleration with the independently
+provided gravitational field and, only when that later capability is enabled,
+the reviewed non-inertial reference-frame acceleration.
+
+For rotation, the future evaluator is expected to combine the B8 body-frame
+applied moment with body-frame angular velocity and principal moments of inertia
+through the rigid-body Euler equation.
+
+EB0.1-B8 freezes these architectural roles but does not yet implement the
+equations.
+
+### 31.8 Required tests
+
+EB0.1-B8 tests MUST verify at least:
+
+- the exact three public record type names;
+- exact member names and declaration order;
+- exact native precision-qualified vector member types;
+- the all-zero record is valid;
+- arbitrary finite signed force and moment vectors are valid;
+- validation imposes no hidden magnitude or cross-field relationship rule;
+- null input returns `BBTC_STATUS_INVALID_ARGUMENT`;
+- any NaN anywhere in the complete record returns `BBTC_STATUS_NAN_INPUT`;
+- NaN takes precedence over infinity even when the infinity occurs in an
+  earlier-declared component;
+- infinity returns `BBTC_STATUS_NONFINITE_INPUT` when no NaN exists;
+- validation is read-only;
+- float, double, and long-double validators are exercised;
+- the public B8 header remains usable from C++;
+- an independent CMake consumer can construct and validate a native-double B8
+  value solely through `<bbtc/bbtc.h>`; and
+- normal, strict-warning, AddressSanitizer, and UndefinedBehaviorSanitizer gates
+  remain green.
+
+Tests SHOULD include a representative mixed-frame value whose force is nonzero
+in active-reference axes and whose moment is nonzero in body axes, while
+avoiding any test that implies one required relation between those vectors.
+
+### 31.9 Deliberately deferred behavior
+
+EB0.1-B8 does NOT define:
+
+- an aerodynamic force or moment model;
+- a drag coefficient model;
+- relative-air velocity;
+- a force/moment callback or provider interface;
+- a public force/moment accumulator function;
+- force application-point storage;
+- center-of-pressure storage;
+- gravity-gradient torque;
+- propulsion;
+- collision/contact response;
+- Coriolis, centrifugal, Euler, or Eötvös acceleration evaluation;
+- a rigid-body derivative record;
+- equations-of-motion evaluation;
+- quaternion derivative evaluation;
+- numerical integration; or
+- Cubes of Honor adapter source code.
+
+Those behaviors remain later reviewed checkpoints.
+
+## 32. Acceptance criteria for EB0.1-B8
+
+EB0.1-B8 is complete when:
+
+- contract version 0.1.8 is reviewed and changed from `Draft` to `Accepted`
+  before implementation is committed;
+- the public header is frozen as
+  `include/bbtc/external_ballistics/force_moment.h`;
+- the three B8 record type names are frozen;
+- the member names and exact declaration order are frozen as
+  `applied_force_reference_n`, then `applied_moment_body_n_m`;
+- applied force is explicitly in active-reference axes and newtons;
+- applied moment is explicitly about the projectile center of mass, in body
+  axes and newton-metres;
+- the B8 applied-force member explicitly excludes force-equivalent duplicates of
+  B6 gravity and reference-frame non-inertial accelerations;
+- the B8 applied-moment member represents physical applied torque and excludes
+  future non-inertial rotational correction terms;
+- zero force and zero moment form a valid B8 record;
+- multiple physical contributions may be reduced algebraically into one B8
+  resultant only after frame/reference-point consistency is established;
+- B8 introduces no public accumulation-order policy;
+- validation is read-only and uses null, complete-record NaN,
+  complete-record infinity, then success precedence;
+- validation imposes no hidden sign, magnitude, direction, mass, inertia, or
+  force/moment relationship rule;
+- all three scalar families remain native throughout;
+- C, C++, and independent-consumer tests cover the public B8 value boundary;
+- normal, strict, and sanitizer gates remain green; and
+- EB0.1-B8 introduces no force model, derivative evaluator, equations of
+  motion, numerical integrator, rotating-frame acceleration evaluator,
+  collision response, or Cubes of Honor adapter implementation.
