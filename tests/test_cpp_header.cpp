@@ -308,6 +308,36 @@ static_assert(
 static_assert(
     std::is_same<
         decltype(
+            bbtc_eb_force_moment_float_t{}.applied_force_reference_n
+        ),
+        bbtc_eb_vec3_float_t
+    >::value,
+    "float EB applied force must use native float vector"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_eb_force_moment_double_t{}.applied_moment_body_n_m
+        ),
+        bbtc_eb_vec3_double_t
+    >::value,
+    "double EB applied moment must use native double vector"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_eb_force_moment_long_double_t{}.applied_force_reference_n
+        ),
+        bbtc_eb_vec3_long_double_t
+    >::value,
+    "long-double EB applied force must use native long-double vector"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
             bbtc_ib_geometry_float_t{}
                 .initial_behind_projectile_volume_m3
         ),
@@ -1207,6 +1237,24 @@ int main()
                .gravitational_acceleration_reference_m_per_s2.x != 12.0
         || eb_reference_provider_sample
                .reference_frame_angular_velocity_reference_rad_per_s.y != 2.0)
+    {
+        return 1;
+    }
+
+
+    /*
+     * Exercise EB0.1-B8 through the C++ umbrella-header boundary. Force and
+     * moment are deliberately populated independently so this test verifies
+     * representation/validation without implying equations-of-motion coupling.
+     */
+    bbtc_eb_force_moment_double_t eb_force_moment = {};
+    eb_force_moment.applied_force_reference_n.x = -125.0;
+    eb_force_moment.applied_force_reference_n.y = 4.5;
+    eb_force_moment.applied_moment_body_n_m.y = -7.0;
+    eb_force_moment.applied_moment_body_n_m.z = 42.0;
+
+    if (bbtc_eb_force_moment_validate_double(&eb_force_moment)
+        != BBTC_STATUS_SUCCESS)
     {
         return 1;
     }

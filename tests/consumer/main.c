@@ -355,6 +355,43 @@ check_external_ballistics_reference_frame_provider_contract(void)
 
 
 /**
+ * @brief Verifies EB0.1-B8 force/moment values through a downstream consumer.
+ *
+ * @details
+ * This independent-consumer check proves that `<bbtc/bbtc.h>` exposes the
+ * native-double B8 record and validator without private headers, equations of
+ * motion, or host-specific vector types.
+ *
+ * @return `EXIT_SUCCESS` when the public B8 value boundary is usable;
+ *         otherwise `EXIT_FAILURE`.
+ */
+static int
+check_external_ballistics_force_moment_contract(void)
+{
+    const bbtc_eb_force_moment_double_t force_moment =
+    {
+        .applied_force_reference_n =
+        {
+            .x = -125.0,
+            .y = 4.5,
+            .z = 0.25
+        },
+        .applied_moment_body_n_m =
+        {
+            .x = 0.001,
+            .y = -7.0,
+            .z = 42.0
+        }
+    };
+
+    return bbtc_eb_force_moment_validate_double(&force_moment)
+            == BBTC_STATUS_SUCCESS
+        ? EXIT_SUCCESS
+        : EXIT_FAILURE;
+}
+
+
+/**
  * @brief Verifies precision-qualified geometry through the consumer target.
  *
  * @return `EXIT_SUCCESS` when the geometry contract works; otherwise
@@ -1164,6 +1201,9 @@ int main(void)
     {
         return EXIT_FAILURE;
     }
+
+    if (check_external_ballistics_force_moment_contract() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
 
     if (check_geometry_contract() != EXIT_SUCCESS)
         return EXIT_FAILURE;
