@@ -32,6 +32,7 @@ add_library(
     include/bbtc/external_ballistics/environment.h
     include/bbtc/external_ballistics/environment_provider.h
     include/bbtc/external_ballistics/force_moment.h
+    include/bbtc/external_ballistics/inertial_vacuum.h
     include/bbtc/external_ballistics/integrator.h
     include/bbtc/external_ballistics/projectile.h
     include/bbtc/external_ballistics/quaternion.h
@@ -64,6 +65,7 @@ add_library(
     src/external/environment.c
     src/external/environment_provider.c
     src/external/force_moment.c
+    src/external/inertial_vacuum.c
     src/external/integrator.c
     src/external/math.c
     src/external/math_internal.h

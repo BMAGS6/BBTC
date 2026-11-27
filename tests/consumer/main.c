@@ -535,6 +535,73 @@ check_external_ballistics_integrator_contract(void)
 
 
 
+
+/**
+ * @brief Verifies EB1.1 inertial-vacuum derivative evaluation downstream.
+ *
+ * @details
+ * This independent-consumer case uses only `<bbtc/bbtc.h>` and the linked
+ * `bbtc::bbtc` target. Binary-exact inputs verify public API visibility,
+ * linkage, translational force/mass plus gravity, quaternion kinematics, and
+ * principal-axis torque response without private headers.
+ *
+ * @return `EXIT_SUCCESS` when one native-double EB1.1 derivative is correct;
+ *         otherwise `EXIT_FAILURE`.
+ */
+static int
+check_external_ballistics_inertial_vacuum_contract(void)
+{
+    const bbtc_eb_rigid_body_state_double_t state =
+    {
+        .orientation_world_from_body = {.w = 1.0},
+        .velocity_m_per_s = {.x = 10.0},
+        .angular_velocity_body_rad_per_s = {.x = 2.0},
+        .time_s = 0.0
+    };
+
+    const bbtc_eb_projectile_properties_double_t projectile =
+    {
+        .principal_inertia =
+        {
+            .moment_about_x_kg_m2 = 3.0,
+            .moment_about_y_kg_m2 = 3.0,
+            .moment_about_z_kg_m2 = 3.0
+        },
+        .mass_kg = 2.0,
+        .reference_diameter_m = 1.0,
+        .reference_area_m2 = 1.0
+    };
+
+    const bbtc_eb_reference_frame_sample_double_t reference_frame =
+    {
+        .gravitational_acceleration_reference_m_per_s2 = {.z = -9.0}
+    };
+
+    const bbtc_eb_force_moment_double_t force_moment =
+    {
+        .applied_force_reference_n = {.x = 4.0},
+        .applied_moment_body_n_m = {.x = 6.0}
+    };
+
+    bbtc_eb_rigid_body_state_derivative_double_t derivative = {0};
+
+    return bbtc_eb_inertial_vacuum_derivative_evaluate_double(
+               &state,
+               &projectile,
+               &reference_frame,
+               &force_moment,
+               &derivative
+           ) == BBTC_STATUS_SUCCESS
+            && derivative.position_derivative_reference_m_per_s.x == 10.0
+            && derivative.velocity_derivative_reference_m_per_s2.x == 2.0
+            && derivative.velocity_derivative_reference_m_per_s2.z == -9.0
+            && derivative.orientation_world_from_body_derivative_per_s.x == 1.0
+            && derivative.angular_velocity_derivative_body_rad_per_s2.x == 2.0
+        ? EXIT_SUCCESS
+        : EXIT_FAILURE;
+}
+
+
 /**
  * @brief Verifies precision-qualified geometry through the consumer target.
  *
@@ -1359,6 +1426,9 @@ int main(void)
     }
 
     if (check_external_ballistics_integrator_contract() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
+
+    if (check_external_ballistics_inertial_vacuum_contract() != EXIT_SUCCESS)
         return EXIT_FAILURE;
 
     if (check_geometry_contract() != EXIT_SUCCESS)

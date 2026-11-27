@@ -430,6 +430,56 @@ static_assert(
 );
 
 
+
+using bbtc_test_inertial_vacuum_float_fn = bbtc_status_e (*)(
+    const bbtc_eb_rigid_body_state_float_t*,
+    const bbtc_eb_projectile_properties_float_t*,
+    const bbtc_eb_reference_frame_sample_float_t*,
+    const bbtc_eb_force_moment_float_t*,
+    bbtc_eb_rigid_body_state_derivative_float_t*
+);
+
+using bbtc_test_inertial_vacuum_double_fn = bbtc_status_e (*)(
+    const bbtc_eb_rigid_body_state_double_t*,
+    const bbtc_eb_projectile_properties_double_t*,
+    const bbtc_eb_reference_frame_sample_double_t*,
+    const bbtc_eb_force_moment_double_t*,
+    bbtc_eb_rigid_body_state_derivative_double_t*
+);
+
+using bbtc_test_inertial_vacuum_long_double_fn = bbtc_status_e (*)(
+    const bbtc_eb_rigid_body_state_long_double_t*,
+    const bbtc_eb_projectile_properties_long_double_t*,
+    const bbtc_eb_reference_frame_sample_long_double_t*,
+    const bbtc_eb_force_moment_long_double_t*,
+    bbtc_eb_rigid_body_state_derivative_long_double_t*
+);
+
+static_assert(
+    std::is_same<
+        decltype(&bbtc_eb_inertial_vacuum_derivative_evaluate_float),
+        bbtc_test_inertial_vacuum_float_fn
+    >::value,
+    "float EB1.1 inertial-vacuum evaluator must use the frozen signature"
+);
+
+static_assert(
+    std::is_same<
+        decltype(&bbtc_eb_inertial_vacuum_derivative_evaluate_double),
+        bbtc_test_inertial_vacuum_double_fn
+    >::value,
+    "double EB1.1 inertial-vacuum evaluator must use the frozen signature"
+);
+
+static_assert(
+    std::is_same<
+        decltype(&bbtc_eb_inertial_vacuum_derivative_evaluate_long_double),
+        bbtc_test_inertial_vacuum_long_double_fn
+    >::value,
+    "long-double EB1.1 inertial-vacuum evaluator must use the frozen signature"
+);
+
+
 using bbtc_test_rk4_float_fn = bbtc_status_e (*)(
     const bbtc_eb_state_derivative_provider_float_t*,
     float,
@@ -1490,6 +1540,55 @@ int main()
         || eb_rk4_state.position_m.y != 1.0
         || eb_rk4_state.position_m.z != -1.5
         || eb_rk4_state.time_s != 0.5)
+    {
+        return 1;
+    }
+
+
+    /*
+     * Exercise EB1.1 inertial-vacuum derivative evaluation through the C++
+     * umbrella-header boundary using only public types and functions.
+     */
+    bbtc_eb_rigid_body_state_double_t eb_vacuum_state = {};
+    eb_vacuum_state.orientation_world_from_body.w = 1.0;
+    eb_vacuum_state.velocity_m_per_s.x = 10.0;
+    eb_vacuum_state.angular_velocity_body_rad_per_s.x = 2.0;
+
+    bbtc_eb_projectile_properties_double_t eb_vacuum_projectile = {};
+    eb_vacuum_projectile.principal_inertia.moment_about_x_kg_m2 = 3.0;
+    eb_vacuum_projectile.principal_inertia.moment_about_y_kg_m2 = 3.0;
+    eb_vacuum_projectile.principal_inertia.moment_about_z_kg_m2 = 3.0;
+    eb_vacuum_projectile.mass_kg = 2.0;
+    eb_vacuum_projectile.reference_diameter_m = 1.0;
+    eb_vacuum_projectile.reference_area_m2 = 1.0;
+
+    bbtc_eb_reference_frame_sample_double_t eb_vacuum_reference_frame = {};
+    eb_vacuum_reference_frame
+        .gravitational_acceleration_reference_m_per_s2.z = -9.0;
+
+    bbtc_eb_force_moment_double_t eb_vacuum_force_moment = {};
+    eb_vacuum_force_moment.applied_force_reference_n.x = 4.0;
+    eb_vacuum_force_moment.applied_moment_body_n_m.x = 6.0;
+
+    bbtc_eb_rigid_body_state_derivative_double_t eb_vacuum_derivative = {};
+
+    if (bbtc_eb_inertial_vacuum_derivative_evaluate_double(
+            &eb_vacuum_state,
+            &eb_vacuum_projectile,
+            &eb_vacuum_reference_frame,
+            &eb_vacuum_force_moment,
+            &eb_vacuum_derivative
+        ) != BBTC_STATUS_SUCCESS
+        || eb_vacuum_derivative.position_derivative_reference_m_per_s.x
+            != 10.0
+        || eb_vacuum_derivative.velocity_derivative_reference_m_per_s2.x
+            != 2.0
+        || eb_vacuum_derivative.velocity_derivative_reference_m_per_s2.z
+            != -9.0
+        || eb_vacuum_derivative.orientation_world_from_body_derivative_per_s.x
+            != 1.0
+        || eb_vacuum_derivative.angular_velocity_derivative_body_rad_per_s2.x
+            != 2.0)
     {
         return 1;
     }
