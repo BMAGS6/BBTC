@@ -140,6 +140,64 @@ static_assert(
 static_assert(
     std::is_same<
         decltype(
+            bbtc_eb_principal_inertia_float_t{}.moment_about_x_kg_m2
+        ),
+        float
+    >::value,
+    "float EB principal inertia must use native float"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_eb_principal_inertia_double_t{}.moment_about_y_kg_m2
+        ),
+        double
+    >::value,
+    "double EB principal inertia must use native double"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_eb_principal_inertia_long_double_t{}.moment_about_z_kg_m2
+        ),
+        long double
+    >::value,
+    "long-double EB principal inertia must use native long double"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_eb_projectile_properties_double_t{}.principal_inertia
+        ),
+        bbtc_eb_principal_inertia_double_t
+    >::value,
+    "double EB projectile properties must own double principal inertia"
+);
+
+static_assert(
+    std::is_same<
+        decltype(bbtc_eb_projectile_properties_float_t{}.mass_kg),
+        float
+    >::value,
+    "float EB projectile properties must use native float"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_eb_projectile_properties_long_double_t{}.reference_area_m2
+        ),
+        long double
+    >::value,
+    "long-double EB projectile properties must use native long double"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
             bbtc_ib_geometry_float_t{}
                 .initial_behind_projectile_volume_m3
         ),
@@ -888,6 +946,20 @@ int main()
     eb_state.time_s = 0.0;
 
     if (bbtc_eb_rigid_body_state_validate_double(&eb_state)
+        != BBTC_STATUS_SUCCESS)
+    {
+        return 1;
+    }
+
+    bbtc_eb_projectile_properties_double_t eb_projectile = {};
+    eb_projectile.principal_inertia.moment_about_x_kg_m2 = 1.0;
+    eb_projectile.principal_inertia.moment_about_y_kg_m2 = 2.0;
+    eb_projectile.principal_inertia.moment_about_z_kg_m2 = 2.0;
+    eb_projectile.mass_kg = 1.0;
+    eb_projectile.reference_diameter_m = 2.0;
+    eb_projectile.reference_area_m2 = 1.0;
+
+    if (bbtc_eb_projectile_properties_validate_double(&eb_projectile)
         != BBTC_STATUS_SUCCESS)
     {
         return 1;

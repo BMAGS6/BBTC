@@ -29,6 +29,7 @@ add_library(
     include/bbtc/bbtc.h
     include/bbtc/diagnostics.h
     include/bbtc/external_ballistics.h
+    include/bbtc/external_ballistics/projectile.h
     include/bbtc/external_ballistics/quaternion.h
     include/bbtc/external_ballistics/state.h
     include/bbtc/external_ballistics/vector.h
@@ -54,6 +55,7 @@ add_library(
     src/diagnostics.c
     src/external/math.c
     src/external/math_internal.h
+    src/external/projectile.c
     src/external/state.c
     src/internal/caloric_reference.c
     src/internal/first_order_virial_gas_model.c
