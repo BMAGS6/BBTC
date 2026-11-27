@@ -1,10 +1,10 @@
 # BBTC External Ballistics Design Contract
 
-**Contract version:** 0.1.1
+**Contract version:** 0.1.2
 
-**Project phase:** EB0.1-B1
+**Project phase:** EB0.1-B2
 
-**Applies to:** `rewrite/eb0_1b_math_state_foundation_v1`
+**Applies to:** `rewrite/eb0_1b2_math_validation_v1`
 
 **Status:** Accepted
 
@@ -735,3 +735,337 @@ EB0.1-B1 is complete when:
   Honor adapter implementation; and
 - contract version 0.1.1 is reviewed and changed from `Draft` to `Accepted`
   before the EB0.1-B1 public-record implementation is committed.
+
+## 19. EB0.1-B2 mathematical operations and state validation
+
+EB0.1-B2 establishes the mathematical correctness layer required by later
+external-ballistics dynamics. It adds a deliberately small internal
+three-dimensional vector and quaternion operation set plus public validation of
+the rigid-body state introduced by EB0.1-B1.
+
+This checkpoint does NOT introduce projectile physical properties, atmosphere
+sampling, force or moment models, derivatives of the rigid-body state, or a
+numerical integrator. Its purpose is to make the coordinate and quaternion
+machinery trustworthy before physical equations depend on it.
+
+### 19.1 Legacy reconstruction constraints
+
+The pre-rewrite BBTC external-ballistics implementation is a research reference,
+not a normative source for the reconstructed API or conventions.
+
+Useful legacy concepts MAY be reimplemented after independent verification,
+including Hamilton quaternion multiplication, quaternion conjugation,
+quaternion-vector rotation, vector cross products, and normalization.
+
+Legacy behavior MUST NOT override the conventions already frozen by this
+contract. In particular:
+
+- the legacy orientation derivative used the multiplication order
+  `omega_quat * q`;
+- the reconstructed world-from-body orientation with body-frame angular
+  velocity requires the later derivative contract to use `q * omega_body_quat`;
+- the legacy quaternion normalizer silently left sufficiently small
+  quaternions unchanged;
+- the reconstructed implementation MUST report normalization failure rather
+  than silently preserving or replacing an invalid quaternion; and
+- no vector operation may combine operands expressed in different coordinate
+  frames merely because their storage representations match.
+
+EB0.1-B2 does not yet implement the quaternion orientation derivative. The
+legacy multiplication-order discrepancy is recorded here so the later dynamics
+checkpoint MUST test the frozen section 12 convention independently.
+
+### 19.2 Internal mathematics boundary
+
+The vector and quaternion operations introduced by EB0.1-B2 are implementation
+support for BBTC physics and are NOT added to the public external-ballistics
+API in this checkpoint.
+
+The internal operation set MUST have native `float`, `double`, and
+`long double` implementations. A family MUST NOT route arithmetic through
+another scalar family.
+
+The implementation MAY use a private internal header shared by BBTC source
+files and dedicated internal tests. Such declarations are not public ABI and
+MUST NOT be installed or included by `<bbtc/external_ballistics.h>`.
+
+The internal operation set MUST NOT allocate dynamic storage, perform file I/O,
+write diagnostics to standard streams, or depend on Cubes of Honor math types.
+
+### 19.3 Internal three-dimensional vector operations
+
+EB0.1-B2 MUST provide internal precision-qualified operations sufficient for:
+
+- component-wise addition;
+- component-wise subtraction;
+- scalar multiplication;
+- dot product;
+- right-handed cross product;
+- squared Euclidean norm;
+- Euclidean norm; and
+- normalization.
+
+The right-handed cross product MUST satisfy the canonical basis relationships:
+
+```text
++X cross +Y = +Z
++Y cross +Z = +X
++Z cross +X = +Y
+```
+
+and reversing either operand MUST reverse the result.
+
+Norm and normalization implementations SHOULD avoid unnecessary overflow or
+underflow where a standard-library scaling operation such as the appropriate
+`hypot` family can provide a more robust result.
+
+Vector normalization MUST be fail-closed. For the internal status-returning
+normalization operation:
+
+- a null input or output pointer returns `BBTC_STATUS_INVALID_ARGUMENT`;
+- a NaN component returns `BBTC_STATUS_NAN_INPUT`;
+- an infinite component returns `BBTC_STATUS_NONFINITE_INPUT`;
+- a finite zero-length vector returns `BBTC_STATUS_OUTSIDE_DOMAIN`; and
+- a finite nonzero vector produces a unit vector and
+  `BBTC_STATUS_SUCCESS`.
+
+On every failure for which a nonnull output pointer is available, the output
+record MUST be cleared to all-zero components.
+
+### 19.4 Internal quaternion operations
+
+EB0.1-B2 MUST provide internal precision-qualified operations sufficient for:
+
+- identity-quaternion construction;
+- Hamilton multiplication;
+- conjugation;
+- squared Euclidean norm;
+- Euclidean norm;
+- normalization; and
+- active rotation of a three-dimensional vector by a unit quaternion.
+
+Quaternion multiplication MUST use the Hamilton product and MUST preserve
+operand order. Quaternion multiplication is not commutative, and tests MUST
+include at least one case for which `q1 * q2` and `q2 * q1` produce distinct
+rotations.
+
+The identity quaternion is:
+
+```text
+(x, y, z, w) = (0, 0, 0, 1)
+```
+
+Quaternion conjugation negates `x`, `y`, and `z` while preserving `w`.
+
+For a unit quaternion `q` and vector `v`, active vector rotation MUST be
+equivalent to:
+
+`q * (0, v) * conjugate(q)`.
+
+An optimized algebraically equivalent vector-rotation formula MAY be used by
+the implementation, but tests MUST compare representative optimized results
+against the explicit Hamilton-product definition.
+
+Quaternion normalization MUST be fail-closed. For the internal
+status-returning normalization operation:
+
+- a null input or output pointer returns `BBTC_STATUS_INVALID_ARGUMENT`;
+- a NaN component returns `BBTC_STATUS_NAN_INPUT`;
+- an infinite component returns `BBTC_STATUS_NONFINITE_INPUT`;
+- a finite zero-length quaternion returns `BBTC_STATUS_OUTSIDE_DOMAIN`; and
+- a finite nonzero quaternion produces a unit quaternion and
+  `BBTC_STATUS_SUCCESS`.
+
+Normalization MUST NOT silently substitute the identity quaternion for an
+invalid input.
+
+On every failure for which a nonnull output pointer is available, the output
+quaternion MUST be cleared to all-zero components.
+
+### 19.5 Public rigid-body-state validation
+
+EB0.1-B2 introduces the following public functions:
+
+```c
+bbtc_status_e
+bbtc_eb_rigid_body_state_validate_float(
+    const bbtc_eb_rigid_body_state_float_t* state
+);
+
+bbtc_status_e
+bbtc_eb_rigid_body_state_validate_double(
+    const bbtc_eb_rigid_body_state_double_t* state
+);
+
+bbtc_status_e
+bbtc_eb_rigid_body_state_validate_long_double(
+    const bbtc_eb_rigid_body_state_long_double_t* state
+);
+```
+
+These functions validate caller-owned state without modifying it.
+
+Validation MUST inspect:
+
+- all four orientation-quaternion components;
+- all three position components;
+- all three translational-velocity components;
+- all three body-angular-velocity components; and
+- simulation time.
+
+Finite position, translational velocity, and angular velocity may otherwise
+have any sign or magnitude representable by the selected scalar family.
+
+`time_s` MUST be greater than or equal to zero. Negative zero is accepted as
+zero by the ordinary floating-point comparison semantics.
+
+The orientation quaternion MUST be finite, nonzero, and sufficiently close to
+unit length as defined by section 19.6.
+
+The validator MUST NOT normalize, repair, clamp, replace, or otherwise mutate a
+supplied state.
+
+### 19.6 Orientation unit-norm acceptance tolerance
+
+Public state validation compares the squared quaternion norm against one:
+
+`abs(norm_squared - 1) <= tolerance`.
+
+For EB0.1-B2, the acceptance tolerance for every scalar family is:
+
+`64 * FLT_EPSILON`.
+
+This common interoperability floor is intentional. Cubes of Honor currently
+uses float-oriented quaternion math while the intended first BBTC integration
+uses the native-double family. A quaternion that was normalized in float and
+then converted component-by-component to double MUST NOT be rejected merely
+because the double family can represent a much tighter normalization residual.
+
+The tolerance is a validation boundary, not the arithmetic precision used by
+the double or long-double solver families. Internal normalization and later
+integration continue to use the native scalar family.
+
+The validator MUST compute the norm in a manner that does not turn ordinary
+finite near-unit inputs into false overflow or underflow failures.
+
+A quaternion outside this tolerance returns `BBTC_STATUS_OUTSIDE_DOMAIN`.
+
+This tolerance MAY be revised only through an explicit contract revision with
+tests demonstrating the interoperability and numerical consequences.
+
+### 19.7 Validation precedence
+
+When more than one invalid condition exists in one rigid-body state, public
+validation MUST apply the following deterministic precedence:
+
+1. a null state pointer returns `BBTC_STATUS_INVALID_ARGUMENT`;
+2. if any inspected scalar is NaN, return `BBTC_STATUS_NAN_INPUT`;
+3. otherwise, if any inspected scalar is positive or negative infinity, return
+   `BBTC_STATUS_NONFINITE_INPUT`;
+4. otherwise, if `time_s` is negative, return
+   `BBTC_STATUS_OUTSIDE_DOMAIN`;
+5. otherwise, if the orientation quaternion is zero-length or outside the
+   unit-norm acceptance tolerance, return `BBTC_STATUS_OUTSIDE_DOMAIN`;
+6. otherwise return `BBTC_STATUS_SUCCESS`.
+
+The NaN and infinity scans MUST cover the complete state before domain
+conditions are evaluated. This prevents member declaration order from changing
+the status reported for a multiply-invalid state.
+
+### 19.8 Convention and interoperability tests
+
+EB0.1-B2 tests MUST establish the mathematical conventions independently of
+later ballistic behavior.
+
+At minimum, tests MUST verify:
+
+- right-handed cross-product basis identities and operand reversal;
+- exact identity-quaternion behavior;
+- Hamilton multiplication order with noncommuting rotations;
+- conjugation;
+- normalization success for representative nonunit finite values;
+- normalization failure for zero, NaN, and infinity;
+- active 90-degree basis rotations about each canonical positive axis;
+- equivalence of `q` and `-q` as rotations;
+- agreement between the optimized quaternion-vector rotation, if used, and the
+  explicit `q * v * conjugate(q)` reference form;
+- a unit quaternion passes rigid-body-state validation;
+- zero orientation fails state validation;
+- a materially nonunit orientation fails state validation;
+- a quaternion within the section 19.6 tolerance passes validation;
+- negative time fails validation;
+- arbitrary finite signed position, velocity, and angular velocity are accepted;
+- deterministic NaN-before-infinity-before-domain validation precedence; and
+- all three precision families execute their own native arithmetic paths.
+
+The Cubes of Honor basis relationship from section 13.1 MUST also be exercised
+as a mathematical reference test. The unit quaternion
+
+```text
+(x, y, z, w) = (0.5, 0.5, -0.5, 0.5)
+```
+
+represents one valid active Cubes-of-Honor-local-from-BBTC-body basis rotation
+under the frozen convention and MUST map:
+
+```text
+BBTC body +X -> Cubes of Honor local -Z
+BBTC body +Y -> Cubes of Honor local +X
+BBTC body +Z -> Cubes of Honor local -Y
+```
+
+Its negation MUST produce the same three rotated basis vectors.
+
+This constant is a convention test vector, not a requirement that the future
+Cubes of Honor adapter store or hard-code one particular quaternion sign.
+
+### 19.9 Deliberately deferred behavior
+
+EB0.1-B2 does NOT define or implement:
+
+- quaternion orientation derivatives;
+- rigid-body derivatives;
+- projectile mass or inertia;
+- aerodynamic reference geometry;
+- environment samples or provider callbacks;
+- gravity or rotating-reference-frame data;
+- force or moment accumulation;
+- aerodynamic coefficients or drag;
+- RK4 or another numerical integrator; or
+- Cubes of Honor adapter source code.
+
+The later dynamics checkpoint MUST specifically test the section 12
+`q_WB * omega_B_quat` orientation-derivative order rather than copying the
+pre-rewrite `omega_quat * q` implementation.
+
+## 20. Acceptance criteria for EB0.1-B2
+
+EB0.1-B2 is complete when:
+
+- the contract version is 0.1.2 and the checkpoint is reviewed and changed from
+  `Draft` to `Accepted` before implementation is committed;
+- native float, double, and long-double internal vector operations satisfy the
+  section 19.3 semantics;
+- native float, double, and long-double internal quaternion operations satisfy
+  the section 19.4 semantics;
+- internal vector and quaternion normalization are status-returning,
+  fail-closed, and clear nonnull outputs on failure;
+- no invalid quaternion is silently converted to identity;
+- public precision-qualified rigid-body-state validation functions exist with
+  the exact names in section 19.5;
+- state validation does not modify caller-owned state;
+- state validation uses the deterministic precedence in section 19.7;
+- state validation enforces the section 19.6 quaternion unit-norm tolerance
+  without reducing double or long-double arithmetic to float;
+- the legacy quaternion multiplication-order ambiguity is explicitly prevented
+  from defining reconstructed behavior;
+- direct mathematical tests cover right-handed vector algebra, Hamilton
+  quaternion composition, active rotations, `q`/`-q` equivalence, and the
+  Cubes of Honor basis mapping;
+- C, C++, and independent-consumer tests exercise the public validation API;
+- existing BBTC internal-ballistics, diagnostics, precision, consumer, and
+  public-header tests continue to pass;
+- strict compiler and sanitizer gates applicable to the repository continue to
+  pass; and
+- EB0.1-B2 introduces no projectile-properties, environment, aerodynamic,
+  derivative, integrator, or Cubes of Honor adapter implementation.
