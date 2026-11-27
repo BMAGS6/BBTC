@@ -1,10 +1,10 @@
 # BBTC External Ballistics Design Contract
 
-**Contract version:** 0.1.3
+**Contract version:** 0.1.4
 
-**Project phase:** EB0.1-B3
+**Project phase:** EB0.1-B4
 
-**Applies to:** `rewrite/eb0_1b3_projectile_properties_v1`
+**Applies to:** `rewrite/eb0_1b4_environment_sample_v1`
 
 **Status:** Accepted
 
@@ -1391,3 +1391,302 @@ EB0.1-B3 is complete when:
   and sanitizer configurations; and
 - EB0.1-B3 introduces no aerodynamic coefficient, environment, force/moment,
   derivative, integrator, collision, or Cubes of Honor adapter implementation.
+
+## 23. EB0.1-B4 local environment sample and validation
+
+EB0.1-B4 establishes the first public external-ballistics representation of one
+already-sampled local atmospheric/environment state. The record is deliberately
+separate from the mechanism that obtains it. It is a value passed to later
+physics layers, not an atmosphere model, weather system, callback, cache, or
+world object.
+
+The purpose of this checkpoint is to freeze the data semantics that future
+relative-air, Mach, aerodynamic, and derivative calculations will consume
+without yet coupling those calculations to any specific environment provider.
+
+### 23.1 Scope and sampling boundary
+
+An EB0.1-B4 environment sample represents local conditions at one conceptual
+projectile position and simulation time. The sample itself does NOT store that
+position or time; those values belong to the state and to the future sampling
+interface that requests an environment sample.
+
+The record MUST be usable whether its values came from:
+
+- a constant standalone atmosphere;
+- a standard-atmosphere implementation;
+- a table or measured data set;
+- a Cubes of Honor atmosphere/weather subsystem;
+- another host-controlled model; or
+- an exact vacuum representation.
+
+EB0.1-B4 defines only the sampled value record and its validation contract.
+The callback/provider mechanism required by section 10 remains a separate
+checkpoint.
+
+### 23.2 Public header and precision-qualified types
+
+EB0.1-B4 introduces:
+
+```text
+include/bbtc/external_ballistics/environment.h
+```
+
+The external-ballistics umbrella header MUST include this public header.
+
+The precision-qualified sample records are:
+
+```c
+bbtc_eb_environment_sample_float_t
+bbtc_eb_environment_sample_double_t
+bbtc_eb_environment_sample_long_double_t
+```
+
+Each family MUST use its native scalar type directly. No precision family may
+store or validate its fields by routing them through another scalar family.
+
+The matching public validators are:
+
+```c
+bbtc_eb_environment_sample_validate_float
+bbtc_eb_environment_sample_validate_double
+bbtc_eb_environment_sample_validate_long_double
+```
+
+### 23.3 Environment-sample record
+
+Each precision family MUST contain the following fields in this exact
+declaration order:
+
+```text
+air_velocity_world_m_per_s
+temperature_k
+absolute_pressure_pa
+air_density_kg_per_m3
+speed_of_sound_m_per_s
+```
+
+`air_velocity_world_m_per_s` uses the matching `bbtc_eb_vec3_*_t` type and is
+declared first so the composite value precedes the equal-size scalar members.
+No public alignment override is introduced.
+
+### 23.4 Field semantics
+
+`air_velocity_world_m_per_s` is the velocity of the local atmospheric medium,
+in metres per second, expressed in the same active world/reference frame used
+by `bbtc_eb_rigid_body_state_*_t.velocity_m_per_s`.
+
+For an Earth-like host this quantity is commonly described as wind velocity.
+The field is named in terms of the moving medium rather than projectile-relative
+airspeed because future relative-air calculations MUST derive the latter
+explicitly from projectile and environment state. Conceptually:
+
+`v_relative_air_W = v_projectile_W - v_air_W`.
+
+EB0.1-B4 does NOT yet expose that derived operation.
+
+`temperature_k` is local absolute thermodynamic temperature in kelvin.
+
+`absolute_pressure_pa` is local absolute static pressure in pascals.
+
+`air_density_kg_per_m3` is local atmospheric-medium mass density in kilograms
+per cubic metre.
+
+`speed_of_sound_m_per_s` is the local acoustic propagation speed in metres per
+second used by future Mach-number calculations.
+
+These quantities are caller-supplied model outputs. BBTC MUST NOT silently
+derive density from pressure and temperature, derive pressure from density and
+temperature, or derive speed of sound from another thermodynamic relation at
+this validation boundary.
+
+### 23.5 Vacuum and thermodynamic-consistency policy
+
+Exact vacuum MUST be representable.
+
+A canonical exact-vacuum sample uses:
+
+```text
+absolute_pressure_pa      = 0
+air_density_kg_per_m3     = 0
+speed_of_sound_m_per_s    = 0
+```
+
+`temperature_k` MUST still be positive and finite because the record retains a
+well-defined scalar value rather than introducing a conditional or optional
+temperature representation.
+
+`air_velocity_world_m_per_s` MAY contain any finite vector in vacuum. No
+aerodynamic model may assign physical influence to that vector when the medium
+density is zero.
+
+A zero speed of sound is valid only when `air_density_kg_per_m3` is zero.
+Any positive-density medium MUST therefore provide a strictly positive finite
+speed of sound.
+
+When `air_density_kg_per_m3` is zero, future aerodynamic calculations MUST
+recognize the vacuum condition before attempting Mach-number normalization.
+They MUST NOT divide relative-air speed by a zero speed of sound merely to
+produce a nominal Mach value. In exact vacuum, aerodynamic force and moment
+models have no medium from which to produce aerodynamic loading.
+
+Because EB0.1-B4 deliberately imposes no equation of state, validation alone
+does not classify every zero-density record as canonical exact vacuum. For
+example, a caller may supply zero density together with a nonzero pressure
+without violating the individual B4 field domains. Such cross-field physical
+consistency remains the responsibility of the environment provider. A caller
+intending to represent exact vacuum SHOULD use the canonical zero-pressure,
+zero-density, zero-sound-speed representation above.
+
+EB0.1-B4 MUST NOT impose an ideal-gas equation, a standard-atmosphere relation,
+or another cross-field equation-of-state consistency test. In particular,
+validation does not attempt to prove that pressure, density, temperature, and
+speed of sound came from one specific thermodynamic model. That consistency is
+owned by the caller or environment provider.
+
+### 23.6 Physical validity requirements
+
+A valid environment sample MUST satisfy all of the following:
+
+- every scalar component of `air_velocity_world_m_per_s` is finite;
+- `temperature_k` is finite and strictly greater than zero;
+- `absolute_pressure_pa` is finite and greater than or equal to zero;
+- `air_density_kg_per_m3` is finite and greater than or equal to zero;
+- `speed_of_sound_m_per_s` is finite and greater than or equal to zero; and
+- when `air_density_kg_per_m3` is greater than zero,
+  `speed_of_sound_m_per_s` is strictly greater than zero.
+
+The three air-velocity components may be positive, negative, or zero.
+
+A zero-initialized environment sample is deterministic storage but is invalid
+because `temperature_k == 0`.
+
+### 23.7 Public validation and deterministic precedence
+
+Validation is read-only and MUST NOT:
+
+- clamp temperature, pressure, density, sound speed, or velocity;
+- substitute a standard atmosphere;
+- derive one thermodynamic field from another;
+- replace a vacuum sample with small positive values;
+- zero wind in vacuum; or
+- mutate caller-owned storage.
+
+For each precision family the validator MUST use this failure precedence:
+
+1. a null sample pointer returns `BBTC_STATUS_INVALID_ARGUMENT`;
+2. otherwise, if any inspected scalar is NaN, return `BBTC_STATUS_NAN_INPUT`;
+3. otherwise, if any inspected scalar is infinite, return
+   `BBTC_STATUS_NONFINITE_INPUT`;
+4. otherwise, if any physical-domain rule in section 23.6 is violated, return
+   `BBTC_STATUS_OUTSIDE_DOMAIN`; and
+5. otherwise return `BBTC_STATUS_SUCCESS`.
+
+NaN and infinity detection MUST scan the complete record before physical-domain
+checks so multiply-invalid inputs do not change status merely because of member
+declaration order.
+
+### 23.8 Ownership, ABI, and layout rules
+
+The environment sample is a plain caller-owned value. It MUST contain no:
+
+- dynamic storage;
+- pointers;
+- callbacks;
+- allocator state;
+- host application handles;
+- Cubes of Honor types; or
+- hidden environment-provider ownership.
+
+Natural ISO C object layout is used. No universal `sizeof` value, padding
+pattern, or stronger-than-natural alignment is frozen.
+
+The exact field order in section 23.3 is public contract, but consumers MUST
+access named members rather than type-punning, assuming foreign layout
+compatibility, or depending on incidental padding.
+
+### 23.9 Required tests
+
+EB0.1-B4 tests MUST verify at least:
+
+- native field and nested vector types for all three scalar families;
+- exact public member names and declaration order without freezing one byte
+  size or padding pattern;
+- a representative positive-density atmosphere sample is valid;
+- positive, negative, and zero air-velocity components are accepted;
+- the canonical exact-vacuum sample is valid;
+- zero-initialized storage is invalid;
+- zero and negative temperature are rejected;
+- negative absolute pressure is rejected;
+- negative density is rejected;
+- negative speed of sound is rejected;
+- zero speed of sound is rejected when density is positive;
+- validation does not impose an ideal-gas or standard-atmosphere relation among
+  otherwise individually valid fields;
+- NaN has deterministic precedence over infinity and physical-domain errors;
+- infinity has deterministic precedence over physical-domain errors;
+- validation is read-only;
+- native `float`, `double`, and `long double` entry points are independently
+  exercised;
+- the new public header remains usable from C++ through the project compatibility
+  test;
+- an independent CMake consumer can construct and validate a native-double
+  sample through `<bbtc/bbtc.h>`; and
+- existing normal, strict-warning, AddressSanitizer, and UndefinedBehaviorSanitizer
+  gates remain green.
+
+### 23.10 Deliberately deferred behavior
+
+EB0.1-B4 does NOT define:
+
+- an environment-provider callback or context object;
+- position/time sampling dispatch;
+- interpolation or caching;
+- a BBTC-owned standard atmosphere;
+- gravity;
+- planetary or reference-frame angular velocity;
+- relative-air-velocity helper functions;
+- Mach-number evaluation;
+- dynamic pressure;
+- Reynolds number or viscosity;
+- aerodynamic coefficients;
+- drag, lift, Magnus, spin damping, or aerodynamic moments;
+- force or moment accumulation;
+- rigid-body state derivatives;
+- numerical integration;
+- collision behavior; or
+- Cubes of Honor adapter source code.
+
+Those behaviors require later reviewed checkpoints built on top of the sampled
+value semantics frozen here.
+
+## 24. Acceptance criteria for EB0.1-B4
+
+EB0.1-B4 is complete when:
+
+- contract version 0.1.4 is reviewed and changed from `Draft` to `Accepted`
+  before implementation is committed;
+- the public environment header and exact precision-qualified sample type names
+  in section 23.2 are frozen;
+- each sample uses the exact member names and declaration order in section 23.3;
+- air velocity is explicitly expressed in the active world/reference frame and
+  is distinct from future projectile-relative air velocity;
+- temperature, absolute pressure, density, and speed-of-sound units and meanings
+  are explicitly documented;
+- exact vacuum is representable without substituting epsilon-valued atmosphere
+  fields;
+- positive-density media require positive sound speed while zero-density vacuum
+  permits zero sound speed;
+- validation does not impose an ideal-gas, standard-atmosphere, or other hidden
+  equation-of-state consistency relation;
+- public validation follows the deterministic precedence in section 23.7 and
+  never repairs or mutates caller data;
+- zero-initialized environment storage is documented and tested as invalid;
+- no public alignment override, dynamic ownership, provider callback, host type,
+  or Cubes of Honor dependency is introduced;
+- C, C++, and independent-consumer tests cover the public record and validator;
+- existing BBTC tests remain green under normal, strict, and sanitizer gates;
+  and
+- EB0.1-B4 introduces no environment-provider dispatch, gravity/reference-frame
+  data, relative-air calculation, aerodynamic model, derivative, integrator,
+  collision, or Cubes of Honor adapter implementation.
