@@ -404,6 +404,31 @@ static_assert(
     "B9 long-double derivative must not contain a time_derivative member"
 );
 
+
+static_assert(
+    std::is_same<
+        decltype(bbtc_eb_state_derivative_provider_float_t{}.evaluate),
+        bbtc_eb_state_derivative_provider_float_fn
+    >::value,
+    "float EB state-derivative provider must use native callback type"
+);
+
+static_assert(
+    std::is_same<
+        decltype(bbtc_eb_state_derivative_provider_double_t{}.context),
+        const void*
+    >::value,
+    "EB state-derivative provider context must be borrowed const void pointer"
+);
+
+static_assert(
+    std::is_same<
+        decltype(bbtc_eb_state_derivative_provider_long_double_t{}.evaluate),
+        bbtc_eb_state_derivative_provider_long_double_fn
+    >::value,
+    "long-double EB state-derivative provider must use native callback type"
+);
+
 static_assert(
     std::is_same<
         decltype(
@@ -1343,6 +1368,46 @@ int main()
 
     if (bbtc_eb_rigid_body_state_derivative_validate_double(&eb_derivative)
         != BBTC_STATUS_SUCCESS)
+    {
+        return 1;
+    }
+
+
+    /*
+     * Exercise EB0.1-B10 through the C++ umbrella-header boundary.
+     */
+    const bbtc_eb_state_derivative_provider_double_t eb_derivative_provider =
+    {
+        [](const void*,
+           const bbtc_eb_rigid_body_state_double_t* state,
+           bbtc_eb_rigid_body_state_derivative_double_t* out_derivative)
+            -> bbtc_status_e
+        {
+            out_derivative->position_derivative_reference_m_per_s =
+                state->velocity_m_per_s;
+            return BBTC_STATUS_SUCCESS;
+        },
+        nullptr
+    };
+
+    const bbtc_eb_rigid_body_state_double_t eb_provider_state =
+    {
+        {0.0, 0.0, 0.0, 1.0},
+        {0.0, 0.0, 0.0},
+        {100.0, 2.0, -3.0},
+        {0.0, 0.0, 0.0},
+        1.0
+    };
+
+    bbtc_eb_rigid_body_state_derivative_double_t eb_provider_derivative = {};
+
+    if (bbtc_eb_state_derivative_provider_evaluate_double(
+            &eb_derivative_provider,
+            &eb_provider_state,
+            &eb_provider_derivative
+        ) != BBTC_STATUS_SUCCESS
+        || eb_provider_derivative.position_derivative_reference_m_per_s.x
+            != 100.0)
     {
         return 1;
     }

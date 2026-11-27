@@ -38,6 +38,7 @@ add_library(
     include/bbtc/external_ballistics/reference_frame_provider.h
     include/bbtc/external_ballistics/state.h
     include/bbtc/external_ballistics/state_derivative.h
+    include/bbtc/external_ballistics/state_derivative_provider.h
     include/bbtc/external_ballistics/vector.h
     include/bbtc/internal_ballistics.h
     include/bbtc/internal_ballistics/caloric_reference.h
@@ -69,6 +70,7 @@ add_library(
     src/external/reference_frame_provider.c
     src/external/state.c
     src/external/state_derivative.c
+    src/external/state_derivative_provider.c
     src/internal/caloric_reference.c
     src/internal/first_order_virial_gas_model.c
     src/internal/noble_abel_gas_model.c

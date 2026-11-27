@@ -439,6 +439,54 @@ check_external_ballistics_state_derivative_contract(void)
         ? EXIT_SUCCESS
         : EXIT_FAILURE;
 }
+static bbtc_status_e
+consumer_state_derivative_provider(
+    const void* context,
+    const bbtc_eb_rigid_body_state_double_t* state,
+    bbtc_eb_rigid_body_state_derivative_double_t* out_derivative
+)
+{
+    (void)context;
+    out_derivative->position_derivative_reference_m_per_s =
+        state->velocity_m_per_s;
+    out_derivative->velocity_derivative_reference_m_per_s2.z = -9.81;
+    return BBTC_STATUS_SUCCESS;
+}
+
+
+/**
+ * @brief Verifies EB0.1-B10 derivative-provider dispatch downstream.
+ *
+ * @return `EXIT_SUCCESS` when the B10 public provider boundary is usable;
+ *         otherwise `EXIT_FAILURE`.
+ */
+static int
+check_external_ballistics_state_derivative_provider_contract(void)
+{
+    const bbtc_eb_state_derivative_provider_double_t provider =
+    {
+        .evaluate = consumer_state_derivative_provider,
+        .context = NULL
+    };
+    const bbtc_eb_rigid_body_state_double_t state =
+    {
+        .orientation_world_from_body = {.w = 1.0},
+        .position_m = {.x = 10.0, .y = 20.0, .z = 30.0},
+        .velocity_m_per_s = {.x = 700.0, .y = -2.0, .z = 1.0},
+        .angular_velocity_body_rad_per_s = {.x = 100.0},
+        .time_s = 2.0
+    };
+    bbtc_eb_rigid_body_state_derivative_double_t derivative = {0};
+
+    return bbtc_eb_state_derivative_provider_evaluate_double(
+               &provider, &state, &derivative
+           ) == BBTC_STATUS_SUCCESS
+            && derivative.position_derivative_reference_m_per_s.x == 700.0
+            && derivative.velocity_derivative_reference_m_per_s2.z == -9.81
+        ? EXIT_SUCCESS
+        : EXIT_FAILURE;
+}
+
 
 
 /**
@@ -1257,6 +1305,12 @@ int main(void)
 
     if (check_external_ballistics_state_derivative_contract() != EXIT_SUCCESS)
         return EXIT_FAILURE;
+
+    if (check_external_ballistics_state_derivative_provider_contract()
+        != EXIT_SUCCESS)
+    {
+        return EXIT_FAILURE;
+    }
 
     if (check_geometry_contract() != EXIT_SUCCESS)
         return EXIT_FAILURE;
