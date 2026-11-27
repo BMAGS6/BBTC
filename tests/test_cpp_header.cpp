@@ -251,6 +251,39 @@ static_assert(
 static_assert(
     std::is_same<
         decltype(
+            bbtc_eb_reference_frame_sample_float_t{}
+                .gravitational_acceleration_reference_m_per_s2
+        ),
+        bbtc_eb_vec3_float_t
+    >::value,
+    "float EB reference-frame gravity must use native float vector"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_eb_reference_frame_sample_double_t{}
+                .reference_frame_origin_acceleration_reference_m_per_s2
+        ),
+        bbtc_eb_vec3_double_t
+    >::value,
+    "double EB reference-frame origin acceleration must use native vector"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
+            bbtc_eb_reference_frame_sample_long_double_t{}
+                .reference_frame_angular_velocity_reference_rad_per_s
+        ),
+        bbtc_eb_vec3_long_double_t
+    >::value,
+    "long-double EB frame angular velocity must use native vector"
+);
+
+static_assert(
+    std::is_same<
+        decltype(
             bbtc_ib_geometry_float_t{}
                 .initial_behind_projectile_volume_m3
         ),
@@ -1081,6 +1114,23 @@ int main()
         return 1;
     }
 
+    /*
+     * Exercise EB0.1-B6 through the C++ umbrella-header boundary.
+     */
+    bbtc_eb_reference_frame_sample_double_t eb_reference_frame = {};
+    eb_reference_frame.gravitational_acceleration_reference_m_per_s2.z =
+        9.81;
+    eb_reference_frame
+        .reference_frame_origin_acceleration_reference_m_per_s2.x = -0.02;
+    eb_reference_frame
+        .reference_frame_angular_velocity_reference_rad_per_s.y =
+            7.292115e-5;
+
+    if (bbtc_eb_reference_frame_sample_validate_double(&eb_reference_frame)
+        != BBTC_STATUS_SUCCESS)
+    {
+        return 1;
+    }
 
     bbtc_ib_rectangular_prismatic_grain_geometry_double_t grain_geometry = {};
     grain_geometry.initial_length_m = 4.0;

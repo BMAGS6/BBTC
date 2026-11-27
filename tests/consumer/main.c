@@ -238,6 +238,50 @@ check_external_ballistics_environment_provider_contract(void)
         : EXIT_FAILURE;
 }
 
+/**
+ * @brief Verifies EB0.1-B6 reference-frame samples through a downstream consumer.
+ *
+ * @return `EXIT_SUCCESS` when the native-double sample and validator are usable
+ *         solely through `<bbtc/bbtc.h>`; otherwise `EXIT_FAILURE`.
+ */
+static int
+check_external_ballistics_reference_frame_contract(void)
+{
+    const bbtc_eb_reference_frame_sample_double_t sample =
+    {
+        .gravitational_acceleration_reference_m_per_s2 =
+        {
+            .x = 0.0,
+            .y = 0.0,
+            .z = 9.81
+        },
+        .reference_frame_origin_acceleration_reference_m_per_s2 =
+        {
+            .x = -0.02,
+            .y = 0.0,
+            .z = 0.01
+        },
+        .reference_frame_angular_velocity_reference_rad_per_s =
+        {
+            .x = 0.0,
+            .y = 7.292115e-5,
+            .z = 0.0
+        },
+        .reference_frame_angular_acceleration_reference_rad_per_s2 =
+        {
+            .x = 0.0,
+            .y = 0.0,
+            .z = 0.0
+        }
+    };
+
+    return bbtc_eb_reference_frame_sample_validate_double(&sample)
+            == BBTC_STATUS_SUCCESS
+        ? EXIT_SUCCESS
+        : EXIT_FAILURE;
+}
+
+
 
 /**
  * @brief Verifies precision-qualified geometry through the consumer target.
@@ -1040,6 +1084,9 @@ int main(void)
     {
         return EXIT_FAILURE;
     }
+
+    if (check_external_ballistics_reference_frame_contract() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
 
     if (check_geometry_contract() != EXIT_SUCCESS)
         return EXIT_FAILURE;
