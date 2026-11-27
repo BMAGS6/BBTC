@@ -1,10 +1,10 @@
 # BBTC External Ballistics Design Contract
 
-**Contract version:** 0.2.0
+**Contract version:** 0.2.1
 
-**Project phase:** EB1.1
+**Project phase:** EB1.2
 
-**Applies to:** `rewrite/eb1_1_vacuum_6dof_eom_v1`
+**Applies to:** `rewrite/eb1_2_vacuum_provider_v1`
 
 **Status:** Accepted
 
@@ -4929,3 +4929,446 @@ EB1.1 is contract-ready for implementation when:
 - B11 remains unchanged and physics-agnostic; and
 - no aerodynamic, rotating-frame, collision, trajectory-storage, or Cubes of
   Honor coupling is introduced.
+
+## 42. EB1.2 inertial-vacuum derivative-provider composition
+
+EB1.2 composes the already accepted EB1.1 physical equations of motion with the
+already accepted B7 reference-frame provider and B10 state-derivative provider
+boundaries.
+
+The purpose of EB1.2 is not to introduce new rigid-body physics. Its purpose is
+to expose EB1.1 through an ordinary B10 provider so the unchanged B11 integrator
+can request stage-local physical derivatives while B7 samples gravity and
+reference-frame state at each candidate position and simulation time.
+
+### 42.1 Scope
+
+EB1.2 provides one concrete inertial-vacuum B10 composition layer.
+
+It combines:
+
+- one immutable-during-use B3 projectile-property value;
+- one immutable-during-use constant B8 applied force/moment value;
+- one B7 reference-frame provider descriptor;
+- one validated B2 candidate state supplied by B10; and
+- the accepted EB1.1 inertial-vacuum derivative evaluator.
+
+EB1.2 does not change the equations frozen by EB1.1 and does not change B7,
+B10, or B11 semantics.
+
+The normal ballistic-vacuum configuration uses an all-zero B8 force/moment
+record. A nonzero constant B8 record remains valid when a caller deliberately
+wants a constant non-aerodynamic physical force or moment.
+
+EB1.2 does not introduce a time-varying, position-varying, state-varying, or
+callback-driven force/moment model.
+
+### 42.2 Public header, configuration records, and functions
+
+EB1.2 introduces:
+
+```text
+include/bbtc/external_ballistics/inertial_vacuum_provider.h
+```
+
+After EB1.2 implementation is accepted, the external-ballistics umbrella header
+MUST include this header.
+
+The three public configuration types are:
+
+```c
+bbtc_eb_inertial_vacuum_provider_config_float_t
+bbtc_eb_inertial_vacuum_provider_config_double_t
+bbtc_eb_inertial_vacuum_provider_config_long_double_t
+```
+
+Conceptually, each native-family record has exactly these members in this order:
+
+```c
+typedef struct bbtc_eb_inertial_vacuum_provider_config_*_t
+{
+    bbtc_eb_projectile_properties_*_t projectile;
+    bbtc_eb_force_moment_*_t constant_force_moment;
+    bbtc_eb_reference_frame_provider_*_t reference_frame_provider;
+}
+bbtc_eb_inertial_vacuum_provider_config_*_t;
+```
+
+`projectile` is stored by value.
+
+`constant_force_moment` is stored by value and is used unchanged for every
+derivative request made through the bound provider.
+
+`reference_frame_provider` is stored by value. Its own `context` member retains
+the B7 borrowed-context semantics already frozen by EB0.1-B7.
+
+EB1.2 introduces these validation functions:
+
+```c
+bbtc_eb_inertial_vacuum_provider_config_validate_float
+bbtc_eb_inertial_vacuum_provider_config_validate_double
+bbtc_eb_inertial_vacuum_provider_config_validate_long_double
+```
+
+and these binding functions:
+
+```c
+bbtc_eb_inertial_vacuum_provider_bind_float
+bbtc_eb_inertial_vacuum_provider_bind_double
+bbtc_eb_inertial_vacuum_provider_bind_long_double
+```
+
+Conceptually, the bind functions have the form:
+
+```c
+bbtc_status_e bbtc_eb_inertial_vacuum_provider_bind_*(
+    const bbtc_eb_inertial_vacuum_provider_config_*_t* config,
+    bbtc_eb_state_derivative_provider_*_t* out_provider
+);
+```
+
+The exact parameter order is:
+
+1. `config`;
+2. `out_provider`.
+
+EB1.2 does not expose a second integrator and does not expose a public
+model-specific derivative callback separate from the generic B10 descriptor.
+
+### 42.3 Configuration validation
+
+The EB1.2 configuration validators are read-only.
+
+They apply this exact validation order:
+
+1. null `config` returns `BBTC_STATUS_INVALID_ARGUMENT`;
+2. validate `config->projectile` with the matching B3 validator and propagate
+   failure unchanged;
+3. validate `config->constant_force_moment` with the matching B8 validator and
+   propagate failure unchanged;
+4. require `config->reference_frame_provider.sample` to be nonnull, otherwise
+   return `BBTC_STATUS_INVALID_ARGUMENT`;
+5. otherwise return `BBTC_STATUS_SUCCESS`.
+
+A null B7 provider `context` is valid.
+
+Configuration validation MUST NOT invoke the B7 callback and therefore cannot
+validate any future B6 sample.
+
+Configuration validation MUST NOT alter the configuration or the object reached
+through the B7 provider context.
+
+### 42.4 Binding semantics
+
+If `out_provider` is null, a bind function returns
+`BBTC_STATUS_INVALID_ARGUMENT`.
+
+When `out_provider` is nonnull, the bind function MUST first overwrite it with
+the zero-initialized matching B10 provider descriptor, such that
+`out_provider->evaluate == NULL` and `out_provider->context == NULL`.
+
+This requirement is semantic rather than a byte-representation guarantee. C
+does not require a null function pointer or null object pointer to have an
+all-bits-zero representation.
+
+The bind function then:
+
+1. rejects null `config` with `BBTC_STATUS_INVALID_ARGUMENT`;
+2. validates `config` with the matching EB1.2 configuration validator and
+   propagates failure unchanged;
+3. initializes `out_provider->evaluate` to the BBTC-owned EB1.2 derivative
+   callback for the matching native family;
+4. initializes `out_provider->context` to exactly the supplied `config`
+   pointer; and
+5. returns `BBTC_STATUS_SUCCESS`.
+
+Every bind failure after a nonnull output pointer has been established leaves
+the zero-initialized B10 provider descriptor in caller storage, with
+`evaluate == NULL` and `context == NULL`.
+
+Binding performs no allocation and copies none of the configuration into hidden
+BBTC-owned storage.
+
+### 42.5 Ownership and lifetime
+
+A bound EB1.2 B10 provider borrows the exact configuration object supplied to
+the bind function.
+
+The caller MUST keep that configuration object alive for every evaluation made
+through the bound B10 descriptor.
+
+The caller MUST NOT modify the configuration object while the bound provider is
+being evaluated or while a B11 step using that provider is in progress.
+
+Copying a configuration object after binding does not retarget an already-bound
+provider. The provider remains bound to the exact object whose address was
+supplied to the successful bind call.
+
+The B7 provider context nested inside the configuration remains caller-owned and
+MUST satisfy the B7 lifetime and repeated/out-of-order-call requirements.
+
+The nested B7 provider context MUST NOT provide writable aliasing access to the
+bound EB1.2 configuration object or to any of its by-value members while a
+derivative evaluation or B11 step is in progress. Such aliasing could otherwise
+allow the B7 callback to mutate already-validated projectile, force/moment, or
+provider configuration during one derivative request.
+
+When an EB1.2 provider is used by B11, neither the EB1.2 configuration nor the
+nested B7 provider context may provide writable aliasing access to the
+caller-owned B11 state in a way that violates B11 transactional semantics.
+
+Invoking the caller-supplied B7 callback MAY produce caller-owned context side
+effects such as diagnostics, counters, or request recording, provided those
+side effects do not violate the already accepted B7 requirements or determine
+physical sample meaning from call order. EB1.2 itself does not write through
+the opaque B7 context pointer.
+
+Such B7 context side effects are not transactional. EB1.2, B10, and B11 do not
+roll them back if a later B7, EB1.1, B10, or B11 operation fails.
+
+EB1.2 allocates, frees, retains, clones, or otherwise owns none of these caller
+objects.
+
+### 42.6 Derivative-request composition
+
+The bound EB1.2 provider MUST be consumed through the already accepted B10
+dispatch interface.
+
+For one B10 callback request with candidate state `state`, EB1.2 performs this
+composition in the matching native precision family:
+
+1. validate the bound EB1.2 configuration;
+2. call the matching B7 provider-dispatch function with:
+   - `&state->position_m` as the requested active-reference position; and
+   - `state->time_s` as the requested simulation time;
+3. if B7 succeeds, receive one complete validated local B6 sample;
+4. call the matching EB1.1 evaluator with:
+   - the same candidate `state`;
+   - `&config->projectile`;
+   - the local B6 sample;
+   - `&config->constant_force_moment`; and
+   - the B10 callback derivative output; and
+5. return the resulting status.
+
+EB1.2 MUST NOT substitute the initial-state position or time for the supplied
+candidate state's position or time.
+
+EB1.2 MUST NOT cache a B6 sample across distinct derivative requests.
+
+EB1.2 MUST NOT sample B4/B5 environment data.
+
+EB1.2 MUST NOT alter the candidate state, projectile properties, constant B8
+record, B7 provider descriptor, or B7 provider context.
+
+### 42.7 Stage-local B7 sampling
+
+When a bound EB1.2 provider is used through B11 RK4, each B10 derivative request
+causes a fresh B7 dispatch using that candidate stage state's position and
+`state->time_s`.
+
+For a successful B11 step, this means exactly four EB1.2 derivative callbacks
+and therefore exactly four B7 sampling requests: one each for K1, K2, K3, and
+K4.
+
+EB1.2 places no requirement that those four sampled positions be distinct.
+
+For classical RK4 with a synthetic constant-velocity, zero-acceleration,
+zero-angular-velocity case, tests MUST independently verify that B7 observes:
+
+```text
+K1: r0             at t
+K2: r0 + v*h/2     at t + h/2
+K3: r0 + v*h/2     at t + h/2
+K4: r0 + v*h       at t + h
+```
+
+for exactly representable test values.
+
+This test establishes composition and stage-local sampling behavior. It does not
+replace the direct EB1.1 equation tests and is not the complete EB1 analytic
+trajectory-validation milestone.
+
+A test-only B7 provider MAY record requests for observation, but its returned
+physical sample MUST remain a deterministic function of its request and
+configured test data rather than depending on call order for physical meaning.
+
+### 42.8 Failure propagation
+
+Configuration-validation failures are returned before B7 is called.
+
+A B7 provider-dispatch failure is propagated unchanged by EB1.2.
+
+When B7 fails, EB1.2 MUST NOT invoke EB1.1 for that derivative request.
+
+If B7 succeeds but the resulting valid B6 sample contains nonzero frame
+kinematics unsupported by EB1.1, the EB1.1
+`BBTC_STATUS_UNSUPPORTED_MODEL_OR_OPTION` result is propagated unchanged.
+
+Any EB1.1 input or numerical failure is propagated unchanged by EB1.2.
+
+B10 remains authoritative for its existing fail-closed callback-output
+semantics. A callback failure returned by EB1.2 therefore leaves the public B10
+dispatch output as the exact all-zero B9 derivative.
+
+When B11 consumes the bound B10 provider, any propagated EB1.2/B7/EB1.1 failure
+retains the already accepted B11 transactional rule: the caller-owned state is
+not committed on failure.
+
+That caller-state transaction does not extend to side effects already produced
+inside the caller-owned B7 provider context. Such side effects are not rolled
+back.
+
+EB1.2 does not invent replacement statuses for valid B7 or EB1.1 failures.
+
+### 42.9 Relationship to B7, B10, and B11
+
+B7 remains the only reference-frame sampling boundary used by EB1.2.
+
+B10 remains the only derivative-provider dispatch boundary presented to B11.
+
+B11 remains unchanged and physics-agnostic.
+
+The intended composition is:
+
+```text
+B11 RK4
+    -> B10 state-derivative dispatch
+        -> EB1.2 inertial-vacuum provider composition
+            -> B7 reference-frame sampling
+            -> EB1.1 inertial-vacuum derivative evaluation
+                -> B9 derivative
+```
+
+EB1.2 MUST NOT add a direct B11 dependency to EB1.1 or B7.
+
+EB1.2 MUST NOT modify the B11 stage equations, quaternion stage-normalization
+rules, step acceptance rules, or transactional semantics.
+
+### 42.10 Native precision, allocation, and determinism
+
+Every EB1.2 family remains native `float`, `double`, or `long double`
+throughout configuration storage, B7 sampling, EB1.1 evaluation, and B10
+output.
+
+One precision family MUST NOT route through another.
+
+EB1.2 requires no dynamic allocation.
+
+EB1.2 itself introduces no mutable global state and no hidden sampling cache or
+call history.
+
+Overall provider determinism still depends on the caller-supplied B7 provider
+obeying its already accepted contract. EB1.2 does not strengthen or replace
+that external provider's determinism guarantees.
+
+### 42.11 Required tests
+
+EB1.2 tests MUST verify at least:
+
+- the exact public header name;
+- all three native configuration type names;
+- exact configuration member types and declaration order;
+- projectile and constant force/moment are stored by value;
+- the B7 provider descriptor is stored by value;
+- all three configuration-validator function names and signatures;
+- all three bind function names and signatures;
+- null configuration validation;
+- B3 validation failure propagation;
+- B8 validation failure propagation;
+- null B7 sample callback rejection;
+- null B7 context acceptance;
+- configuration validation does not call B7;
+- configuration validation is read-only;
+- null bind output behavior;
+- fail-closed zero-initialized B10 descriptor output on bind failure, with
+  `evaluate == NULL` and `context == NULL`, without assuming all-bits-zero
+  pointer representation;
+- successful bind sets a nonnull matching B10 callback;
+- successful bind sets B10 `context` to exactly the supplied configuration
+  address;
+- the bound provider samples B7 with the candidate state's exact position and
+  `state->time_s`;
+- one successful derivative request performs exactly one B7 dispatch;
+- B7 failure is propagated unchanged and prevents EB1.1 evaluation;
+- a B7-success/non-inertial B6 sample propagates EB1.1
+  `BBTC_STATUS_UNSUPPORTED_MODEL_OR_OPTION`;
+- the configured constant B8 force/moment is used unchanged;
+- EB1.2 does not mutate the configuration record or candidate state;
+- test-only B7 context side effects may record requests without changing the
+  physical meaning of returned samples;
+- B7 context side effects already produced before a later propagated failure
+  are not rolled back;
+- float, double, and long-double families are exercised;
+- a successful B11 step through EB1.2 produces exactly four stage-local B7
+  sampling requests;
+- an independent RK4 stage oracle verifies the K1/K2/K3/K4 B7 positions and
+  times for a constant-velocity exact-arithmetic case;
+- a B7 failure reached through EB1.2/B10/B11 propagates unchanged and preserves
+  the caller-owned B11 state transactionally;
+- the public EB1.2 header remains usable from C++;
+- an independent CMake consumer can bind and evaluate one native-double EB1.2
+  provider through the installed public interface; and
+- normal, strict-warning, AddressSanitizer, and UndefinedBehaviorSanitizer
+  gates remain green.
+
+### 42.12 Deliberately deferred behavior
+
+EB1.2 does NOT define:
+
+- atmosphere or wind sampling;
+- B4/B5 provider composition;
+- aerodynamic force or moment;
+- a time-varying or state-varying B8 provider;
+- drag, lift, Magnus, damping, or ballistic coefficients;
+- non-inertial reference-frame acceleration equations;
+- adaptive integration;
+- complete analytic trajectory-validation requirements;
+- trajectory storage or interpolation;
+- event detection;
+- collision/contact response;
+- Cubes of Honor adapter code; or
+- a replacement integrator.
+
+Those remain later EB1 or subsequent external-ballistics milestones.
+
+## 43. Acceptance criteria for EB1.2
+
+EB1.2 is contract-ready for implementation when:
+
+- contract version 0.2.1 is reviewed and changed from `Draft` to `Accepted`
+  before implementation is committed;
+- EB1.1 remains sealed at its accepted implementation boundary;
+- the public header is frozen as
+  `include/bbtc/external_ballistics/inertial_vacuum_provider.h`;
+- the three configuration type names and exact member order are frozen;
+- projectile properties and the constant B8 force/moment are stored by value;
+- the B7 provider descriptor is stored by value while retaining its borrowed
+  nested context semantics;
+- configuration validation order is frozen as B3, B8, then structural B7
+  callback validity;
+- a null B7 context remains valid;
+- binding is fail-closed and produces an ordinary B10 descriptor whose
+  `evaluate` callback is BBTC-owned and whose context is exactly the supplied
+  configuration address;
+- bind failure leaves a zero-initialized B10 descriptor with null callback and
+  context fields without assuming an all-bits-zero pointer representation;
+- the bound configuration lifetime and immutability-during-use rules are
+  explicit;
+- the nested B7 context may not provide writable aliasing access to the bound
+  configuration or caller-owned B11 state in violation of those rules;
+- caller-owned B7 context side effects are explicitly nontransactional and are
+  not rolled back by EB1.2, B10, or B11;
+- every derivative request obtains a fresh B7 sample using the candidate
+  state's exact position and `state->time_s`;
+- B7 failures are propagated unchanged;
+- successful B7 output is passed to EB1.1 without redefining B6 semantics;
+- EB1.1 failures are propagated unchanged;
+- the configured B8 force/moment remains constant for EB1.2;
+- successful B11 stepping through EB1.2 causes exactly four stage-local B7
+  samples;
+- an independent K1/K2/K3/K4 sampling oracle is required;
+- a composed failure path verifies B11 transactional preservation;
+- all three scalar families remain native;
+- B7, B10, B11, and EB1.1 public contracts remain unchanged; and
+- no atmosphere, aerodynamic, rotating-frame, collision, trajectory-storage,
+  adaptive-integration, or Cubes of Honor behavior is introduced.
