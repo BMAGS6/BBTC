@@ -283,6 +283,30 @@ static_assert(
 
 static_assert(
     std::is_same<
+        decltype(bbtc_eb_reference_frame_provider_float_t{}.sample),
+        bbtc_eb_reference_frame_provider_float_fn
+    >::value,
+    "float EB reference-frame provider must use native float callback type"
+);
+
+static_assert(
+    std::is_same<
+        decltype(bbtc_eb_reference_frame_provider_double_t{}.context),
+        const void*
+    >::value,
+    "EB reference-frame provider context must be borrowed const void pointer"
+);
+
+static_assert(
+    std::is_same<
+        decltype(bbtc_eb_reference_frame_provider_long_double_t{}.sample),
+        bbtc_eb_reference_frame_provider_long_double_fn
+    >::value,
+    "long-double EB reference-frame provider must use native callback type"
+);
+
+static_assert(
+    std::is_same<
         decltype(
             bbtc_ib_geometry_float_t{}
                 .initial_behind_projectile_volume_m3
@@ -1036,6 +1060,30 @@ cpp_environment_provider(
     return BBTC_STATUS_SUCCESS;
 }
 
+/**
+ * @brief Native-double B7 callback used by the C++ umbrella-header test.
+ */
+extern "C" bbtc_status_e
+cpp_reference_frame_provider(
+    const void* context,
+    const bbtc_eb_vec3_double_t* position_reference_m,
+    double time_s,
+    bbtc_eb_reference_frame_sample_double_t* out_sample
+)
+{
+    (void)context;
+
+    *out_sample = bbtc_eb_reference_frame_sample_double_t{};
+    out_sample->gravitational_acceleration_reference_m_per_s2.x =
+        position_reference_m->x + time_s;
+    out_sample->gravitational_acceleration_reference_m_per_s2.z = 9.81;
+    out_sample->reference_frame_angular_velocity_reference_rad_per_s.y =
+        time_s;
+
+    return BBTC_STATUS_SUCCESS;
+}
+
+
 
 int main()
 {
@@ -1128,6 +1176,37 @@ int main()
 
     if (bbtc_eb_reference_frame_sample_validate_double(&eb_reference_frame)
         != BBTC_STATUS_SUCCESS)
+    {
+        return 1;
+    }
+
+
+    /*
+     * Exercise EB0.1-B7 through the C++ umbrella-header boundary. This proves
+     * that callback, descriptor, position, dispatch, and B6 output types are
+     * usable without private headers.
+     */
+    bbtc_eb_reference_frame_provider_double_t eb_reference_provider = {};
+    eb_reference_provider.sample = cpp_reference_frame_provider;
+    eb_reference_provider.context = nullptr;
+
+    bbtc_eb_vec3_double_t eb_reference_provider_position = {};
+    eb_reference_provider_position.x = 10.0;
+    eb_reference_provider_position.y = 20.0;
+    eb_reference_provider_position.z = 30.0;
+
+    bbtc_eb_reference_frame_sample_double_t eb_reference_provider_sample = {};
+
+    if (bbtc_eb_reference_frame_provider_sample_double(
+            &eb_reference_provider,
+            &eb_reference_provider_position,
+            2.0,
+            &eb_reference_provider_sample
+        ) != BBTC_STATUS_SUCCESS
+        || eb_reference_provider_sample
+               .gravitational_acceleration_reference_m_per_s2.x != 12.0
+        || eb_reference_provider_sample
+               .reference_frame_angular_velocity_reference_rad_per_s.y != 2.0)
     {
         return 1;
     }

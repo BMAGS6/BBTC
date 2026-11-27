@@ -282,6 +282,77 @@ check_external_ballistics_reference_frame_contract(void)
 }
 
 
+/**
+ * @brief Native-double B7 callback for the independent consumer fixture.
+ *
+ * The sample is intentionally derived only from explicit position/time inputs
+ * so this consumer exercises the public B7 callback and dispatch boundary
+ * without relying on private BBTC headers or host-specific state.
+ */
+static bbtc_status_e
+consumer_reference_frame_provider(
+    const void* context,
+    const bbtc_eb_vec3_double_t* position_reference_m,
+    double time_s,
+    bbtc_eb_reference_frame_sample_double_t* out_sample
+)
+{
+    (void)context;
+
+    *out_sample = (bbtc_eb_reference_frame_sample_double_t){0};
+
+    out_sample->gravitational_acceleration_reference_m_per_s2.x =
+        position_reference_m->x + time_s;
+    out_sample->gravitational_acceleration_reference_m_per_s2.z = 9.81;
+    out_sample->reference_frame_origin_acceleration_reference_m_per_s2.y =
+        position_reference_m->y;
+    out_sample->reference_frame_angular_velocity_reference_rad_per_s.z =
+        time_s;
+
+    return BBTC_STATUS_SUCCESS;
+}
+
+
+/**
+ * @brief Verifies EB0.1-B7 dispatch through an independent downstream consumer.
+ *
+ * @return `EXIT_SUCCESS` when the callback descriptor and dispatch function are
+ *         usable solely through `<bbtc/bbtc.h>`; otherwise `EXIT_FAILURE`.
+ */
+static int
+check_external_ballistics_reference_frame_provider_contract(void)
+{
+    const bbtc_eb_reference_frame_provider_double_t provider =
+    {
+        .sample = consumer_reference_frame_provider,
+        .context = NULL
+    };
+    const bbtc_eb_vec3_double_t position =
+    {
+        .x = 10.0,
+        .y = 20.0,
+        .z = 30.0
+    };
+    bbtc_eb_reference_frame_sample_double_t sample = {0};
+
+    return bbtc_eb_reference_frame_provider_sample_double(
+               &provider,
+               &position,
+               2.0,
+               &sample
+           ) == BBTC_STATUS_SUCCESS
+            && sample.gravitational_acceleration_reference_m_per_s2.x == 12.0
+            && sample.gravitational_acceleration_reference_m_per_s2.z == 9.81
+            && sample
+                   .reference_frame_origin_acceleration_reference_m_per_s2.y
+                == 20.0
+            && sample.reference_frame_angular_velocity_reference_rad_per_s.z
+                == 2.0
+        ? EXIT_SUCCESS
+        : EXIT_FAILURE;
+}
+
+
 
 /**
  * @brief Verifies precision-qualified geometry through the consumer target.
@@ -1087,6 +1158,12 @@ int main(void)
 
     if (check_external_ballistics_reference_frame_contract() != EXIT_SUCCESS)
         return EXIT_FAILURE;
+
+    if (check_external_ballistics_reference_frame_provider_contract()
+        != EXIT_SUCCESS)
+    {
+        return EXIT_FAILURE;
+    }
 
     if (check_geometry_contract() != EXIT_SUCCESS)
         return EXIT_FAILURE;
