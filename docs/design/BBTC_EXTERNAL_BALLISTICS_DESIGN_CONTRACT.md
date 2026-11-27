@@ -1,10 +1,10 @@
 # BBTC External Ballistics Design Contract
 
-**Contract version:** 0.1.4
+**Contract version:** 0.1.5
 
-**Project phase:** EB0.1-B4
+**Project phase:** EB0.1-B5
 
-**Applies to:** `rewrite/eb0_1b4_environment_sample_v1`
+**Applies to:** `rewrite/eb0_1b5_environment_provider_v1`
 
 **Status:** Accepted
 
@@ -335,9 +335,33 @@ velocity vector for effects associated with a rotating reference frame.
 This permits the same BBTC solver architecture to represent Earth-like,
 non-Earth, artificial, reduced-gravity, and game-specific environments.
 
-Coriolis or related rotating-frame terms MUST NOT be introduced until the
-meaning of the supplied reference frame and velocity state is formally fixed
-and independently tested.
+The future reference-frame contract MUST explicitly distinguish gravitational
+acceleration from effective or apparent gravity whenever that distinction is
+necessary to prevent centrifugal acceleration from being counted twice.
+
+A complete rotating-frame formulation MUST support, when physically applicable,
+the Coriolis term associated with reference-frame angular velocity and the
+centrifugal term associated with reference-frame rotation. A time-varying
+rotating frame MAY additionally require an Euler-acceleration term. Curved or
+moving local-navigation frames MAY require further transport-rate terms; such
+terms must be introduced only after their frame semantics are explicitly
+defined.
+
+BBTC MUST support the physical behavior conventionally described as the
+Eötvös effect for applicable Earth-like rotating-frame models. That behavior
+MUST arise consistently from the selected gravity, geometry, and rotating-frame
+kinematics. An implementation MUST NOT add a separate empirical Eötvös
+correction when the same acceleration contribution is already represented by
+the active Coriolis, centrifugal, or reference-frame formulation.
+
+Earth-specific helpers MAY construct a reference-frame angular-velocity vector
+from Earth rotation, geographic orientation, latitude, or equivalent data, but
+the generic BBTC core MUST NOT assign intrinsic Earth geography to its axes.
+
+Coriolis, centrifugal, Eötvös, Euler, or related rotating-frame terms MUST NOT
+be introduced into the solver until the meaning of the supplied reference
+frame, position, velocity, gravity quantity, and angular-velocity quantity is
+formally frozen and independently tested.
 
 ## 12. Numerical architecture
 
@@ -477,6 +501,53 @@ The intended staged implementation is:
    models.
 
 Each stage MUST remain independently testable.
+
+### 15.1 Required environment and reference-frame capability reconstruction
+
+The reconstructed architecture MUST preserve the useful physical capabilities of
+the pre-rewrite BBTC environment and six-degree-of-freedom work without copying
+its former structural coupling or unverified equations.
+
+Later reviewed checkpoints MUST provide an architectural path for:
+
+- position-dependent, altitude-dependent, and time-dependent environment
+  sampling;
+- arbitrary world/reference-frame air-velocity fields, including spatially or
+  temporally varying wind;
+- optional standalone atmosphere models;
+- optional humid-air modeling, including relative-humidity input and the
+  thermodynamic calculations needed to obtain density and acoustic properties;
+- optional standard-atmosphere or table-driven helpers;
+- explicit gravity or gravity-field input;
+- explicit planetary/reference-frame angular velocity;
+- Earth-like rotation helpers without hard-coding Earth into the generic core;
+- Coriolis acceleration;
+- centrifugal acceleration;
+- Euler acceleration when a modeled frame has time-varying angular velocity;
+- transport-rate or curvature effects when a later moving local-frame model
+  requires them; and
+- analytically verified Earth-like behavior conventionally described as the
+  Eötvös effect.
+
+Legacy quantities such as saturation vapor pressure, water-vapor partial
+pressure, dry-air partial pressure, vapor mass fraction, inverse speed of sound,
+wind-direction angles, muzzle atmosphere values, altitude references, and
+similar convenience or intermediate values MUST NOT automatically become fields
+of the generic sampled-environment record. They belong in a concrete atmosphere
+model, configuration record, derived calculation, or convenience helper unless
+a later reviewed public contract demonstrates that generic solver state truly
+requires them.
+
+Environment-provider and atmosphere-model calculations MUST NOT require mutable
+history merely to evaluate one position and time. In particular, an RK or other
+multi-stage integrator must be able to request samples in derivative-stage order
+without changing the physical answer because a previous sample mutated hidden
+pressure, temperature, density, or altitude state.
+
+The reference-frame implementation MUST prevent double counting between
+supplied gravity and inertial terms. Earth/Eötvös validation MUST likewise
+prevent a separately named correction from duplicating acceleration already
+present in the mathematically complete rotating-frame formulation.
 
 ## 16. EB0.1-A acceptance criteria
 
@@ -1689,4 +1760,292 @@ EB0.1-B4 is complete when:
   and
 - EB0.1-B4 introduces no environment-provider dispatch, gravity/reference-frame
   data, relative-air calculation, aerodynamic model, derivative, integrator,
+  collision, or Cubes of Honor adapter implementation.
+
+## 25. EB0.1-B5 environment-provider interface
+
+EB0.1-B5 establishes the caller-controlled mechanism that obtains the local
+environment sample defined by EB0.1-B4 at an arbitrary projectile position and
+simulation time.
+
+This checkpoint deliberately separates provider dispatch from any particular
+atmosphere model. A provider may represent a constant atmosphere, an analytic
+model, a table, a Cubes of Honor weather subsystem, a vacuum, or another
+caller-owned source. The generic BBTC solver consumes only the resulting B4
+sample.
+
+### 25.1 Sampling inputs
+
+An environment-provider request is defined by:
+
+- projectile center-of-mass position in metres, expressed in the active BBTC
+  world/reference frame; and
+- simulation time in seconds measured from the external-ballistics initial
+  state.
+
+The provider MUST NOT require projectile velocity, orientation, angular
+velocity, mass, inertia, aerodynamic coefficients, or gameplay state merely to
+determine the local atmospheric sample.
+
+Position components MUST be finite. Sampling time MUST be finite and greater
+than or equal to zero.
+
+The provider interface MUST be usable at numerical derivative-evaluation
+points. A future integrator may therefore sample at intermediate positions and
+times and MAY invoke a provider more than once per complete integration step.
+
+### 25.2 Public header and precision-qualified callback types
+
+EB0.1-B5 introduces:
+
+```text
+include/bbtc/external_ballistics/environment_provider.h
+```
+
+The external-ballistics umbrella header MUST include this public header.
+
+The precision-qualified callback types are:
+
+```c
+bbtc_eb_environment_provider_float_fn
+bbtc_eb_environment_provider_double_fn
+bbtc_eb_environment_provider_long_double_fn
+```
+
+Conceptually, each callback has the native-family form:
+
+```c
+bbtc_status_e callback(
+    const void* context,
+    const bbtc_eb_vec3_*_t* position_world_m,
+    SCALAR time_s,
+    bbtc_eb_environment_sample_*_t* out_sample
+);
+```
+
+The exact callback parameter order above is frozen by EB0.1-B5.
+
+The matching provider descriptor records are:
+
+```c
+bbtc_eb_environment_provider_float_t
+bbtc_eb_environment_provider_double_t
+bbtc_eb_environment_provider_long_double_t
+```
+
+Each descriptor contains the following fields in this exact declaration order:
+
+```text
+sample
+context
+```
+
+`sample` is the matching precision-qualified callback pointer.
+
+`context` is a borrowed `const void*` supplied unchanged to the callback. A
+null context pointer is valid. BBTC does not allocate, free, retain, clone, or
+interpret context storage.
+
+No public alignment override is introduced.
+
+### 25.3 Provider dispatch functions
+
+BBTC exposes the following precision-qualified dispatch functions:
+
+```c
+bbtc_eb_environment_provider_sample_float
+bbtc_eb_environment_provider_sample_double
+bbtc_eb_environment_provider_sample_long_double
+```
+
+Conceptually, each function has the native-family form:
+
+```c
+bbtc_status_e bbtc_eb_environment_provider_sample_*(
+    const bbtc_eb_environment_provider_*_t* provider,
+    const bbtc_eb_vec3_*_t* position_world_m,
+    SCALAR time_s,
+    bbtc_eb_environment_sample_*_t* out_sample
+);
+```
+
+The dispatch function, rather than future solver code, owns common provider
+boundary validation and B4 output validation.
+
+### 25.4 Callback contract
+
+A provider callback returning `BBTC_STATUS_SUCCESS` MUST have fully initialized
+every named field of `out_sample` with one complete B4 environment sample.
+
+A provider callback returning any non-success BBTC status communicates sampling
+failure. The dispatch layer MUST propagate that status unchanged after restoring
+the public fail-closed output state described in section 25.5.
+
+Callbacks MUST NOT depend on being invoked exactly once per integration step,
+once per render frame, or in monotonically increasing position or time order.
+
+Within one deterministic simulation snapshot, a provider MUST behave as a
+function of its explicit position, time, and context rather than requiring the
+result of a previous provider invocation. Internal caching MAY be used only when
+it is observationally equivalent to this rule.
+
+BBTC does not serialize provider callbacks. If caller-owned context refers to
+mutable or shared state, the caller/provider implementation owns any required
+synchronization and snapshot semantics.
+
+### 25.5 Dispatch validation, output state, and precedence
+
+`out_sample` is a required caller-owned output pointer.
+
+If `out_sample` is null, dispatch MUST return `BBTC_STATUS_INVALID_ARGUMENT`;
+no output-state guarantee is possible because no output object exists.
+
+When `out_sample` is non-null, the dispatch function MUST establish the
+all-zero B4 sample as the deterministic failure state of `*out_sample` before
+validating any remaining input or invoking the callback.
+
+For every subsequent dispatch failure, including invalid request data, provider
+rejection, or invalid callback output, `*out_sample` MUST contain the all-zero
+B4 sample on return. That zero value is intentionally deterministic storage and
+remains invalid as a successful B4 atmospheric sample because its temperature
+is zero.
+
+The dispatch function MUST use this validation and failure order:
+
+1. null provider, null provider callback, null position pointer, or null output
+   pointer returns `BBTC_STATUS_INVALID_ARGUMENT`;
+2. otherwise, if any position component or `time_s` is NaN, return
+   `BBTC_STATUS_NAN_INPUT`;
+3. otherwise, if any position component or `time_s` is infinite, return
+   `BBTC_STATUS_NONFINITE_INPUT`;
+4. otherwise, if `time_s` is negative, return `BBTC_STATUS_OUTSIDE_DOMAIN`;
+5. otherwise invoke the provider callback exactly once;
+6. if the callback returns a non-success status, return that status unchanged;
+7. otherwise validate the callback-produced sample with the matching EB0.1-B4
+   validator;
+8. if sample validation fails, restore the all-zero failure sample and return
+   the B4 validator status; and
+9. otherwise return `BBTC_STATUS_SUCCESS` and preserve the validated callback
+   output.
+
+The callback MUST NOT be invoked when dispatch rejects the request in steps 1
+through 4.
+
+### 25.6 Precision and ABI rules
+
+Each provider family operates entirely in its native scalar family:
+
+- float position, time, callback, provider record, and B4 sample;
+- double position, time, callback, provider record, and B4 sample; and
+- long-double position, time, callback, provider record, and B4 sample.
+
+Dispatch MUST NOT convert through another precision family.
+
+Provider descriptors are plain borrowed-interface values. They contain no
+owned allocation, reference count, host handle with BBTC-defined lifetime, or
+Cubes of Honor type.
+
+Function-pointer representation, object-pointer representation, padding, and
+universal byte size are implementation properties and are not frozen beyond the
+named member order and C type identities stated by this contract.
+
+### 25.7 Cubes of Honor boundary
+
+Cubes of Honor MAY implement an EB0.1-B5 provider callback whose context points
+to caller-owned atmosphere or weather-query state.
+
+The adapter MUST convert the BBTC world/reference position and simulation time
+to whatever coordinates or query inputs the authoritative Cubes of Honor
+atmosphere requires and must convert the resulting atmospheric values back into
+the matching B4 environment sample.
+
+BBTC MUST NOT include Cubes of Honor headers or assume that the provider context
+has any particular host representation.
+
+### 25.8 Required tests
+
+EB0.1-B5 tests MUST verify at least:
+
+- exact native callback signatures for float, double, and long double;
+- exact provider descriptor member names and declaration order;
+- native precision is preserved across position, time, and output sample;
+- a null context is valid;
+- null provider, callback, position, and output pointers are rejected;
+- NaN position or time is rejected before callback invocation;
+- infinite position or time is rejected before callback invocation;
+- negative time is rejected before callback invocation;
+- a valid request invokes the callback exactly once;
+- the callback receives the exact context pointer, position components, and time
+  supplied to dispatch;
+- callback failure status is propagated unchanged;
+- every pre-callback failure with a non-null output pointer leaves the output in
+  the all-zero fail-closed state;
+- callback failure leaves the output in the all-zero fail-closed state;
+- callback success with an invalid B4 sample returns the corresponding B4
+  validation status and restores the all-zero failure state;
+- callback success with a valid B4 sample preserves that sample;
+- repeated and deliberately out-of-order requests work with a provider that does
+  not depend on call history;
+- float, double, and long-double dispatch entry points are exercised;
+- the public header remains usable from C++;
+- an independent CMake consumer can define and dispatch a native-double provider
+  through `<bbtc/bbtc.h>`; and
+- normal, strict-warning, AddressSanitizer, and UndefinedBehaviorSanitizer gates
+  remain green.
+
+### 25.9 Deliberately deferred behavior
+
+EB0.1-B5 does NOT define:
+
+- a BBTC-owned standard atmosphere;
+- humid-air equations or saturation-vapor-pressure formulas;
+- atmosphere interpolation, caching policy, or table format;
+- wind-direction convenience conversions;
+- gravity or a gravity-field provider;
+- reference-frame angular velocity;
+- Coriolis, centrifugal, Euler, transport-rate, or Eötvös calculations;
+- relative-air velocity;
+- Mach number;
+- dynamic pressure;
+- aerodynamic coefficients;
+- drag, lift, Magnus, spin damping, yaw-of-repose, or aerodynamic moments;
+- rigid-body derivatives;
+- numerical integration;
+- collision behavior; or
+- Cubes of Honor adapter source code.
+
+These capabilities remain required or permitted by the broader roadmap where
+specified, but they are not part of the B5 provider-dispatch implementation.
+
+## 26. Acceptance criteria for EB0.1-B5
+
+EB0.1-B5 is complete when:
+
+- contract version 0.1.5 is reviewed and changed from `Draft` to `Accepted`
+  before implementation is committed;
+- the environment-provider header, callback type names, descriptor type names,
+  callback parameter order, descriptor field order, and dispatch function names
+  in section 25 are frozen;
+- providers sample only from world/reference-frame position, simulation time,
+  and caller-owned context at this boundary;
+- provider context is borrowed, opaque to BBTC, and may be null;
+- callbacks cannot rely on one call per step, monotonic call order, or mutable
+  sampling history;
+- common dispatch validation follows the exact precedence in section 25.5;
+- invalid dispatch input prevents callback invocation;
+- callback non-success status propagates unchanged;
+- callback-produced successful samples are revalidated through the B4 sample
+  contract;
+- every dispatch failure for which `out_sample` is non-null returns the
+  deterministic all-zero B4 output state;
+- no precision family routes through another precision family;
+- C, C++, and independent-consumer tests cover the public provider boundary;
+- section 11 and section 15.1 explicitly preserve the roadmap for gravity,
+  planetary/reference-frame rotation, Coriolis, centrifugal behavior,
+  Earth/Eötvös behavior, optional humid-air and atmosphere helpers, and
+  prevention of inertial-term double counting;
+- existing BBTC tests remain green under normal, strict, and sanitizer gates;
+  and
+- EB0.1-B5 introduces no atmosphere model, gravity/reference-frame model,
+  rotating-frame acceleration, aerodynamic model, derivative, integrator,
   collision, or Cubes of Honor adapter implementation.
