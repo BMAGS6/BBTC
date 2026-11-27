@@ -226,6 +226,30 @@ static_assert(
 
 static_assert(
     std::is_same<
+        decltype(bbtc_eb_environment_provider_float_t{}.sample),
+        bbtc_eb_environment_provider_float_fn
+    >::value,
+    "float EB environment provider must use native float callback type"
+);
+
+static_assert(
+    std::is_same<
+        decltype(bbtc_eb_environment_provider_double_t{}.context),
+        const void*
+    >::value,
+    "EB environment provider context must be borrowed const void pointer"
+);
+
+static_assert(
+    std::is_same<
+        decltype(bbtc_eb_environment_provider_long_double_t{}.sample),
+        bbtc_eb_environment_provider_long_double_fn
+    >::value,
+    "long-double EB environment provider must use native callback type"
+);
+
+static_assert(
+    std::is_same<
         decltype(
             bbtc_ib_geometry_float_t{}
                 .initial_behind_projectile_volume_m3
@@ -958,6 +982,28 @@ static_assert(
 );
 
 
+extern "C" bbtc_status_e
+cpp_environment_provider(
+    const void* context,
+    const bbtc_eb_vec3_double_t* position_world_m,
+    double time_s,
+    bbtc_eb_environment_sample_double_t* out_sample
+)
+{
+    (void)context;
+
+    out_sample->air_velocity_world_m_per_s.x = position_world_m->x + time_s;
+    out_sample->air_velocity_world_m_per_s.y = position_world_m->y;
+    out_sample->air_velocity_world_m_per_s.z = position_world_m->z;
+    out_sample->temperature_k = 288.15;
+    out_sample->absolute_pressure_pa = 101325.0;
+    out_sample->air_density_kg_per_m3 = 1.225;
+    out_sample->speed_of_sound_m_per_s = 340.29;
+
+    return BBTC_STATUS_SUCCESS;
+}
+
+
 int main()
 {
     /*
@@ -1009,6 +1055,28 @@ int main()
 
     if (bbtc_eb_environment_sample_validate_double(&eb_environment)
         != BBTC_STATUS_SUCCESS)
+    {
+        return 1;
+    }
+
+    bbtc_eb_environment_provider_double_t eb_provider = {};
+    eb_provider.sample = cpp_environment_provider;
+    eb_provider.context = nullptr;
+
+    bbtc_eb_vec3_double_t eb_provider_position = {};
+    eb_provider_position.x = 10.0;
+    eb_provider_position.y = 20.0;
+    eb_provider_position.z = 30.0;
+
+    bbtc_eb_environment_sample_double_t eb_provider_sample = {};
+
+    if (bbtc_eb_environment_provider_sample_double(
+            &eb_provider,
+            &eb_provider_position,
+            2.0,
+            &eb_provider_sample
+        ) != BBTC_STATUS_SUCCESS
+        || eb_provider_sample.air_velocity_world_m_per_s.x != 12.0)
     {
         return 1;
     }

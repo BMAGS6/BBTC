@@ -179,6 +179,67 @@ check_external_ballistics_environment_contract(void)
 
 
 /**
+ * @brief Native-double environment callback for the independent consumer.
+ */
+static bbtc_status_e
+consumer_environment_provider(
+    const void* context,
+    const bbtc_eb_vec3_double_t* position_world_m,
+    double time_s,
+    bbtc_eb_environment_sample_double_t* out_sample
+)
+{
+    (void)context;
+
+    *out_sample = (bbtc_eb_environment_sample_double_t)
+    {
+        .air_velocity_world_m_per_s =
+        {
+            .x = position_world_m->x + time_s,
+            .y = position_world_m->y,
+            .z = position_world_m->z
+        },
+        .temperature_k = 288.15,
+        .absolute_pressure_pa = 101325.0,
+        .air_density_kg_per_m3 = 1.225,
+        .speed_of_sound_m_per_s = 340.29
+    };
+
+    return BBTC_STATUS_SUCCESS;
+}
+
+/**
+ * @brief Verifies EB0.1-B5 provider dispatch through a downstream consumer.
+ *
+ * @return `EXIT_SUCCESS` when the callback descriptor and dispatch function are
+ *         usable solely through `<bbtc/bbtc.h>`; otherwise `EXIT_FAILURE`.
+ */
+static int
+check_external_ballistics_environment_provider_contract(void)
+{
+    const bbtc_eb_environment_provider_double_t provider =
+    {
+        .sample = consumer_environment_provider,
+        .context = NULL
+    };
+    const bbtc_eb_vec3_double_t position = {.x = 10.0, .y = 20.0, .z = 30.0};
+    bbtc_eb_environment_sample_double_t sample = {0};
+
+    return bbtc_eb_environment_provider_sample_double(
+               &provider,
+               &position,
+               2.0,
+               &sample
+           ) == BBTC_STATUS_SUCCESS
+            && sample.air_velocity_world_m_per_s.x == 12.0
+            && sample.air_velocity_world_m_per_s.y == 20.0
+            && sample.air_velocity_world_m_per_s.z == 30.0
+        ? EXIT_SUCCESS
+        : EXIT_FAILURE;
+}
+
+
+/**
  * @brief Verifies precision-qualified geometry through the consumer target.
  *
  * @return `EXIT_SUCCESS` when the geometry contract works; otherwise
@@ -973,6 +1034,12 @@ int main(void)
 
     if (check_external_ballistics_environment_contract() != EXIT_SUCCESS)
         return EXIT_FAILURE;
+
+    if (check_external_ballistics_environment_provider_contract()
+        != EXIT_SUCCESS)
+    {
+        return EXIT_FAILURE;
+    }
 
     if (check_geometry_contract() != EXIT_SUCCESS)
         return EXIT_FAILURE;
