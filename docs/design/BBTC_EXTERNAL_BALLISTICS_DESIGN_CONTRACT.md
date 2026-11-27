@@ -1,10 +1,10 @@
 # BBTC External Ballistics Design Contract
 
-**Contract version:** 0.1.0
+**Contract version:** 0.1.1
 
-**Project phase:** EB0.1-A
+**Project phase:** EB0.1-B1
 
-**Applies to:** `rewrite/eb0_1_external_ballistics_architecture_v1`
+**Applies to:** `rewrite/eb0_1b_math_state_foundation_v1`
 
 **Status:** Accepted
 
@@ -521,3 +521,217 @@ EB0.1-A is complete when:
   implementation; and
 - this contract is reviewed and changed from `Draft` to `Accepted` before the
   first EB0 implementation checkpoint is committed.
+
+## 17. EB0.1-B1 mathematical value and rigid-body state foundation
+
+EB0.1-B1 is the first external-ballistics public-code checkpoint. It freezes
+the value records required to represent three-dimensional vectors,
+orientations, and one six-degree-of-freedom projectile state without yet
+introducing vector operations, quaternion operations, state validation,
+environment sampling, force or moment models, or numerical integration.
+
+The purpose of this increment is deliberately narrow. Later external-ballistics
+layers depend on these records, so their physical meaning and type identity
+MUST be established and tested before equations begin to consume them.
+
+### 17.1 Public header structure
+
+The following public headers are introduced:
+
+```text
+include/bbtc/external_ballistics.h
+include/bbtc/external_ballistics/vector.h
+include/bbtc/external_ballistics/quaternion.h
+include/bbtc/external_ballistics/state.h
+```
+
+`<bbtc/external_ballistics.h>` is the external-ballistics umbrella header and
+MUST include the three concrete record headers. `<bbtc/bbtc.h>` MUST include
+the external-ballistics umbrella so an ordinary BBTC consumer sees both the
+existing API and the new EB0.1-B1 records.
+
+The new headers MUST remain usable from ISO C23 and from the project's supported
+C++ public-header compatibility test. No Cubes of Honor header may be required
+to parse or use them.
+
+### 17.2 Precision-qualified three-dimensional vectors
+
+The public vector records are:
+
+```c
+bbtc_eb_vec3_float_t
+bbtc_eb_vec3_double_t
+bbtc_eb_vec3_long_double_t
+```
+
+Each record contains exactly the named scalar components `x`, `y`, and `z` in
+that declaration order, expressed in the record's native scalar family.
+
+The vector record itself carries no unit or coordinate-frame identity. Physical
+meaning belongs to the field that contains the vector. For example, a
+`position_m` field gives all three components metre semantics, while an
+`angular_velocity_body_rad_per_s` field gives all three components body-frame
+radians-per-second semantics.
+
+This separation allows the same small vector representation to carry positions,
+velocities, angular velocities, forces, moments, gravity, wind, and other
+three-component physical quantities without creating one public structure type
+for every possible unit.
+
+EB0.1-B1 introduces representation only. No public arithmetic function is
+required by this checkpoint.
+
+### 17.3 Precision-qualified quaternions
+
+The public quaternion records are:
+
+```c
+bbtc_eb_quat_float_t
+bbtc_eb_quat_double_t
+bbtc_eb_quat_long_double_t
+```
+
+Each record contains the vector components `x`, `y`, and `z`, followed by the
+scalar component `w`, all in the matching native scalar family.
+
+The component order matches the convention already frozen by section 5.1 and
+is intentionally compatible with straightforward field-wise conversion to the
+current Cubes of Honor quaternion representation. Type compatibility or
+aliasing is NOT implied by matching component names or order.
+
+A quaternion value record does not, by type alone, guarantee finite components,
+unit length, or a physically valid orientation. Those requirements belong to
+the future public state-validation contract. In particular, an all-zero
+quaternion is representable but is not a valid orientation.
+
+EB0.1-B1 introduces no public quaternion multiplication, normalization,
+conjugation, vector-rotation, or interpolation function.
+
+### 17.4 Precision-qualified rigid-body state
+
+The first public six-degree-of-freedom state records are:
+
+```c
+bbtc_eb_rigid_body_state_float_t
+bbtc_eb_rigid_body_state_double_t
+bbtc_eb_rigid_body_state_long_double_t
+```
+
+Each state MUST contain the following fields:
+
+```text
+orientation_world_from_body
+position_m
+velocity_m_per_s
+angular_velocity_body_rad_per_s
+time_s
+```
+
+The declaration order above is frozen for EB0.1-B1. The quaternion is declared
+first, followed by the three vector-valued members and then the scalar time.
+This ordering keeps the largest composite member first and groups equal-sized
+vector records together without changing any physical semantics.
+
+`orientation_world_from_body` is the active world/reference-from-projectile-body
+rotation defined by sections 5.1, 7, and 12. It is stored in the matching
+`bbtc_eb_quat_*_t` type.
+
+`position_m` is the projectile center-of-mass position in metres in the active
+world/reference frame. In the intended Cubes of Honor adapter this position is
+relative to the muzzle-local integration origin described by section 6.
+
+`velocity_m_per_s` is the projectile center-of-mass translational velocity in
+metres per second in the active world/reference frame.
+
+`angular_velocity_body_rad_per_s` is the projectile angular-velocity vector in
+radians per second expressed in the BBTC body frame defined by section 8.
+
+`time_s` is simulation time in seconds measured from the external-ballistics
+initial state.
+
+The state record deliberately stores translational quantities in the active
+world/reference frame while storing angular velocity in the body frame. Future
+equations and validation MUST preserve that distinction explicitly.
+
+A zero-initialized state is useful as deterministic storage but is not, by
+itself, a valid projectile state because its quaternion is the all-zero
+quaternion. EB0.1-B1 MUST NOT add an implicit identity-orientation fallback.
+
+### 17.5 Ownership, ABI, and conversion rules
+
+All EB0.1-B1 records are plain caller-owned values. They contain no pointers,
+dynamic storage, hidden ownership, allocator state, reference counts, or host
+application handles.
+
+The records MUST NOT contain `vec3f_t`, `quatf_t`, `mat4f_t`, or another Cubes
+of Honor type. The Cubes of Honor adapter performs explicit field-wise
+conversion as required by sections 5.2 and 13.1.
+
+No public alignment override is introduced by EB0.1-B1. Natural ISO C object
+layout is used. The project MUST NOT freeze one universal byte size for these
+records because scalar size and alignment are implementation properties,
+especially for `long double`.
+
+Tests MAY verify coherent layout properties on the current platform, but public
+correctness MUST NOT depend on a particular padding pattern beyond the frozen
+declaration and scalar-family semantics.
+
+### 17.6 Deliberately deferred behavior
+
+EB0.1-B1 does NOT define:
+
+- vector arithmetic functions;
+- quaternion arithmetic functions;
+- quaternion normalization tolerance;
+- rigid-body-state validation functions;
+- environment-provider records or callbacks;
+- gravity or planetary-rotation records;
+- projectile mass, dimensions, or inertia records;
+- force or moment accumulation;
+- aerodynamic coefficients;
+- numerical derivatives;
+- an integration stepper; or
+- Cubes of Honor adapter source code.
+
+Those behaviors require their own reviewed contracts. Representation MUST be
+established before algorithms begin assigning additional semantics to it.
+
+## 18. Acceptance criteria for EB0.1-B1
+
+EB0.1-B1 is complete when:
+
+- the exact precision-qualified vector, quaternion, and rigid-body-state type
+  names in section 17 are public through `<bbtc/external_ballistics.h>` and
+  `<bbtc/bbtc.h>`;
+- each vector family uses native `float`, `double`, or `long double` components
+  named `x`, `y`, and `z` without routing representation through another scalar
+  family;
+- each quaternion family uses native components named `x`, `y`, `z`, and `w`
+  with `w` as the scalar component and no implicit validity guarantee;
+- each rigid-body state contains the exact fields and declaration order frozen
+  by section 17.4 using matching precision-qualified vector and quaternion
+  records;
+- state documentation explicitly freezes world/reference-frame position and
+  velocity, world-from-body orientation, body-frame angular velocity, and
+  seconds-from-initial-state time semantics;
+- a zero-initialized state is documented as representable storage rather than a
+  silently valid identity-oriented projectile;
+- the records contain no pointer, allocation, host-engine, or Cubes of Honor
+  ownership state;
+- no public matrix type or host math dependency is introduced;
+- C23 compile-time tests verify native scalar-family field types;
+- the C++ public-header test verifies the same native type relationships and
+  nested state-member types;
+- the independent CMake consumer can construct and read a native-double
+  external-ballistics state through `<bbtc/bbtc.h>`;
+- CMake exposes every new public header through the existing `bbtc` /
+  `bbtc::bbtc` target without adding a new mandatory dependency;
+- the existing internal-ballistics, diagnostics, precision, consumer, and C++
+  tests remain unchanged in behavior and continue to pass;
+- strict compiler and sanitizer gates applicable to the repository continue to
+  pass;
+- EB0.1-B1 adds representation and tests only, with no vector/quaternion
+  arithmetic, validation, environment, aerodynamics, integration, or Cubes of
+  Honor adapter implementation; and
+- contract version 0.1.1 is reviewed and changed from `Draft` to `Accepted`
+  before the EB0.1-B1 public-record implementation is committed.
