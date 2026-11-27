@@ -1,10 +1,10 @@
 # BBTC External Ballistics Design Contract
 
-**Contract version:** 0.1.5
+**Contract version:** 0.1.6
 
-**Project phase:** EB0.1-B5
+**Project phase:** EB0.1-B6
 
-**Applies to:** `rewrite/eb0_1b5_environment_provider_v1`
+**Applies to:** `rewrite/eb0_1b6_reference_frame_v1`
 
 **Status:** Accepted
 
@@ -329,39 +329,102 @@ BBTC-owned atmosphere implementation.
 Gravity MUST be supplied through an explicit physical/reference-frame contract
 rather than assumed to have a fixed hard-coded axis.
 
-The architecture SHOULD support a supplied planetary/reference-frame angular
-velocity vector for effects associated with a rotating reference frame.
+For EB0.1-B6 and later external-ballistics work, **gravitational acceleration**
+means the physical gravitational-field acceleration acting at the projectile
+sample point. It excludes centrifugal, Coriolis, Euler, reference-origin
+translation, aerodynamic, contact/support, propulsion, and other separately
+modeled accelerations. A host or helper that begins from effective/apparent
+gravity MUST NOT pass that quantity as B6 gravitational acceleration unless the
+included non-inertial contributions have first been removed consistently.
+
+Terminology from external gravity, geodesy, navigation, or host systems MUST
+NOT be trusted by name alone. A quantity described as local gravity, normal
+gravity, apparent gravity, effective gravity, or a plumb-line acceleration may
+include centrifugal or other frame-dependent contributions. Such a quantity
+must be decomposed consistently before its gravitational-field component is
+stored in the B6 gravitational-acceleration member.
+
+The active BBTC reference frame may translate and rotate relative to an inertial
+frame. Its origin acceleration, angular velocity, and angular acceleration are
+therefore independent kinematic inputs rather than hidden properties of
+gravity.
+
+All B6 reference-frame vectors are expressed in the axes of the active BBTC
+reference frame used by external-ballistics translational position and velocity.
+The angular velocity is the angular velocity of the active reference frame
+relative to an inertial frame, expressed in active-reference coordinates. The
+angular acceleration is the inertial time derivative of that frame angular
+velocity, likewise expressed in active-reference coordinates.
 
 This permits the same BBTC solver architecture to represent Earth-like,
-non-Earth, artificial, reduced-gravity, and game-specific environments.
+non-Earth, artificial, reduced-gravity, accelerating-platform, rotating-
+habitat, and game-specific environments without assigning intrinsic geographic
+meaning to the generic BBTC axes.
 
-The future reference-frame contract MUST explicitly distinguish gravitational
-acceleration from effective or apparent gravity whenever that distinction is
-necessary to prevent centrifugal acceleration from being counted twice.
+For a projectile with reference-frame position `r_R` and velocity `v_R`, a
+future reviewed non-inertial-acceleration checkpoint MUST use the conventional
+kinematic relation. Here `r_R` is the projectile position measured from the
+active reference-frame origin and expressed in active-reference coordinates,
+and `v_R` is the projectile velocity relative to that active frame, expressed
+in the same coordinates. For the currently frozen rigid-body state contract,
+these meanings correspond directly to the translational `position_m` and
+`velocity_m_per_s` state vectors.
 
-A complete rotating-frame formulation MUST support, when physically applicable,
-the Coriolis term associated with reference-frame angular velocity and the
-centrifugal term associated with reference-frame rotation. A time-varying
-rotating frame MAY additionally require an Euler-acceleration term. Curved or
-moving local-navigation frames MAY require further transport-rate terms; such
-terms must be introduced only after their frame semantics are explicitly
-defined.
+```text
+a_noninertial_R =
+    -a_origin_R
+    -2 * omega_R x v_R
+    -alpha_R x r_R
+    -omega_R x (omega_R x r_R)
+```
+
+where:
+
+- `a_origin_R` is the inertial acceleration of the active reference-frame
+  origin, expressed in active-reference coordinates;
+- `omega_R` is the angular velocity of the active reference frame relative to an
+  inertial frame, expressed in active-reference coordinates; and
+- `alpha_R` is the inertial angular acceleration of that reference frame,
+  expressed in active-reference coordinates.
+
+The four terms correspond respectively to reference-origin translation,
+Coriolis acceleration, Euler acceleration, and centrifugal acceleration. The
+formula is frozen here for sign and semantic consistency, but EB0.1-B6 does not
+yet implement it.
+
+A moving local-navigation frame does not require a separately named
+"transport-rate force" when its complete translational acceleration, total
+angular velocity relative to inertial space, and angular acceleration are
+already represented by `a_origin_R`, `omega_R`, and `alpha_R`. A later
+specialized helper MAY decompose those quantities into planetary rotation,
+transport rate, curvature, or other convenient components, but the generic
+solver consumes the total frame kinematics and MUST NOT double count a
+decomposed contribution.
 
 BBTC MUST support the physical behavior conventionally described as the
-Eötvös effect for applicable Earth-like rotating-frame models. That behavior
-MUST arise consistently from the selected gravity, geometry, and rotating-frame
-kinematics. An implementation MUST NOT add a separate empirical Eötvös
-correction when the same acceleration contribution is already represented by
-the active Coriolis, centrifugal, or reference-frame formulation.
+Eötvös effect for applicable Earth-like rotating-frame models. For a complete
+Earth-fixed or Earth-related frame model, the velocity-dependent Eötvös
+contribution MUST arise consistently from the Coriolis/reference-frame
+kinematics and selected gravity treatment. An implementation MUST NOT add a
+second empirical Eötvös correction when the same acceleration is already
+represented by the generic rotating-frame formulation.
 
-Earth-specific helpers MAY construct a reference-frame angular-velocity vector
-from Earth rotation, geographic orientation, latitude, or equivalent data, but
-the generic BBTC core MUST NOT assign intrinsic Earth geography to its axes.
+The B6 reference-frame origin is deliberately independent of any planetary
+center. A local or muzzle-relative projectile position therefore remains a
+local coordinate. For an Earth-fixed local frame, Earth-specific code may use
+planetary radius, latitude, ellipsoid geometry, and Earth rotation to construct
+the inertial acceleration of the local frame origin without forcing the generic
+projectile state to contain an Earth-centered position vector.
 
-Coriolis, centrifugal, Eötvös, Euler, or related rotating-frame terms MUST NOT
-be introduced into the solver until the meaning of the supplied reference
-frame, position, velocity, gravity quantity, and angular-velocity quantity is
-formally frozen and independently tested.
+Earth-specific helpers MAY construct B6 quantities from Earth rotation,
+geographic orientation, latitude, planetary geometry, gravity models, or
+equivalent data, but the generic BBTC core MUST NOT hard-code Earth constants,
+Earth geography, WGS-84, or a particular planetary model.
+
+Coriolis, centrifugal, Euler, Eötvös, or related non-inertial accelerations
+MUST NOT be evaluated by the solver until the B6 value contract and the later
+reference-frame sampling/provider boundary are independently reviewed and
+tested.
 
 ## 12. Numerical architecture
 
@@ -2048,4 +2111,308 @@ EB0.1-B5 is complete when:
   and
 - EB0.1-B5 introduces no atmosphere model, gravity/reference-frame model,
   rotating-frame acceleration, aerodynamic model, derivative, integrator,
+  collision, or Cubes of Honor adapter implementation.
+
+## 27. EB0.1-B6 reference-frame sample
+
+EB0.1-B6 defines one already-sampled local reference-frame/gravity value. It
+freezes the physical meaning, coordinate-frame meaning, precision families,
+public member order, and validation of the quantities that later
+non-inertial-acceleration code will consume.
+
+Like the B4 environment sample, the B6 value record deliberately does not define
+how the sample is obtained. A later provider checkpoint may evaluate constant
+gravity/frame kinematics, an analytic planetary model, a table, a navigation
+solution, a Cubes of Honor world model, or another caller-owned source.
+
+### 27.1 Public header and precision-qualified sample types
+
+EB0.1-B6 introduces:
+
+```text
+include/bbtc/external_ballistics/reference_frame.h
+```
+
+The external-ballistics umbrella header MUST include this public header once B6
+is implemented.
+
+The public sample types are:
+
+```c
+bbtc_eb_reference_frame_sample_float_t
+bbtc_eb_reference_frame_sample_double_t
+bbtc_eb_reference_frame_sample_long_double_t
+```
+
+Each sample contains the following members in this exact declaration order:
+
+```text
+gravitational_acceleration_reference_m_per_s2
+reference_frame_origin_acceleration_reference_m_per_s2
+reference_frame_angular_velocity_reference_rad_per_s
+reference_frame_angular_acceleration_reference_rad_per_s2
+```
+
+Every member is the matching native precision-qualified BBTC three-vector type.
+
+All four members therefore have identical structural type size within one
+precision family. The declaration order above is a public semantic contract;
+EB0.1-B6 does not claim that the order provides a universal padding or ABI-size
+optimization.
+
+### 27.2 Gravitational acceleration
+
+`gravitational_acceleration_reference_m_per_s2` is the physical
+gravitational-field acceleration at the projectile sample point, expressed in
+the active BBTC reference frame.
+
+It MUST NOT contain:
+
+- Coriolis acceleration;
+- centrifugal acceleration;
+- Euler acceleration;
+- acceleration caused solely by translation of the active reference-frame
+  origin;
+- aerodynamic acceleration;
+- contact or support acceleration;
+- propulsion; or
+- another separately modeled force/acceleration contribution.
+
+The vector may have any finite magnitude and direction, including exactly zero.
+The generic B6 validator does not impose an Earth gravity magnitude, a fixed
+down axis, an inverse-square law, a planetary center, or a standard-gravity
+constant.
+
+### 27.3 Reference-frame origin acceleration
+
+`reference_frame_origin_acceleration_reference_m_per_s2` is the inertial
+translational acceleration of the origin of the active BBTC reference frame,
+expressed in the active reference-frame axes.
+
+This is a kinematic quantity. It does not mean "gravity at the origin" and BBTC
+does not infer its physical cause.
+
+For a stationary inertial frame, this vector is exactly zero.
+
+The stored vector MUST represent the complete inertial translational
+acceleration of the active reference-frame origin required by the selected
+frame model. It MUST NOT omit a known contribution merely because that
+contribution is rotational, planetary, vehicle-induced, or otherwise modeled
+outside the projectile state.
+
+For an ideal Earth-fixed local frame whose origin rigidly co-rotates with the
+planet, this quantity therefore includes the inertial centripetal acceleration
+of that local origin caused by planetary rotation. Earth-specific geometry
+needed to obtain that acceleration remains outside the generic B6 sample. This
+permits the projectile's `position_m` to remain local or muzzle-relative
+instead of being reinterpreted as an Earth-centered vector.
+
+### 27.4 Reference-frame angular velocity
+
+`reference_frame_angular_velocity_reference_rad_per_s` is the angular velocity
+of the active BBTC reference frame **relative to an inertial frame**, expressed
+in the active reference-frame axes, in radians per second.
+
+It is the total angular velocity needed by the generic rotating-frame
+kinematics. If a specialized navigation or planetary model decomposes frame
+rotation into Earth/planet rotation, transport rate, local-frame curvature, or
+other components, those components MUST be combined consistently before the
+generic rotating-frame evaluation unless a later reviewed API explicitly
+defines a different decomposition.
+
+A zero vector denotes no instantaneous frame rotation relative to inertial
+space.
+
+### 27.5 Reference-frame angular acceleration
+
+`reference_frame_angular_acceleration_reference_rad_per_s2` is the time
+derivative, taken with respect to the inertial frame, of the active reference
+frame's angular-velocity vector relative to that inertial frame. The resulting
+angular-acceleration vector is expressed in active reference-frame axes, in
+radians per second squared.
+
+This quantity supplies the future Euler-acceleration term. It may be zero even
+when angular velocity is nonzero, as for an ideal uniformly rotating frame, and
+it may be nonzero when angular velocity is instantaneously zero.
+
+The generic validator imposes no cross-field consistency relation between
+angular velocity and angular acceleration.
+
+### 27.6 Zero sample and inertial-frame semantics
+
+Unlike the B4 environment sample, the all-zero B6 reference-frame sample is
+valid.
+
+The exact zero sample denotes, at the sampled event:
+
+- zero gravitational acceleration;
+- zero inertial acceleration of the active reference-frame origin;
+- zero active-frame angular velocity relative to inertial space; and
+- zero active-frame angular acceleration.
+
+It therefore represents an inertial, nonaccelerating, nonrotating,
+zero-gravity reference-frame condition suitable for vacuum/free-motion
+validation.
+
+Negative zero is not assigned distinct physical meaning.
+
+### 27.7 Validation and deterministic precedence
+
+EB0.1-B6 exposes:
+
+```c
+bbtc_eb_reference_frame_sample_validate_float
+bbtc_eb_reference_frame_sample_validate_double
+bbtc_eb_reference_frame_sample_validate_long_double
+```
+
+Each validator is read-only and MUST use this exact precedence:
+
+1. a null sample pointer returns `BBTC_STATUS_INVALID_ARGUMENT`;
+2. otherwise, if any component of any member vector is NaN, return
+   `BBTC_STATUS_NAN_INPUT`;
+3. otherwise, if any component of any member vector is positive or negative
+   infinity, return `BBTC_STATUS_NONFINITE_INPUT`;
+4. otherwise return `BBTC_STATUS_SUCCESS`.
+
+The validator MUST scan the complete record for NaN before performing the
+complete infinity scan so member declaration order cannot change diagnostic
+precedence.
+
+EB0.1-B6 defines no additional magnitude, sign, direction, normalization,
+planetary, or cross-field domain restriction. Validation MUST NOT:
+
+- clamp or repair any vector;
+- replace negative zero;
+- normalize angular quantities;
+- derive origin acceleration from angular velocity;
+- derive gravity from origin acceleration;
+- derive angular acceleration from angular velocity history;
+- add or remove centrifugal acceleration; or
+- infer Earth-specific values.
+
+### 27.8 Ownership, layout, and precision
+
+B6 samples are plain caller-owned values with no pointers, callbacks, dynamic
+storage, allocators, reference counts, host handles, or Cubes of Honor types.
+
+Each precision family stores and validates entirely in its native scalar family.
+No public operation may route float or long-double samples through double as an
+implementation shortcut.
+
+Natural ISO C object layout applies. EB0.1-B6 freezes named member order and
+native member types but does not freeze one universal `sizeof`, alignment,
+padding pattern, byte serialization, or foreign-language binary layout.
+
+Consumers MUST use named members rather than type-punning the record.
+
+### 27.9 Relationship to future rotating-frame evaluation
+
+EB0.1-B6 stores the input quantities needed by a future non-inertial
+translational-acceleration evaluator but does not perform that evaluation.
+
+A later reviewed evaluator will consume projectile reference-frame position and
+velocity together with a B6 sample and apply the sign convention frozen in
+section 11:
+
+```text
+-a_origin_R
+-2 * omega_R x v_R
+-alpha_R x r_R
+-omega_R x (omega_R x r_R)
+```
+
+The future evaluator MUST keep physical gravitational acceleration separate from
+those non-inertial terms. A caller that supplies B6 gravitational acceleration
+must therefore not pre-add centrifugal, Coriolis, Euler, or origin-translation
+accelerations to that field.
+
+For applicable Earth models, the later analytic test suite MUST demonstrate the
+expected east/west Eötvös behavior from the complete frame formulation and MUST
+include a regression test that would fail if an equivalent Eötvös contribution
+were added twice.
+
+### 27.10 Required tests
+
+EB0.1-B6 tests MUST verify at least:
+
+- all four members use the exact matching native vector type for float, double,
+  and long double;
+- exact public member names and declaration order without freezing universal
+  byte size or padding;
+- the all-zero sample is valid in all three precision families;
+- arbitrary finite positive and negative vector components are accepted;
+- a representative Earth-like sample with nonzero gravity, origin acceleration,
+  and angular velocity is accepted without any hidden Earth-specific check;
+- nonzero angular acceleration with zero angular velocity is accepted;
+- nonzero angular velocity with zero angular acceleration is accepted;
+- no hidden relation is imposed between gravity and origin acceleration;
+- NaN anywhere in the record takes precedence over infinity elsewhere;
+- infinity takes precedence only after no NaN exists;
+- validation is read-only;
+- all three precision-qualified validator entry points are exercised;
+- the public header remains usable from C++;
+- an independent CMake consumer can construct and validate a native-double B6
+  sample through `<bbtc/bbtc.h>`; and
+- normal, strict-warning, AddressSanitizer, and UndefinedBehaviorSanitizer gates
+  remain green.
+
+### 27.11 Deliberately deferred behavior
+
+EB0.1-B6 does NOT define:
+
+- a reference-frame provider callback or dispatch API;
+- Earth constants, WGS-84, ellipsoid geometry, latitude/longitude helpers, or a
+  planetary gravity model;
+- a standard gravity constant as a mandatory solver assumption;
+- derivation of local-origin acceleration from planetary radius or rotation;
+- Coriolis acceleration evaluation;
+- centrifugal acceleration evaluation;
+- Euler acceleration evaluation;
+- a separately added Eötvös correction;
+- relative-air velocity;
+- aerodynamic forces or moments;
+- rigid-body derivatives;
+- numerical integration;
+- collision behavior; or
+- Cubes of Honor adapter source code.
+
+Those behaviors remain later reviewed checkpoints.
+
+## 28. Acceptance criteria for EB0.1-B6
+
+EB0.1-B6 is complete when:
+
+- contract version 0.1.6 is reviewed and changed from `Draft` to `Accepted`
+  before implementation is committed;
+- the B6 public header name, three sample type names, exact four-member
+  declaration order, member names, member meanings, and three validator names
+  are frozen;
+- B6 gravitational acceleration is explicitly physical gravitational-field
+  acceleration rather than effective/apparent gravity containing non-inertial
+  terms;
+- reference-frame origin acceleration is explicitly the complete inertial
+  translational acceleration of the active frame origin required by the
+  selected frame model, expressed in active-reference axes;
+- reference-frame angular velocity is explicitly the active frame's angular
+  velocity relative to inertial space, expressed in active-reference axes;
+- reference-frame angular acceleration is explicitly the inertial derivative of
+  that frame angular velocity, expressed in active-reference axes;
+- the future non-inertial acceleration sign convention in section 11 is frozen;
+- a local/muzzle-relative projectile position is explicitly not reinterpreted as
+  a planetary-center position;
+- all-zero B6 storage is a valid inertial zero-gravity sample;
+- validation is read-only and uses null, complete-record NaN, complete-record
+  infinity, then success precedence;
+- validation imposes no hidden Earth-specific or cross-field consistency law;
+- float, double, and long-double families remain natively typed;
+- C, C++, and independent-consumer tests cover the public B6 value boundary;
+- Coriolis, centrifugal, Euler, and applicable Earth/Eötvös behavior remain
+  mandatory later work rather than optional or forgotten features;
+- future Eötvös behavior is required to emerge consistently from the complete
+  rotating-frame formulation without duplicate empirical correction;
+- existing BBTC tests remain green under normal, strict, and sanitizer gates;
+  and
+- EB0.1-B6 introduces no reference-frame provider, non-inertial-acceleration
+  evaluator, atmosphere model, aerodynamic model, derivative, integrator,
   collision, or Cubes of Honor adapter implementation.
