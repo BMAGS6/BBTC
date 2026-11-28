@@ -1,10 +1,10 @@
 # BBTC External Ballistics Design Contract
 
-**Contract version:** 0.2.1
+**Contract version:** 0.2.2
 
-**Project phase:** EB1.2
+**Project phase:** EB1.3
 
-**Applies to:** `rewrite/eb1_2_vacuum_provider_v1`
+**Applies to:** `rewrite/eb1_3_analytic_propagation_v1`
 
 **Status:** Accepted
 
@@ -5372,3 +5372,464 @@ EB1.2 is contract-ready for implementation when:
 - B7, B10, B11, and EB1.1 public contracts remain unchanged; and
 - no atmosphere, aerodynamic, rotating-frame, collision, trajectory-storage,
   adaptive-integration, or Cubes of Honor behavior is introduced.
+## 44. EB1.3 analytic end-to-end propagation validation
+
+EB1.3 is a validation milestone for the already accepted EB1.1 physical
+equations, EB1.2 B7/B10 composition, and B11 fixed-step RK4 integrator.
+
+EB1.3 does not introduce a new production physics model, provider boundary,
+integrator, trajectory container, or public propagation API. Its purpose is to
+demonstrate that the complete accepted inertial-vacuum pipeline reproduces
+independent analytic solutions and exhibits the expected fourth-order
+convergence where the exact solution is not a low-degree polynomial.
+
+The pipeline under validation is:
+
+```text
+test-owned initial state and configuration
+    -> B11 fixed-step RK4
+        -> B10 state-derivative dispatch
+            -> EB1.2 inertial-vacuum provider
+                -> B7 reference-frame sampling
+                -> EB1.1 inertial-vacuum derivative evaluation
+                    -> B9 derivative
+```
+
+### 44.1 Scope and implementation surface
+
+The intended EB1.3 implementation is validation-only.
+
+The dedicated validation source is:
+
+```text
+tests/test_eb_inertial_vacuum_propagation.c
+```
+
+and the CTest name is:
+
+```text
+bbtc.eb_inertial_vacuum_propagation
+```
+
+`tests/CMakeLists.txt` may be changed only as needed to register that test.
+
+No production header or production source file is required to change for EB1.3
+when the already accepted implementation satisfies the analytic oracles.
+
+A test-local helper MAY advance a state through `N` successive calls to the
+matching B11 fixed-step RK4 function. Such a helper is test infrastructure and
+does not create a public multi-step propagation API.
+
+If EB1.3 validation exposes a genuine defect in a sealed EB1.1, EB1.2, or B11
+production implementation, that defect MUST be reviewed explicitly before the
+sealed production code is modified. A failing validation result alone is not
+permission to weaken an oracle or silently change an accepted contract.
+
+### 44.2 Independence of analytic oracles
+
+Expected analytic states MUST be computed independently of BBTC's derivative
+and integration implementations.
+
+The analytic oracle MUST NOT:
+
+- call EB1.1 to manufacture expected derivatives;
+- call B10 or B11 to manufacture expected states;
+- copy expected values from BBTC output;
+- reuse B11 stage values as the reference solution; or
+- derive acceptance thresholds from the observed BBTC error.
+
+Elementary arithmetic and the matching native C math-library functions are
+permitted. In particular, the three precision families use the corresponding
+`float`, `double`, or `long double` arithmetic and matching transcendental
+functions such as `sinf`/`cosf`, `sin`/`cos`, and `sinl`/`cosl`.
+
+One precision family's oracle MUST NOT route through another precision family.
+
+### 44.3 Common physical restrictions
+
+Every EB1.3 case remains within the accepted EB1.1 inertial-frame restriction.
+
+Therefore every successful B7 sample has exact zero:
+
+- frame-origin acceleration;
+- reference-frame angular velocity; and
+- reference-frame angular acceleration.
+
+Only true gravitational acceleration may vary through B7.
+
+Unless a case explicitly requires a constant B8 force, the B8 force/moment
+record is all zero.
+
+Rotational analytic cases use a spherical principal inertia tensor so zero
+applied moment produces constant body angular velocity without gyroscopic
+coupling.
+
+Every run begins from a fresh valid B2 state, fresh EB1.2 configuration, and
+fresh test-owned B7 context. Results from one step-size run MUST NOT become the
+initial state of another convergence run.
+
+### 44.4 Precision-qualified comparison rule for polynomial cases
+
+The drift and constant-acceleration cases are analytically polynomial and are
+not required to compare bit-for-bit because B11 includes native floating-point
+RK4 weighting and quaternion normalization.
+
+For one scalar family with machine epsilon `epsilon_family`, a finite scalar
+result `actual` satisfies the EB1.3 polynomial comparison when:
+
+```text
+abs(actual - expected)
+    <= 4096 * epsilon_family * max(1, abs(expected))
+```
+
+using native-family arithmetic.
+
+The matching `FLT_EPSILON`, `DBL_EPSILON`, or `LDBL_EPSILON` is used for the
+family under test.
+
+This tolerance is a validation allowance for floating-point evaluation order;
+it does not redefine any public BBTC physical or numerical contract.
+
+### 44.5 Oracle A: multi-step inertial drift
+
+All three native precision families MUST validate a multi-step zero-acceleration
+drift case through the complete EB1.2/B10/B11 pipeline.
+
+The case uses:
+
+```text
+initial position     r0 = ( 1, -2,  3) m
+initial velocity     v0 = ( 4, -6,  8) m/s
+initial orientation  q0 = ( 0,  0,  0, 1)
+initial angular vel. w0 = ( 0,  0,  0) rad/s
+B7 gravity           g  = ( 0,  0,  0) m/s^2
+B8 force/moment         = all zero
+initial time         t0 = 0 s
+step size             h = 0.25 s
+step count            N = 8
+final time             T = 2 s
+```
+
+The independent analytic solution is:
+
+```text
+v(T) = v0
+r(T) = r0 + v0*T = (9, -14, 19) m
+q(T) = q0
+w(T) = w0
+```
+
+The final state MUST satisfy the comparison rule in 44.4 and the public B2
+validator.
+
+The B7 test context MUST observe exactly `4*N = 32` sampling requests during the
+successful propagation.
+
+### 44.6 Oracle B: multi-step constant acceleration from B7 plus B8
+
+All three native precision families MUST validate a case in which constant
+gravity and constant applied force combine through EB1.1.
+
+The case uses a projectile mass of exactly `2 kg` and:
+
+```text
+initial position     r0 = (1,  2, 3) m
+initial velocity     v0 = (4, -2, 1) m/s
+initial orientation  q0 = (0, 0, 0, 1)
+initial angular vel. w0 = (0, 0, 0) rad/s
+
+B7 gravity           g  = (0.5,  1, -1) m/s^2
+B8 applied force     F  = (2,   -4,  6) N
+B8 applied moment       = (0,    0,  0) N*m
+
+initial time         t0 = 0 s
+step size             h = 0.25 s
+step count            N = 8
+final time             T = 2 s
+```
+
+The expected constant translational acceleration is:
+
+```text
+a = g + F/m = (1.5, -1, 2) m/s^2
+```
+
+and the independent analytic final state is:
+
+```text
+v(T) = v0 + a*T
+     = (7, -4, 5) m/s
+
+r(T) = r0 + v0*T + 0.5*a*T^2
+     = (12, -4, 9) m
+```
+
+Orientation and angular velocity remain unchanged.
+
+The final state MUST satisfy the comparison rule in 44.4 and the public B2
+validator.
+
+The B7 test context MUST observe exactly 32 sampling requests.
+
+### 44.7 Oracle C: position-dependent gravity and RK4 convergence
+
+All three native precision families MUST validate stage-local position sampling
+with a synthetic but physically well-defined one-dimensional restoring gravity
+field:
+
+```text
+g_x(x) = -x  m/s^2
+g_y    =  0
+g_z    =  0
+```
+
+for positions whose numeric x-coordinate is expressed in metres. Equivalently,
+the restoring coefficient is exactly `1 s^-2`.
+
+The initial translational state is:
+
+```text
+x(0)  = 1 m
+v_x(0)= 0 m/s
+```
+
+with all other position and velocity components zero. Orientation is identity,
+angular velocity is zero, and B8 is all zero.
+
+The exact solution at `T = 1 s` is:
+
+```text
+x(T)   = cos(1) m
+v_x(T) = -sin(1) m/s
+```
+
+using the matching native-family trigonometric functions for the oracle.
+
+Three independent propagations are performed over the same interval with:
+
+```text
+h0 = 1.0  s   -> 1 step
+h1 = 0.5  s   -> 2 steps
+h2 = 0.25 s   -> 4 steps
+```
+
+The coarsest run deliberately remains within a numerically useful error regime,
+while the finest run stays far enough above single-precision roundoff that the
+required convergence-ratio check retains practical margin across conforming
+platforms.
+
+For each run define the native-family translational error:
+
+```text
+e(h) = max(
+    abs(x_numeric(T)   - x_exact(T)),
+    abs(vx_numeric(T)  - vx_exact(T))
+)
+```
+
+Each error MUST be finite and strictly positive, and:
+
+```text
+e(h0) > e(h1) > e(h2)
+e(h0) / e(h1) >= 10
+e(h1) / e(h2) >= 10
+```
+
+The ratio floor is an end-to-end regression criterion consistent with
+fourth-order convergence while leaving margin for native-family floating-point
+rounding. It is not a replacement definition of RK4 order.
+
+The corresponding B7 contexts MUST observe exactly 4, 8, and 16 sample
+requests.
+
+This oracle specifically guards against replacing stage-local B7 sampling with
+one gravity sample per completed timestep.
+
+### 44.8 Oracle D: noncommuting pure principal-axis spin and quaternion convergence
+
+All three native precision families MUST validate rotational propagation with:
+
+```text
+q_WB(0) = (0, 0, 1, 0)
+w_B     = (1, 0, 0) rad/s
+```
+
+The initial quaternion is the exact unit quaternion for a 180-degree
+world-from-body rotation about +Z. The projectile uses a spherical inertia
+tensor, zero applied moment, zero applied force, and zero gravity.
+
+The non-identity initial orientation is deliberate. It does not commute with
+the pure +X angular-velocity quaternion, so the accepted right-multiplied
+Hamilton kinematics are distinguishable from the historical wrong
+left-multiplied ordering.
+
+The exact angular velocity remains constant.
+
+At `T = 1 s`, under the accepted active Hamilton world-from-body convention and
+EB1.1 equation
+
+```text
+dq_WB/dt = 0.5 * q_WB * omega_B_quat
+```
+
+define the exact +X spin increment:
+
+```text
+q_spin(T) = (sin(0.5), 0, 0, cos(0.5))
+```
+
+The accepted multiplication order gives:
+
+```text
+q_exact(T)
+    = q_WB(0) * q_spin(T)
+    = (0, sin(0.5), cos(0.5), 0)
+```
+
+For comparison, the historical wrong ordering would give:
+
+```text
+q_wrong(T)
+    = q_spin(T) * q_WB(0)
+    = (0, -sin(0.5), cos(0.5), 0)
+```
+
+`q_wrong(T)` is not sign-equivalent to `q_exact(T)`. Therefore this oracle MUST
+fail for that multiplication-order regression rather than merely checking a
+case in which left and right multiplication happen to commute.
+
+The same three step sizes are used:
+
+```text
+h0 = 1.0  s
+h1 = 0.5  s
+h2 = 0.25 s
+```
+
+Quaternion comparison MUST be sign-invariant. For numerical quaternion `q_n`
+and analytic quaternion `q_e`, define:
+
+```text
+d_plus  = max_i abs(q_n[i] - q_e[i])
+d_minus = max_i abs(q_n[i] + q_e[i])
+e_q(h)  = min(d_plus, d_minus)
+```
+
+Each quaternion error MUST be finite and strictly positive, and:
+
+```text
+e_q(h0) > e_q(h1) > e_q(h2)
+e_q(h0) / e_q(h1) >= 10
+e_q(h1) / e_q(h2) >= 10
+```
+
+Every final angular-velocity component MUST satisfy the comparison rule in
+44.4, translational state must remain unchanged within that rule, and every
+final state MUST pass the public B2 validator.
+
+The corresponding B7 contexts MUST observe exactly 4, 8, and 16 sample
+requests for the three step-size runs.
+
+This oracle validates the accepted quaternion multiplication order together
+with B11 stage/final normalization rather than an unconstrained quaternion RK4
+scheme.
+
+### 44.9 Failure behavior and determinism
+
+EB1.3 introduces no new failure statuses.
+
+A propagation helper stops immediately when any B11 step returns non-success
+and returns that status to the test caller without attempting later steps.
+
+Analytic success cases use deterministic B7 providers whose physical sample is
+a pure function of the requested position and configured immutable test data.
+Diagnostic request counters are permitted as caller-owned B7 context side
+effects and remain nontransactional exactly as accepted by EB1.2.
+
+No oracle may depend on B7 call order to determine the returned physical field.
+
+### 44.10 Required EB1.3 tests and gates
+
+EB1.3 implementation MUST verify at least:
+
+- the dedicated CTest test name is
+  `bbtc.eb_inertial_vacuum_propagation`;
+- the validation source is
+  `tests/test_eb_inertial_vacuum_propagation.c`;
+- Oracle A inertial drift for float, double, and long double;
+- Oracle B constant B7-plus-B8 acceleration for all three families;
+- Oracle C position-dependent restoring gravity for all three families;
+- Oracle C performs fresh runs at `h = 1.0`, `0.5`, and `0.25` seconds;
+- Oracle C satisfies both required error-decrease ratios;
+- Oracle D noncommuting pure +X body-axis spin for all three families;
+- Oracle D starts from `q_WB(0) = (0, 0, 1, 0)` specifically so the accepted
+  `q_WB * omega_B_quat` ordering is distinguishable from `omega_B_quat * q_WB`;
+- Oracle D uses sign-invariant quaternion comparison;
+- Oracle D satisfies both required quaternion-error decrease ratios;
+- successful multi-step runs produce exactly four B7 requests per B11 step;
+- every tested final state passes the matching public B2 validator;
+- analytic expected values are produced independently of EB1.1/B10/B11;
+- no precision family routes through another;
+- no production API or production physics is added merely to support the
+  validation test;
+- normal and strict-warning builds remain green; and
+- AddressSanitizer and UndefinedBehaviorSanitizer gates remain green.
+
+With the dedicated EB1.3 test added to the current 34-test suite, the expected
+suite size is 35 tests.
+
+### 44.11 Deliberately deferred behavior
+
+EB1.3 does NOT define or validate:
+
+- atmosphere or wind;
+- aerodynamic drag, lift, Magnus force, or aerodynamic moments;
+- ballistic-coefficient models;
+- rotating-reference-frame acceleration equations;
+- Coriolis or centrifugal effects;
+- adaptive integration or local error control;
+- public multi-step trajectory storage;
+- interpolation or dense output;
+- event detection;
+- collision/contact response;
+- Cubes of Honor adapter behavior; or
+- a replacement integrator.
+
+Those remain later external-ballistics milestones.
+
+## 45. Acceptance criteria for EB1.3
+
+EB1.3 is contract-ready for validation implementation when:
+
+- contract version 0.2.2 is reviewed and changed from `Draft` to `Accepted`
+  before EB1.3 validation code is committed;
+- EB1.1 and EB1.2 remain sealed at their accepted implementation boundaries;
+- B11 remains sealed and physics-agnostic unless an independently demonstrated
+  defect requires a separately reviewed correction;
+- EB1.3 is frozen as a validation-only milestone with no new production public
+  API;
+- the dedicated validation file and CTest name are frozen;
+- all three native scalar families are required;
+- the polynomial comparison rule and native-family epsilon selection are
+  frozen;
+- inertial drift and constant-acceleration multi-step oracles are frozen;
+- the position-dependent restoring-gravity oracle and its exact solution are
+  frozen;
+- the three convergence step sizes are frozen as `1.0`, `0.5`, and `0.25`
+  seconds over a common one-second propagation interval;
+- both restoring-gravity convergence ratios have a minimum accepted value of
+  10;
+- the pure-spin quaternion analytic solution is frozen under the accepted
+  Hamilton world-from-body convention;
+- the pure-spin initial orientation is noncommuting with the +X
+  angular-velocity quaternion so the accepted multiplication order is directly
+  regression-tested;
+- quaternion comparison is explicitly sign-invariant;
+- both pure-spin convergence ratios have a minimum accepted value of 10;
+- successful propagation requires exactly four B7 samples per B11 step;
+- analytic expected values remain independent of BBTC's derivative and
+  integrator implementation;
+- the existing B2, B7, B9, B10, B11, EB1.1, and EB1.2 public contracts remain
+  unchanged; and
+- atmosphere, aerodynamics, rotating-frame physics, adaptive integration,
+  trajectory storage, collision, and Cubes of Honor behavior remain deferred.
