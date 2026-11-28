@@ -1,14 +1,14 @@
 # BBTC External Ballistics Design Contract
 
-**Contract version:** 0.2.2
+**Contract version:** 0.3.0
 
-**Project phase:** EB1.3
+**Project phase:** EB2.1
 
-**Applies to:** `rewrite/eb1_3_analytic_propagation_v1`
+**Applies to:** `rewrite/eb2_1_relative_air_v1`
 
 **Status:** Accepted
 
-**Date:** 2026-11-27
+**Date:** 2026-11-28
 
 ## 1. Purpose
 
@@ -5833,3 +5833,570 @@ EB1.3 is contract-ready for validation implementation when:
   unchanged; and
 - atmosphere, aerodynamics, rotating-frame physics, adaptive integration,
   trajectory storage, collision, and Cubes of Honor behavior remain deferred.
+## 46. EB2.1 relative-air derived-flow contract
+
+EB2.1 is the first aerodynamic checkpoint. It establishes the derived local
+flow quantities that later drag, lift, Magnus, attitude, and coefficient models
+need, without yet introducing any aerodynamic force or moment model.
+
+EB2.1 consumes two already established public quantities:
+
+- a projectile translational velocity expressed in the active BBTC
+  world/reference frame; and
+- one already sampled B4 environment value.
+
+The EB2.1 evaluator independently validates that B4 sample. A caller is not
+required to invoke the B4 validator separately before calling EB2.1.
+
+It derives the projectile velocity relative to the local atmospheric medium,
+the corresponding scalar relative speed, an aerodynamic Mach number, and
+dynamic pressure.
+
+EB2.1 deliberately remains below the B5 provider-composition layer. It does not
+sample the environment itself, does not evaluate a drag coefficient, does not
+produce B8 force/moment data, and does not perform numerical integration.
+
+### 46.1 EB2 stage plan
+
+The intended EB2 decomposition is:
+
+```text
+EB2.1  relative-air derived-flow values
+EB2.2  basic drag coefficient / drag-force model
+EB2.3  environment + drag + EB1 derivative-provider composition
+EB2.4  analytic end-to-end drag propagation validation
+```
+
+Only EB2.1 is frozen by this checkpoint. Exact public APIs, equations, and test
+oracles for EB2.2 through EB2.4 remain deferred to their own reviewed
+contracts.
+
+This subdivision preserves the section 15 roadmap requirement that EB2 provide
+basic aerodynamic relative-air and drag models while keeping each physical
+layer independently reviewable and testable.
+
+### 46.2 Public header and implementation boundary
+
+EB2.1 introduces the public header:
+
+```text
+include/bbtc/external_ballistics/relative_air.h
+```
+
+and the production implementation:
+
+```text
+src/external/relative_air.c
+```
+
+The external-ballistics umbrella header MUST expose `relative_air.h` after the
+implementation checkpoint is accepted.
+
+The root CMake target MUST compile the new source and expose the new public
+header through the existing `bbtc` / `bbtc::bbtc` target. EB2.1 MUST NOT create
+a second library target or a new mandatory external dependency.
+
+The dedicated C test source is:
+
+```text
+tests/test_eb_relative_air.c
+```
+
+and the CTest name is:
+
+```text
+bbtc.eb_relative_air
+```
+
+Public-header C++ compatibility and the independent consumer fixture MUST be
+extended to exercise the new public type/function family.
+
+### 46.3 Public relative-air value records
+
+EB2.1 introduces:
+
+```c
+bbtc_eb_relative_air_float_t
+bbtc_eb_relative_air_double_t
+bbtc_eb_relative_air_long_double_t
+```
+
+Each record contains exactly the following fields in this declaration order:
+
+```text
+projectile_relative_to_air_velocity_world_m_per_s
+projectile_relative_to_air_speed_m_per_s
+mach_number
+dynamic_pressure_pa
+```
+
+The matching public C declarations are conceptually:
+
+```c
+typedef struct bbtc_eb_relative_air_float_t
+{
+    bbtc_eb_vec3_float_t projectile_relative_to_air_velocity_world_m_per_s;
+    float projectile_relative_to_air_speed_m_per_s;
+    float mach_number;
+    float dynamic_pressure_pa;
+}
+bbtc_eb_relative_air_float_t;
+```
+
+with structurally identical native-double and native-long-double families.
+
+No family may store, derive, validate, or evaluate its values by converting
+through another scalar family.
+
+The vector is declared first so the composite vector-valued member precedes the
+same-family scalar members. This declaration order is frozen independently of
+implementation-specific padding or total `sizeof`.
+
+### 46.4 Relative-velocity sign convention
+
+The EB2.1 relative-air velocity is explicitly the velocity of the projectile
+relative to the local atmospheric medium:
+
+```text
+v_PA = v_PW - v_AW
+```
+
+where:
+
+- `v_PA` is projectile-relative-to-air velocity;
+- `v_PW` is projectile velocity in the active world/reference frame; and
+- `v_AW` is the B4 local air velocity in that same world/reference frame.
+
+Therefore:
+
+```text
+projectile_relative_to_air_velocity_world_m_per_s
+    = projectile_velocity_world_m_per_s
+    - environment.air_velocity_world_m_per_s
+```
+
+The stored vector points in the direction the projectile moves through the
+local medium.
+
+This sign convention is intentionally selected so a later ordinary drag force
+with positive drag magnitude acts in the opposite direction:
+
+```text
+F_drag parallel to -v_PA
+```
+
+EB2.1 does not itself evaluate that drag force.
+
+The API MUST NOT use the opposite "air relative to projectile" convention under
+the same field name, and later aerodynamic contracts MUST cite this convention
+rather than silently changing signs.
+
+### 46.5 Scalar relative speed
+
+The scalar relative speed is the Euclidean norm:
+
+```text
+V_rel = |v_PA|
+```
+
+and is stored in:
+
+```text
+projectile_relative_to_air_speed_m_per_s
+```
+
+The result is nonnegative.
+
+The implementation MUST evaluate the three-dimensional norm in a manner that
+avoids unnecessary intermediate overflow or underflow. The matching native
+`hypot` family, including an equivalent nested `hypot(hypot(x, y), z)`
+calculation, is an acceptable strategy.
+
+A mathematically finite vector whose Euclidean norm is not representable as a
+finite value in the selected scalar family produces
+`BBTC_STATUS_NUMERICAL_FAILURE`.
+
+Zero relative speed is valid and has no invented direction. EB2.1 MUST NOT
+replace a zero relative velocity with an epsilon magnitude or arbitrary unit
+vector.
+
+### 46.6 Aerodynamic Mach-number convention
+
+For a positive-density B4 medium, B4 already requires a strictly positive
+finite local speed of sound. EB2.1 therefore defines:
+
+```text
+Mach = V_rel / c
+```
+
+where `c` is `environment.speed_of_sound_m_per_s`.
+
+Mach number is nonnegative.
+
+For a B4 sample whose `air_density_kg_per_m3` is exactly zero, EB2.1 defines:
+
+```text
+mach_number = 0
+```
+
+without dividing by `speed_of_sound_m_per_s`, regardless of whether the
+zero-density B4 sample stores zero or positive finite sound speed.
+
+This is an aerodynamic no-medium convention, not a claim that acoustic Mach
+number is physically defined in a vacuum. Its purpose is to provide a finite,
+deterministic value to downstream aerodynamic code while preserving B4's
+explicit representation of exact zero-density vacuum.
+
+A later drag/force model MUST treat zero density as zero aerodynamic loading and
+MUST NOT infer a nonzero force merely because another derived quantity is
+finite.
+
+For positive density, if the mathematically positive Mach ratio cannot be
+represented finitely in the selected scalar family, evaluation fails with
+`BBTC_STATUS_NUMERICAL_FAILURE`.
+
+### 46.7 Dynamic pressure
+
+EB2.1 defines aerodynamic dynamic pressure as:
+
+```text
+q = 0.5 * rho * V_rel^2
+```
+
+where `rho` is `environment.air_density_kg_per_m3`.
+
+The stored field is:
+
+```text
+dynamic_pressure_pa
+```
+
+because `kg/m^3 * (m/s)^2` is equivalent to pascals.
+
+The following cases are exact:
+
+```text
+rho == 0  -> q = 0
+V_rel == 0 -> q = 0
+```
+
+These zero cases MUST be recognized before any multiplication that could create
+a meaningless overflow.
+
+For positive density and nonzero speed, the implementation MUST avoid
+avoidable intermediate overflow AND avoidable intermediate underflow.
+
+In particular, it MUST NOT reject an input merely because the naïve
+intermediate expression:
+
+```text
+V_rel * V_rel
+```
+
+overflows when the final value `0.5 * rho * V_rel^2` is nevertheless
+representable as a finite scalar.
+
+Likewise, it MUST NOT collapse a mathematically representable nonzero final
+dynamic pressure to zero merely because an unfortunate evaluation order first
+forms an intermediate product such as:
+
+```text
+0.5 * rho
+```
+
+that underflows before later multiplication by `V_rel^2` would bring the final
+result back into the representable nonzero range.
+
+An implementation MAY use exponent/mantissa scaling through the matching native
+`frexp`/`scalbn` family or another algebraically equivalent strategy.
+
+If the mathematical final dynamic pressure is above the finite range of the
+selected scalar family, evaluation returns `BBTC_STATUS_NUMERICAL_FAILURE`.
+
+If the mathematical final dynamic pressure is positive but below the smallest
+positive result representable by the selected scalar family, ordinary rounding
+to positive zero is a successful finite result. Such unavoidable final-result
+underflow is NOT `BBTC_STATUS_NUMERICAL_FAILURE`.
+
+Dynamic pressure MUST NOT be derived from static pressure, temperature, an
+ideal-gas equation, or a standard-atmosphere assumption. EB2.1 uses the density
+already supplied by B4.
+
+### 46.8 Public evaluator functions
+
+EB2.1 introduces exactly:
+
+```c
+bbtc_status_e
+bbtc_eb_relative_air_evaluate_float(
+    const bbtc_eb_vec3_float_t* projectile_velocity_world_m_per_s,
+    const bbtc_eb_environment_sample_float_t* environment,
+    bbtc_eb_relative_air_float_t* out_relative_air
+);
+
+bbtc_status_e
+bbtc_eb_relative_air_evaluate_double(
+    const bbtc_eb_vec3_double_t* projectile_velocity_world_m_per_s,
+    const bbtc_eb_environment_sample_double_t* environment,
+    bbtc_eb_relative_air_double_t* out_relative_air
+);
+
+bbtc_status_e
+bbtc_eb_relative_air_evaluate_long_double(
+    const bbtc_eb_vec3_long_double_t* projectile_velocity_world_m_per_s,
+    const bbtc_eb_environment_sample_long_double_t* environment,
+    bbtc_eb_relative_air_long_double_t* out_relative_air
+);
+```
+
+The evaluator accepts only the physical inputs required by the derived-flow
+calculation. It deliberately does not accept the complete B2 rigid-body state
+because orientation, position, angular velocity, and simulation time do not
+participate in EB2.1 relative-air kinematics.
+
+A later B5/B10 composition layer obtains projectile velocity from the candidate
+B2 state, samples B5 at candidate position/time, and supplies those values to
+this evaluator.
+
+### 46.9 Input validation and diagnostic precedence
+
+A nonnull `out_relative_air` is first set to the exact all-zero EB2.1 record.
+
+Failure precedence is:
+
+1. null `out_relative_air` ->
+   `BBTC_STATUS_INVALID_ARGUMENT`;
+2. otherwise establish the exact all-zero output;
+3. null projectile-velocity pointer or null environment pointer ->
+   `BBTC_STATUS_INVALID_ARGUMENT`;
+4. if any scalar in the projectile velocity or complete B4 environment record
+   is NaN -> `BBTC_STATUS_NAN_INPUT`;
+5. otherwise, if any scalar in those two complete inputs is positive or
+   negative infinity -> `BBTC_STATUS_NONFINITE_INPUT`;
+6. otherwise apply the accepted B4 physical-domain requirements to the
+   environment and propagate its domain failure unchanged;
+7. otherwise evaluate the derived values; and
+8. any nonfinite value generated by otherwise valid finite inputs ->
+   `BBTC_STATUS_NUMERICAL_FAILURE`.
+
+The NaN and infinity scans in steps 4 and 5 cover both complete inputs before a
+domain status is selected. This prevents argument ordering from causing an
+environment NaN to be hidden by a projectile-velocity infinity or vice versa.
+
+The evaluator MUST NOT modify either caller-owned input.
+
+On every failure after a nonnull output pointer has been established, the
+returned output remains the exact all-zero EB2.1 record.
+
+Because an all-zero EB2.1 record is also physically valid for zero relative
+speed, the returned `bbtc_status_e` is authoritative. A caller MUST NOT infer
+success from output contents alone.
+
+### 46.10 Successful-output invariants
+
+On success:
+
+- every vector component is finite;
+- `projectile_relative_to_air_speed_m_per_s` is finite and nonnegative;
+- `mach_number` is finite and nonnegative;
+- `dynamic_pressure_pa` is finite and nonnegative;
+- the vector follows the exact sign convention in section 46.4;
+- the scalar speed is the native-family Euclidean norm of that vector;
+- zero-density environment produces exactly zero Mach number and exactly zero
+  dynamic pressure;
+- positive-density environment uses the B4 speed of sound for Mach;
+- dynamic pressure uses the B4 density directly; and
+- no field is derived from temperature, static pressure, a standard atmosphere,
+  or an implicit equation of state.
+
+EB2.1 does not introduce a separate public validator for the derived record.
+The record is a result type produced by the evaluator. Whether a later public
+aerodynamic API should accept independently caller-constructed relative-air
+records is deferred until such an API exists and can justify the required
+validation contract.
+
+### 46.11 Required convention examples
+
+Tests MUST include simple independently auditable examples that freeze the sign
+and scalar conventions.
+
+At minimum, a stationary-air case with:
+
+```text
+v_projectile = (3, 4, 0) m/s
+v_air        = (0, 0, 0) m/s
+rho          = 1.2 kg/m^3
+c            = 2.5 m/s
+```
+
+must produce:
+
+```text
+v_PA = (3, 4, 0) m/s
+V_rel = 5 m/s
+Mach = 2
+q = 15 Pa
+```
+
+A moving-air sign case MUST demonstrate component subtraction with a
+non-collinear wind, for example:
+
+```text
+v_projectile = (10, -2, 5) m/s
+v_air        = ( 3,  4,-1) m/s
+```
+
+producing:
+
+```text
+v_PA = (7, -6, 6) m/s
+```
+
+A zero-relative-speed case MUST demonstrate:
+
+```text
+v_projectile == v_air
+V_rel = 0
+Mach = 0
+q = 0
+```
+
+for a positive-density medium.
+
+A zero-density case with nonzero relative velocity and zero sound speed MUST
+demonstrate that vector and scalar relative speed are still computed while:
+
+```text
+Mach = 0
+q = 0
+```
+
+and no division by zero occurs.
+
+### 46.12 Numerical robustness tests
+
+EB2.1 tests MUST exercise generated-arithmetic failure and robust success
+behavior, not only ordinary-scale values.
+
+At minimum, tests MUST verify:
+
+- finite projectile and air velocities whose component subtraction overflows
+  cause `BBTC_STATUS_NUMERICAL_FAILURE` and exact-zero output;
+- a finite relative vector whose Euclidean norm is not representable causes
+  `BBTC_STATUS_NUMERICAL_FAILURE`;
+- positive-density inputs whose finite relative speed divided by a tiny positive
+  finite sound speed yields an unrepresentable Mach number cause
+  `BBTC_STATUS_NUMERICAL_FAILURE`;
+- a dynamic-pressure case for which naïve `V_rel * V_rel` would overflow but
+  the final `0.5 * rho * V_rel^2` remains representable succeeds rather than
+  reporting a false numerical failure;
+- a dynamic-pressure case for which an early density scaling such as
+  `0.5 * rho` would underflow but the final dynamic pressure remains
+  representable and nonzero succeeds with that nonzero result;
+- a case whose positive mathematical final dynamic pressure lies below the
+  selected family's positive representable range succeeds with finite positive
+  zero rather than reporting numerical failure; and
+- a genuinely unrepresentable high final dynamic pressure returns
+  `BBTC_STATUS_NUMERICAL_FAILURE`.
+
+The numerical-robustness matrix MUST exercise these requirements in float,
+double, and long double without routing one family through another.
+
+### 46.13 Precision-family and ABI requirements
+
+All public fields and evaluator arguments remain native to their declared
+family.
+
+Compile-time C tests MUST verify:
+
+- vector member family;
+- scalar member family;
+- declaration order;
+- exact evaluator signature; and
+- absence of accidental cross-family field types.
+
+The C++ public-header test MUST verify the corresponding public type and
+function signatures.
+
+The independent consumer fixture MUST construct a valid environment and
+projectile velocity, call the native-double evaluator through `<bbtc/bbtc.h>`,
+and observe a successful representative result.
+
+No universal byte size or padding pattern is frozen.
+
+### 46.14 Deliberately deferred behavior
+
+EB2.1 does NOT define or implement:
+
+- a drag coefficient;
+- a drag-force vector;
+- ballistic coefficient;
+- G1, G2, G5, G6, G7, G8, GS, RA4, or another reference-drag table;
+- lift;
+- angle of attack;
+- sideslip;
+- body-frame relative-air components;
+- aerodynamic moments;
+- center of pressure;
+- Magnus force;
+- spin damping;
+- yaw of repose;
+- B5 sampling inside an aerodynamic derivative provider;
+- B7 reference-frame composition changes;
+- B10 provider composition changes;
+- a new integrator;
+- atmosphere reconstruction from pressure/temperature;
+- humidity modeling;
+- rotating-reference-frame physics;
+- collision or event handling; or
+- Cubes of Honor adapter code.
+
+Those remain later reviewed checkpoints.
+
+## 47. Acceptance criteria for EB2.1
+
+EB2.1 is contract-ready for implementation when:
+
+- contract version 0.3.0 is reviewed and changed from `Draft` to `Accepted`
+  before EB2.1 production code is committed;
+- EB1 remains sealed through implementation tag
+  `eb1.3-implemented-20261128`;
+- the public header is frozen as
+  `include/bbtc/external_ballistics/relative_air.h`;
+- the three public relative-air record names are frozen;
+- the four public record fields and declaration order are frozen;
+- relative-air velocity is explicitly projectile velocity minus air velocity in
+  active world/reference coordinates;
+- relative speed is the robust native-family Euclidean norm of that vector;
+- zero relative speed is valid and receives no invented direction;
+- positive-density Mach is `V_rel / c`;
+- zero-density Mach is explicitly frozen to zero without sound-speed division;
+- dynamic pressure is `0.5 * rho * V_rel^2`;
+- zero density or zero relative speed produces exact-zero dynamic pressure;
+- dynamic-pressure evaluation must avoid false failure or false zero from
+  avoidable intermediate overflow or underflow;
+- unavoidable final-result underflow to positive zero is a successful finite
+  result rather than a numerical failure;
+- the evaluator accepts projectile velocity plus a B4 environment sample rather
+  than the complete B2 state;
+- evaluator names and argument order are frozen for all three precision
+  families;
+- global input diagnostic precedence is null, NaN, infinity, B4 domain, then
+  generated numerical failure;
+- nonnull output is zeroed before validation and remains zero on every failure;
+- generated nonfinite arithmetic returns
+  `BBTC_STATUS_NUMERICAL_FAILURE`;
+- temperature and static pressure do not participate in the derived-flow
+  equations except through B4 input validation;
+- the dedicated test file and CTest name are frozen;
+- ordinary sign, speed, Mach, dynamic-pressure, zero-speed, and vacuum cases are
+  independently tested;
+- overflow/underflow-sensitive arithmetic behavior is explicitly tested in
+  float, double, and long double;
+- C, C++, and independent-consumer coverage is required;
+- normal, strict-warning, AddressSanitizer, and UndefinedBehaviorSanitizer gates
+  remain green;
+- no drag coefficient, drag force, ballistic coefficient, G-function,
+  attitude-aerodynamic, B5/B10 composition, or Cubes of Honor code is added in
+  EB2.1; and
+- EB2.2 through EB2.4 remain separate future contract checkpoints.
