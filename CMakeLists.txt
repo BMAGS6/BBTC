@@ -39,6 +39,7 @@ add_library(
     include/bbtc/external_ballistics/quaternion.h
     include/bbtc/external_ballistics/reference_frame.h
     include/bbtc/external_ballistics/reference_frame_provider.h
+    include/bbtc/external_ballistics/relative_air.h
     include/bbtc/external_ballistics/state.h
     include/bbtc/external_ballistics/state_derivative.h
     include/bbtc/external_ballistics/state_derivative_provider.h
@@ -74,6 +75,7 @@ add_library(
     src/external/projectile.c
     src/external/reference_frame.c
     src/external/reference_frame_provider.c
+    src/external/relative_air.c
     src/external/state.c
     src/external/state_derivative.c
     src/external/state_derivative_provider.c

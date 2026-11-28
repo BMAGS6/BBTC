@@ -224,6 +224,96 @@ static_assert(
     "long-double EB environment sound speed must use native long double"
 );
 
+
+#define BBTC_TEST_ASSERT_RELATIVE_AIR_TYPES(TYPE, VEC_TYPE, SCALAR_TYPE)   \
+    static_assert(                                                        \
+        std::is_same<                                                     \
+            decltype(                                                     \
+                TYPE{}.projectile_relative_to_air_velocity_world_m_per_s  \
+            ),                                                             \
+            VEC_TYPE                                                      \
+        >::value,                                                         \
+        "EB2.1 relative-air vector must use its native vector family"      \
+    );                                                                    \
+    static_assert(                                                        \
+        std::is_same<                                                     \
+            decltype(TYPE{}.projectile_relative_to_air_speed_m_per_s),    \
+            SCALAR_TYPE                                                   \
+        >::value,                                                         \
+        "EB2.1 relative-air speed must use its native scalar family"       \
+    );                                                                    \
+    static_assert(                                                        \
+        std::is_same<decltype(TYPE{}.mach_number), SCALAR_TYPE>::value,   \
+        "EB2.1 Mach number must use its native scalar family"              \
+    );                                                                    \
+    static_assert(                                                        \
+        std::is_same<                                                     \
+            decltype(TYPE{}.dynamic_pressure_pa),                         \
+            SCALAR_TYPE                                                   \
+        >::value,                                                         \
+        "EB2.1 dynamic pressure must use its native scalar family"         \
+    )
+
+BBTC_TEST_ASSERT_RELATIVE_AIR_TYPES(
+    bbtc_eb_relative_air_float_t,
+    bbtc_eb_vec3_float_t,
+    float
+);
+BBTC_TEST_ASSERT_RELATIVE_AIR_TYPES(
+    bbtc_eb_relative_air_double_t,
+    bbtc_eb_vec3_double_t,
+    double
+);
+BBTC_TEST_ASSERT_RELATIVE_AIR_TYPES(
+    bbtc_eb_relative_air_long_double_t,
+    bbtc_eb_vec3_long_double_t,
+    long double
+);
+
+#undef BBTC_TEST_ASSERT_RELATIVE_AIR_TYPES
+
+using bbtc_test_relative_air_float_fn = bbtc_status_e (*)(
+    const bbtc_eb_vec3_float_t*,
+    const bbtc_eb_environment_sample_float_t*,
+    bbtc_eb_relative_air_float_t*
+);
+
+using bbtc_test_relative_air_double_fn = bbtc_status_e (*)(
+    const bbtc_eb_vec3_double_t*,
+    const bbtc_eb_environment_sample_double_t*,
+    bbtc_eb_relative_air_double_t*
+);
+
+using bbtc_test_relative_air_long_double_fn = bbtc_status_e (*)(
+    const bbtc_eb_vec3_long_double_t*,
+    const bbtc_eb_environment_sample_long_double_t*,
+    bbtc_eb_relative_air_long_double_t*
+);
+
+static_assert(
+    std::is_same<
+        decltype(&bbtc_eb_relative_air_evaluate_float),
+        bbtc_test_relative_air_float_fn
+    >::value,
+    "float EB2.1 evaluator must use the frozen native signature"
+);
+
+static_assert(
+    std::is_same<
+        decltype(&bbtc_eb_relative_air_evaluate_double),
+        bbtc_test_relative_air_double_fn
+    >::value,
+    "double EB2.1 evaluator must use the frozen native signature"
+);
+
+static_assert(
+    std::is_same<
+        decltype(&bbtc_eb_relative_air_evaluate_long_double),
+        bbtc_test_relative_air_long_double_fn
+    >::value,
+    "long-double EB2.1 evaluator must use the frozen native signature"
+);
+
 static_assert(
     std::is_same<
         decltype(bbtc_eb_environment_provider_float_t{}.sample),
@@ -1456,6 +1546,38 @@ int main()
 
     if (bbtc_eb_environment_sample_validate_double(&eb_environment)
         != BBTC_STATUS_SUCCESS)
+    {
+        return 1;
+    }
+
+
+    /*
+     * Exercise EB2.1 through the C++ umbrella-header boundary with binary-exact
+     * values: relative velocity (3,4,0), speed 5, Mach 1, q=25 Pa.
+     */
+    bbtc_eb_vec3_double_t eb_relative_air_projectile_velocity = {};
+    eb_relative_air_projectile_velocity.x = 3.0;
+    eb_relative_air_projectile_velocity.y = 4.0;
+
+    bbtc_eb_environment_sample_double_t eb_relative_air_environment = {};
+    eb_relative_air_environment.temperature_k = 1.0;
+    eb_relative_air_environment.air_density_kg_per_m3 = 2.0;
+    eb_relative_air_environment.speed_of_sound_m_per_s = 5.0;
+
+    bbtc_eb_relative_air_double_t eb_relative_air = {};
+
+    if (bbtc_eb_relative_air_evaluate_double(
+            &eb_relative_air_projectile_velocity,
+            &eb_relative_air_environment,
+            &eb_relative_air
+        ) != BBTC_STATUS_SUCCESS
+        || eb_relative_air
+               .projectile_relative_to_air_velocity_world_m_per_s.x != 3.0
+        || eb_relative_air
+               .projectile_relative_to_air_velocity_world_m_per_s.y != 4.0
+        || eb_relative_air.projectile_relative_to_air_speed_m_per_s != 5.0
+        || eb_relative_air.mach_number != 1.0
+        || eb_relative_air.dynamic_pressure_pa != 25.0)
     {
         return 1;
     }

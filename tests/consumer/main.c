@@ -178,6 +178,55 @@ check_external_ballistics_environment_contract(void)
 }
 
 
+
+/**
+ * @brief Verifies EB2.1 relative-air evaluation through a downstream consumer.
+ *
+ * @details
+ * Binary-exact native-double values prove that `<bbtc/bbtc.h>` exposes the new
+ * result record and evaluator through the ordinary `bbtc::bbtc` target. The
+ * detailed edge/representability matrix remains in the dedicated EB2.1 test.
+ *
+ * @return `EXIT_SUCCESS` when relative velocity, speed, Mach, and dynamic
+ *         pressure are all correct; otherwise `EXIT_FAILURE`.
+ */
+static int
+check_external_ballistics_relative_air_contract(void)
+{
+    const bbtc_eb_vec3_double_t projectile_velocity =
+    {
+        .x = 3.0,
+        .y = 4.0,
+        .z = 0.0
+    };
+
+    const bbtc_eb_environment_sample_double_t environment =
+    {
+        .air_velocity_world_m_per_s = {0},
+        .temperature_k = 1.0,
+        .absolute_pressure_pa = 0.0,
+        .air_density_kg_per_m3 = 2.0,
+        .speed_of_sound_m_per_s = 5.0
+    };
+
+    bbtc_eb_relative_air_double_t relative_air = {0};
+
+    return bbtc_eb_relative_air_evaluate_double(
+               &projectile_velocity,
+               &environment,
+               &relative_air
+           ) == BBTC_STATUS_SUCCESS
+            && relative_air
+                   .projectile_relative_to_air_velocity_world_m_per_s.x == 3.0
+            && relative_air
+                   .projectile_relative_to_air_velocity_world_m_per_s.y == 4.0
+            && relative_air.projectile_relative_to_air_speed_m_per_s == 5.0
+            && relative_air.mach_number == 1.0
+            && relative_air.dynamic_pressure_pa == 25.0
+        ? EXIT_SUCCESS
+        : EXIT_FAILURE;
+}
+
 /**
  * @brief Native-double environment callback for the independent consumer.
  */
@@ -1481,6 +1530,9 @@ int main(void)
         return EXIT_FAILURE;
 
     if (check_external_ballistics_environment_contract() != EXIT_SUCCESS)
+        return EXIT_FAILURE;
+
+    if (check_external_ballistics_relative_air_contract() != EXIT_SUCCESS)
         return EXIT_FAILURE;
 
     if (check_external_ballistics_environment_provider_contract()
